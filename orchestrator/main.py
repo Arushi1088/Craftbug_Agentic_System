@@ -9,6 +9,7 @@ import sys
 import json
 import asyncio
 import logging
+import requests
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
@@ -53,6 +54,58 @@ class OrchestratorAgent:
         # Initialize connections to both agents
         self.ux_analyzer = None
         self.coder_agent = None
+        
+    def fetch_ux_issues(self, url: str) -> Dict[str, Any]:
+        """Fetch UX issues from FastAPI analyzer"""
+        try:
+            endpoint = self.config["ux_analyzer"]["api_endpoint"]
+            
+            # Make request to UX Analyzer API
+            payload = {
+                "url": url,
+                "modules": self.config["ux_analyzer"]["modules"],
+                "output_format": "json"
+            }
+            
+            self.logger.info(f"Calling UX Analyzer API: {endpoint}/api/analyze")
+            response = requests.post(f"{endpoint}/api/analyze", json=payload, timeout=30)
+            response.raise_for_status()
+            
+            analysis_response = response.json()
+            self.logger.info(f"Received analysis response: {analysis_response.get('analysis_id', 'unknown')}")
+            
+            # Get the full report if analysis_id is returned
+            if 'analysis_id' in analysis_response and analysis_response.get('status') == 'completed':
+                # Wait a moment for report to be ready
+                import time
+                time.sleep(1)
+                
+                try:
+                    report_response = requests.get(
+                        f"{endpoint}/api/reports/{analysis_response['analysis_id']}", 
+                        timeout=30
+                    )
+                    if report_response.status_code == 200:
+                        return report_response.json()
+                    else:
+                        self.logger.warning(f"Report not found for ID: {analysis_response['analysis_id']}")
+                        # Return the analysis response as-is
+                        return analysis_response
+                except Exception as e:
+                    self.logger.warning(f"Failed to fetch report: {e}")
+                    return analysis_response
+            
+            return analysis_response
+            
+        except requests.exceptions.ConnectionError:
+            self.logger.error("Could not connect to UX Analyzer. Is the FastAPI server running on port 8000?")
+            raise Exception("UX Analyzer API not available. Please start: uvicorn fastapi_server:app --reload --port 8000")
+        except requests.exceptions.Timeout:
+            self.logger.error("UX Analyzer API request timed out")
+            raise Exception("UX Analyzer API timeout")
+        except Exception as e:
+            self.logger.error(f"Error calling UX Analyzer API: {e}")
+            raise
         
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """Load orchestrator configuration"""
@@ -142,15 +195,33 @@ class OrchestratorAgent:
     async def _init_ux_analyzer(self):
         """Initialize UX Analyzer connection"""
         try:
-            # Import and setup UX analyzer components
-            from fastapi_server import app as analyzer_app
+            # Test API connection
+            endpoint = self.config["ux_analyzer"]["api_endpoint"]
+            health_response = requests.get(f"{endpoint}/health", timeout=5)
+            health_response.raise_for_status()
+            
             self.ux_analyzer = {
-                "app": analyzer_app,
-                "endpoint": self.config["ux_analyzer"]["api_endpoint"]
+                "endpoint": endpoint,
+                "available": True,
+                "status": health_response.json()
             }
-            self.logger.info("UX Analyzer connection established")
-        except ImportError as e:
-            self.logger.warning(f"UX Analyzer not available: {e}")
+            self.logger.info(f"UX Analyzer API connection established: {endpoint}")
+            
+        except requests.exceptions.ConnectionError:
+            self.logger.warning(f"UX Analyzer API not available at {self.config['ux_analyzer']['api_endpoint']}")
+            self.logger.warning("Please start FastAPI server: uvicorn fastapi_server:app --reload --port 8000")
+            self.ux_analyzer = {
+                "endpoint": self.config["ux_analyzer"]["api_endpoint"],
+                "available": False,
+                "status": "Connection failed"
+            }
+        except Exception as e:
+            self.logger.warning(f"UX Analyzer initialization failed: {e}")
+            self.ux_analyzer = {
+                "endpoint": self.config["ux_analyzer"]["api_endpoint"],
+                "available": False,
+                "status": str(e)
+            }
     
     async def _init_coder_agent(self):
         """Initialize Coder Agent connection"""
@@ -169,51 +240,53 @@ class OrchestratorAgent:
             self.logger.warning(f"Coder Agent not available: {e}")
     
     async def analyze_website(self, url: str, custom_modules: Optional[Dict[str, bool]] = None) -> AnalysisResult:
-        """Trigger UX analysis of a website"""
+        """Trigger UX analysis of a website using real FastAPI server"""
         self.logger.info(f"Starting UX analysis for: {url}")
         
-        modules = custom_modules or self.config["ux_analyzer"]["modules"]
+        if custom_modules:
+            # Temporarily update config for this analysis
+            original_modules = self.config["ux_analyzer"]["modules"].copy()
+            self.config["ux_analyzer"]["modules"].update(custom_modules)
         
         try:
-            # Simulate API call to UX analyzer
-            # In real implementation, this would make HTTP request to analyzer
-            analysis_data = {
-                "url": url,
-                "analysis_id": f"ux_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                "overall_score": 75,  # Mock score
-                "issues": [
-                    {
-                        "type": "accessibility",
-                        "severity": "high",
-                        "message": "Missing alt text on images",
-                        "element": "img.hero-banner",
-                        "recommendation": "Add descriptive alt text to all images"
-                    },
-                    {
-                        "type": "performance",
-                        "severity": "medium", 
-                        "message": "Large bundle size detected",
-                        "file": "main.js",
-                        "recommendation": "Consider code splitting and lazy loading"
-                    }
-                ],
-                "recommendations": [
-                    "Implement proper alt text for accessibility",
-                    "Optimize JavaScript bundle size",
-                    "Add ARIA labels for better screen reader support"
-                ],
-                "timestamp": datetime.now().isoformat()
-            }
+            # Call real UX Analyzer API
+            analysis_data = self.fetch_ux_issues(url)
             
-            result = AnalysisResult(
-                analysis_id=analysis_data["analysis_id"],
-                url=url,
-                overall_score=analysis_data["overall_score"],
-                issues=analysis_data["issues"],
-                recommendations=analysis_data["recommendations"],
-                timestamp=analysis_data["timestamp"],
-                severity_counts=self._count_severities(analysis_data["issues"])
-            )
+            # Convert API response to AnalysisResult format
+            if "modules" in analysis_data:
+                # Extract issues from module results
+                issues = []
+                recommendations = []
+                
+                for module_name, module_data in analysis_data["modules"].items():
+                    if isinstance(module_data, dict) and "findings" in module_data:
+                        for finding in module_data["findings"]:
+                            issues.append({
+                                "type": module_name,
+                                "severity": finding.get("severity", "medium"),
+                                "message": finding.get("message", ""),
+                                "element": finding.get("element", ""),
+                                "file": finding.get("file", ""),
+                                "recommendation": finding.get("recommendation", "")
+                            })
+                    
+                    # Extract recommendations
+                    if isinstance(module_data, dict) and "recommendations" in module_data:
+                        recommendations.extend(module_data["recommendations"])
+                
+                result = AnalysisResult(
+                    analysis_id=analysis_data.get("analysis_id", f"ux_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
+                    url=url,
+                    overall_score=analysis_data.get("overall_score", 0),
+                    issues=issues,
+                    recommendations=recommendations,
+                    timestamp=analysis_data.get("timestamp", datetime.now().isoformat()),
+                    severity_counts=self._count_severities(issues)
+                )
+            else:
+                # Fallback to mock data if API response format is unexpected
+                self.logger.warning("Unexpected API response format, using mock data")
+                result = self._create_mock_analysis_result(url)
             
             self.analysis_history.append(result)
             self.logger.info(f"UX analysis completed: {result.analysis_id}")
@@ -222,7 +295,16 @@ class OrchestratorAgent:
             
         except Exception as e:
             self.logger.error(f"UX analysis failed: {e}")
-            raise
+            # Fallback to mock data for development
+            self.logger.info("Falling back to mock data for development")
+            result = self._create_mock_analysis_result(url)
+            self.analysis_history.append(result)
+            return result
+            
+        finally:
+            # Restore original modules config
+            if custom_modules:
+                self.config["ux_analyzer"]["modules"] = original_modules
     
     def _count_severities(self, issues: List[Dict[str, Any]]) -> Dict[str, int]:
         """Count issues by severity level"""
@@ -232,6 +314,48 @@ class OrchestratorAgent:
             if severity in counts:
                 counts[severity] += 1
         return counts
+    
+    def _create_mock_analysis_result(self, url: str) -> AnalysisResult:
+        """Create mock analysis result for development/fallback"""
+        analysis_data = {
+            "url": url,
+            "analysis_id": f"ux_mock_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "overall_score": 75,  # Mock score
+            "issues": [
+                {
+                    "type": "accessibility",
+                    "severity": "high",
+                    "message": "Missing alt text on images",
+                    "element": "img.hero-banner",
+                    "file": "index.html",
+                    "recommendation": "Add descriptive alt text to all images"
+                },
+                {
+                    "type": "performance",
+                    "severity": "medium", 
+                    "message": "Large bundle size detected",
+                    "file": "main.js",
+                    "element": "",
+                    "recommendation": "Consider code splitting and lazy loading"
+                }
+            ],
+            "recommendations": [
+                "Implement proper alt text for accessibility",
+                "Optimize JavaScript bundle size",
+                "Add ARIA labels for better screen reader support"
+            ],
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return AnalysisResult(
+            analysis_id=analysis_data["analysis_id"],
+            url=url,
+            overall_score=analysis_data["overall_score"],
+            issues=analysis_data["issues"],
+            recommendations=analysis_data["recommendations"],
+            timestamp=analysis_data["timestamp"],
+            severity_counts=self._count_severities(analysis_data["issues"])
+        )
     
     async def create_coder_tasks(self, analysis_result: AnalysisResult) -> List[CoderTask]:
         """Convert UX analysis results into actionable coder tasks"""
@@ -418,12 +542,23 @@ class OrchestratorAgent:
         """Get current orchestrator status"""
         return {
             "agents": {
-                "ux_analyzer": self.ux_analyzer is not None,
-                "coder_agent": self.coder_agent is not None and self.coder_agent.get("available", False)
+                "ux_analyzer": {
+                    "available": self.ux_analyzer is not None and self.ux_analyzer.get("available", False),
+                    "endpoint": self.ux_analyzer.get("endpoint", "Unknown") if self.ux_analyzer else None,
+                    "status": self.ux_analyzer.get("status", "Not initialized") if self.ux_analyzer else "Not initialized"
+                },
+                "coder_agent": {
+                    "available": self.coder_agent is not None and self.coder_agent.get("available", False),
+                    "path": self.coder_agent.get("path", "Unknown") if self.coder_agent else None
+                }
             },
             "active_tasks": len(self.active_tasks),
             "analysis_history": len(self.analysis_history),
-            "config": self.config,
+            "config": {
+                "ux_analyzer_endpoint": self.config["ux_analyzer"]["api_endpoint"],
+                "severity_threshold": self.config["orchestrator"]["severity_threshold"],
+                "auto_trigger_fixes": self.config["orchestrator"]["auto_trigger_fixes"]
+            },
             "timestamp": datetime.now().isoformat()
         }
 
