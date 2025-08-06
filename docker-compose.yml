@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # UX Analyzer API Backend
+  ux-analyzer-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - MAX_CONCURRENT_ANALYSES=20
+      - REQUEST_TIMEOUT=60
+      - REPORT_CACHE_TTL=7200
+      - MAX_UPLOAD_SIZE=52428800
+    volumes:
+      - ./logs:/app/logs
+      - ./temp:/app/temp
+    restart: unless-stopped
+    networks:
+      - ux-analyzer-network
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (React Vite)
+  ux-analyzer-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://ux-analyzer-api:8000
+      - NODE_ENV=production
+    depends_on:
+      - ux-analyzer-api
+    networks:
+      - ux-analyzer-network
+    restart: unless-stopped
+
+  # Redis for caching (optional enhancement)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ux-analyzer-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ux-analyzer-api
+      - ux-analyzer-frontend
+    networks:
+      - ux-analyzer-network
+    restart: unless-stopped
+
+  # Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - ux-analyzer-network
+    restart: unless-stopped
+
+networks:
+  ux-analyzer-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  prometheus_data:

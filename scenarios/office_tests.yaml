@@ -1,0 +1,128 @@
+# Phase 3 Advanced UX Analytics Configuration
+tests:
+  Integration Nav (Phase 3):
+    description: Advanced integration navigation testing with comprehensive analytics
+    server_url: http://localhost:8000
+    analytics:
+      performance_monitoring: true
+      accessibility_analysis: true
+      keyboard_navigation_testing: true
+      ux_heuristics_evaluation: true
+      best_practices_analysis: true
+      core_web_vitals: true
+      visual_analytics: true
+      health_alerts: true
+    thresholds:
+      performance:
+        max_action_latency_ms: 500
+        max_lcp_ms: 2500
+        max_fid_ms: 100
+        max_cls: 0.1
+        min_performance_score: 80
+      accessibility:
+        max_critical_violations: 0
+        max_serious_violations: 5
+        min_accessibility_score: 80
+        wcag_compliance_level: AA
+      keyboard_navigation:
+        min_coverage_percentage: 80
+        required_interactive_elements:
+        - button
+        - a
+        - input
+        - select
+      ux_heuristics:
+        min_overall_score: 4.0
+        min_individual_heuristic: 3.5
+        framework: Nielsen10
+      best_practices:
+        min_overall_score: 4.0
+        min_category_score: 3.5
+        max_violations_per_app: 5
+        frameworks:
+        - Microsoft Fluent Design
+        - WCAG Accessibility
+        - Industry Standards
+    scenarios:
+    - name: Word Integration with Analytics
+      steps:
+      - action: navigate_to_url
+        url: '{server_url}/word.html'
+        analytics:
+        - performance
+        - accessibility
+        - keyboard
+      - action: wait_for_element
+        selector: '[data-testid="word-app"]'
+        timeout: 5000
+        analytics:
+        - performance
+      - action: click
+        selector: '[data-testid="integration-nav"]'
+        analytics:
+        - performance
+        - accessibility
+      - action: verify_navigation
+        expected_url_contains: /integration.html
+        analytics:
+        - performance
+      - action: accessibility_scan
+        scope: full_page
+        analytics:
+        - accessibility
+      - action: keyboard_navigation_test
+        scope: interactive_elements
+        analytics:
+        - keyboard
+    - name: Excel Integration with Analytics
+      steps:
+      - action: navigate_to_url
+        url: '{server_url}/excel.html'
+        analytics:
+        - performance
+        - accessibility
+      - action: wait_for_element
+        selector: '[data-testid="excel-app"]'
+        timeout: 5000
+      - action: click
+        selector: '[data-testid="integration-nav"]'
+        analytics:
+        - performance
+      - action: verify_navigation
+        expected_url_contains: /integration.html
+      - action: accessibility_scan
+        scope: full_page
+        analytics:
+        - accessibility
+    - name: PowerPoint Integration with Analytics
+      steps:
+      - action: navigate_to_url
+        url: '{server_url}/powerpoint.html'
+        analytics:
+        - performance
+        - accessibility
+        - keyboard
+      - action: wait_for_element
+        selector: '[data-testid="powerpoint-app"]'
+        timeout: 5000
+      - action: click
+        selector: '[data-testid="integration-nav"]'
+        analytics:
+        - performance
+      - action: verify_navigation
+        expected_url_contains: /integration.html
+      - action: comprehensive_analytics
+        include:
+        - performance
+        - accessibility
+        - keyboard
+        - core_web_vitals
+    reporting:
+      generate_visual_dashboard: true
+      export_formats:
+      - html
+      - json
+      - png
+      include_executive_summary: true
+      health_alert_notifications: true
+      save_performance_timeline: true

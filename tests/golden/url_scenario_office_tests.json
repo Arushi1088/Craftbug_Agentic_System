@@ -1,0 +1,291 @@
+{
+  "analysis_id": "e5d4379b",
+  "timestamp": "2025-07-30T14:30:00.000000",
+  "type": "url_scenario",
+  "url": "https://example.com",
+  "scenario_file": "YAML scenario",
+  "overall_score": 89,
+  "scenario_results": [
+    {
+      "name": "Word Integration with Analytics",
+      "score": 88,
+      "steps": [
+        {
+          "action": "navigate_to_url",
+          "status": "success",
+          "duration_ms": 259,
+          "analytics": [
+            "performance",
+            "accessibility",
+            "keyboard"
+          ],
+          "url": "https://example.com/word.html"
+        },
+        {
+          "action": "wait_for_element",
+          "status": "success",
+          "duration_ms": 126,
+          "analytics": [
+            "performance"
+          ]
+        },
+        {
+          "action": "click",
+          "status": "success",
+          "duration_ms": 288,
+          "analytics": [
+            "performance",
+            "accessibility"
+          ],
+          "selector": "[data-testid=\"integration-nav\"]"
+        },
+        {
+          "action": "verify_navigation",
+          "status": "success",
+          "duration_ms": 194,
+          "analytics": [
+            "performance"
+          ]
+        },
+        {
+          "action": "accessibility_scan",
+          "status": "success",
+          "duration_ms": 145,
+          "analytics": [
+            "accessibility"
+          ],
+          "violations": 0,
+          "scope": "full_page"
+        },
+        {
+          "action": "keyboard_navigation_test",
+          "status": "success",
+          "duration_ms": 116,
+          "analytics": [
+            "keyboard"
+          ]
+        }
+      ],
+      "duration_ms": 1128,
+      "status": "passed"
+    },
+    {
+      "name": "Excel Integration with Analytics",
+      "score": 92,
+      "steps": [
+        {
+          "action": "navigate_to_url",
+          "status": "success",
+          "duration_ms": 206,
+          "analytics": [
+            "performance",
+            "accessibility"
+          ],
+          "url": "https://example.com/excel.html"
+        },
+        {
+          "action": "wait_for_element",
+          "status": "success",
+          "duration_ms": 140,
+          "analytics": []
+        },
+        {
+          "action": "click",
+          "status": "success",
+          "duration_ms": 237,
+          "analytics": [
+            "performance"
+          ],
+          "selector": "[data-testid=\"integration-nav\"]"
+        },
+        {
+          "action": "verify_navigation",
+          "status": "warning",
+          "duration_ms": 300,
+          "analytics": []
+        },
+        {
+          "action": "accessibility_scan",
+          "status": "success",
+          "duration_ms": 199,
+          "analytics": [
+            "accessibility"
+          ],
+          "violations": 1,
+          "scope": "full_page"
+        }
+      ],
+      "duration_ms": 1082,
+      "status": "passed"
+    },
+    {
+      "name": "PowerPoint Integration with Analytics",
+      "score": 79,
+      "steps": [
+        {
+          "action": "navigate_to_url",
+          "status": "success",
+          "duration_ms": 69,
+          "analytics": [
+            "performance",
+            "accessibility",
+            "keyboard"
+          ],
+          "url": "https://example.com/powerpoint.html"
+        },
+        {
+          "action": "wait_for_element",
+          "status": "success",
+          "duration_ms": 137,
+          "analytics": []
+        },
+        {
+          "action": "click",
+          "status": "success",
+          "duration_ms": 167,
+          "analytics": [
+            "performance"
+          ],
+          "selector": "[data-testid=\"integration-nav\"]"
+        },
+        {
+          "action": "verify_navigation",
+          "status": "success",
+          "duration_ms": 297,
+          "analytics": []
+        },
+        {
+          "action": "comprehensive_analytics",
+          "status": "success",
+          "duration_ms": 226,
+          "analytics": []
+        }
+      ],
+      "duration_ms": 896,
+      "status": "warning"
+    }
+  ],
+  "module_results": {
+    "performance": {
+      "score": 94,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [],
+      "recommendations": [
+        "Implement lazy loading for images and components",
+        "Minimize and compress JavaScript and CSS files",
+        "Use CDN for static assets"
+      ]
+    },
+    "accessibility": {
+      "score": 81,
+      "threshold_met": true,
+      "analytics_enabled": true,
+      "findings": [],
+      "recommendations": [
+        "Add proper ARIA labels and roles",
+        "Ensure sufficient color contrast",
+        "Implement proper heading hierarchy"
+      ]
+    },
+    "keyboard": {
+      "score": 81,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [],
+      "recommendations": [
+        "Ensure logical tab order",
+        "Add visible focus indicators",
+        "Implement keyboard shortcuts"
+      ]
+    },
+    "ux_heuristics": {
+      "score": 100,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [],
+      "recommendations": [
+        "Follow ux_heuristics best practices",
+        "Regularly audit ux_heuristics compliance",
+        "Implement ux_heuristics monitoring"
+      ]
+    },
+    "best_practices": {
+      "score": 92,
+      "threshold_met": true,
+      "analytics_enabled": true,
+      "findings": [],
+      "recommendations": [
+        "Follow best_practices best practices",
+        "Regularly audit best_practices compliance",
+        "Implement best_practices monitoring"
+      ]
+    }
+  },
+  "analytics_config": {
+    "performance_monitoring": true,
+    "accessibility_analysis": true,
+    "keyboard_navigation_testing": true,
+    "ux_heuristics_evaluation": true,
+    "best_practices_analysis": true,
+    "core_web_vitals": true,
+    "visual_analytics": true,
+    "health_alerts": true
+  },
+  "thresholds": {
+    "performance": {
+      "max_action_latency_ms": 500,
+      "max_lcp_ms": 2500,
+      "max_fid_ms": 100,
+      "max_cls": 0.1,
+      "min_performance_score": 80
+    },
+    "accessibility": {
+      "max_critical_violations": 0,
+      "max_serious_violations": 5,
+      "min_accessibility_score": 80,
+      "wcag_compliance_level": "AA"
+    },
+    "keyboard_navigation": {
+      "min_coverage_percentage": 80,
+      "required_interactive_elements": [
+        "button",
+        "a",
+        "input",
+        "select"
+      ]
+    },
+    "ux_heuristics": {
+      "min_overall_score": 4.0,
+      "min_individual_heuristic": 3.5,
+      "framework": "Nielsen10"
+    },
+    "best_practices": {
+      "min_overall_score": 4.0,
+      "min_category_score": 3.5,
+      "max_violations_per_app": 5,
+      "frameworks": [
+        "Microsoft Fluent Design",
+        "WCAG Accessibility",
+        "Industry Standards"
+      ]
+    }
+  },
+  "metadata": {
+    "total_scenarios": 3,
+    "total_steps": 16,
+    "analysis_duration": 3.106,
+    "scenarios_passed": 2,
+    "analytics_features": [
+      "performance_monitoring",
+      "accessibility_analysis",
+      "keyboard_navigation_testing",
+      "ux_heuristics_evaluation",
+      "best_practices_analysis",
+      "core_web_vitals",
+      "visual_analytics",
+      "health_alerts"
+    ],
+    "deterministic_mode": true
+  }
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "test": "Backend Health",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Response time: 0.002s"
+  },
+  {
+    "test": "Frontend Availability",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Response time: 0.004s"
+  },
+  {
+    "test": "Proxy Integration",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Analysis ID: 071961f4"
+  },
+  {
+    "test": "URL Analysis",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "ID: f83b6908"
+  },
+  {
+    "test": "Scenario Analysis",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "ID: 7d686ff1"
+  },
+  {
+    "test": "Mock App Analysis",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "ID: a045eeca"
+  },
+  {
+    "test": "Report Retrieval (f83b6908)",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Score: 75, Modules: 2"
+  },
+  {
+    "test": "Report Retrieval (7d686ff1)",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Score: 81, Modules: 2"
+  },
+  {
+    "test": "Report Retrieval (a045eeca)",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Score: 87, Modules: 2"
+  },
+  {
+    "test": "Download JSON",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Size: 804 bytes"
+  },
+  {
+    "test": "Download HTML",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Size: 833 bytes"
+  },
+  {
+    "test": "Performance Benchmark",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Avg: 0.003s, Success: 5/5"
+  },
+  {
+    "test": "Error Handling: Missing URL",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Expected 400, got 400"
+  },
+  {
+    "test": "Error Handling: Invalid Report ID",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Expected 404, got 404"
+  },
+  {
+    "test": "Error Handling: Invalid JSON",
+    "status": "PASS",
+    "timestamp": "14:36:03",
+    "details": "Expected 422, got 422"
+  }
+]

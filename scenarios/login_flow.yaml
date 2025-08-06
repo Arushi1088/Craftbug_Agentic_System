@@ -1,0 +1,23 @@
+# Login flow testing scenarios
+tests:
+  Login Flow:
+    description: User authentication flow testing
+    scenarios:
+    - name: Basic Login Test
+      steps:
+      - action: navigate_to_url
+        url: '{url}/login'
+      - action: wait_for_element
+        selector: 'input[type="email"], input[name="username"]'
+        timeout: 5000
+      - action: accessibility_scan
+        scope: form_elements
+      - action: keyboard_navigation_test
+        scope: interactive_elements
+    - name: Login Error Handling
+      steps:
+      - action: navigate_to_url
+        url: '{url}/login'
+      - action: submit_form
+        selector: 'form'
+        validate_errors: true

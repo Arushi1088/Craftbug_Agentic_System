@@ -1,0 +1,95 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>UX Analysis Report - 59f72380</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 40px; line-height: 1.6; background: #f5f5f5; }
+                .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }
+                .score { font-size: 48px; font-weight: bold; color: #4CAF50; text-align: center; margin: 20px 0; }
+                .section { margin: 25px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; }
+                .scenario { background: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; margin: 15px 0; border-radius: 5px; }
+                .step { background: #f0f0f0; padding: 10px; margin: 5px 0; border-radius: 3px; font-family: monospace; }
+                .success { border-left-color: #4CAF50; background: #e8f5e8; }
+                .warning { border-left-color: #FF9800; background: #fff3e0; }
+                .error { border-left-color: #F44336; background: #ffebee; }
+                .metadata { background: #f3f4f6; padding: 20px; border-radius: 10px; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                th { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎯 UX Analyzer - Scenario Report</h1>
+                    <p><strong>Report ID:</strong> 59f72380</p>
+                    <p><strong>Generated:</strong> 2025-07-30T16:17:15.417948</p>
+                    <p><strong>Type:</strong> mock_scenario</p>
+                </div>
+                
+                <div class="score">Overall Score: 89/100</div>
+        <div class="section"><h2>📋 Scenario Results</h2>
+                <div class="scenario passed">
+                    <h3>Word Integration with Analytics - Score: 87/100</h3>
+                    <p><strong>Duration:</strong> 1027ms</p>
+                    <p><strong>Status:</strong> Passed</p>
+                    
+                    <h4>Steps:</h4>
+                <div class="step warning"><strong>navigate_to_url:</strong> 208ms - warning</div><div class="step success"><strong>wait_for_element:</strong> 168ms - success</div><div class="step success"><strong>click:</strong> 289ms - success | Selector: [data-testid="integration-nav"]</div><div class="step success"><strong>verify_navigation:</strong> 77ms - success</div><div class="step success"><strong>accessibility_scan:</strong> 110ms - success</div><div class="step success"><strong>keyboard_navigation_test:</strong> 175ms - success</div></div>
+                <div class="scenario passed">
+                    <h3>Excel Integration with Analytics - Score: 86/100</h3>
+                    <p><strong>Duration:</strong> 1095ms</p>
+                    <p><strong>Status:</strong> Passed</p>
+                    
+                    <h4>Steps:</h4>
+                <div class="step success"><strong>navigate_to_url:</strong> 293ms - success</div><div class="step success"><strong>wait_for_element:</strong> 146ms - success</div><div class="step success"><strong>click:</strong> 110ms - success | Selector: [data-testid="integration-nav"]</div><div class="step success"><strong>verify_navigation:</strong> 250ms - success</div><div class="step success"><strong>accessibility_scan:</strong> 296ms - success</div></div>
+                <div class="scenario passed">
+                    <h3>PowerPoint Integration with Analytics - Score: 87/100</h3>
+                    <p><strong>Duration:</strong> 779ms</p>
+                    <p><strong>Status:</strong> Passed</p>
+                    
+                    <h4>Steps:</h4>
+                <div class="step success"><strong>navigate_to_url:</strong> 160ms - success</div><div class="step success"><strong>wait_for_element:</strong> 131ms - success</div><div class="step success"><strong>click:</strong> 208ms - success | Selector: [data-testid="integration-nav"]</div><div class="step success"><strong>verify_navigation:</strong> 186ms - success</div><div class="step warning"><strong>comprehensive_analytics:</strong> 94ms - warning</div></div></div><div class="section"><h2>📊 Module Analysis</h2><table><tr><th>Module</th><th>Score</th><th>Threshold Met</th><th>Analytics Enabled</th></tr>
+                <tr>
+                    <td>Performance</td>
+                    <td>89/100</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                </tr>
+                
+                <tr>
+                    <td>Accessibility</td>
+                    <td>94/100</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                
+                <tr>
+                    <td>Keyboard</td>
+                    <td>92/100</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                </tr>
+                
+                <tr>
+                    <td>Ux_Heuristics</td>
+                    <td>76/100</td>
+                    <td>✅</td>
+                    <td>❌</td>
+                </tr>
+                
+                <tr>
+                    <td>Best_Practices</td>
+                    <td>94/100</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                </table></div><div class="metadata"><h3>📊 Analysis Metadata</h3><p><strong>Total Scenarios:</strong> 3</p><p><strong>Total Steps:</strong> 16</p><p><strong>Analysis Duration:</strong> 2.901</p><p><strong>Scenarios Passed:</strong> 3</p><p><strong>Deterministic Mode:</strong> False</p><p><strong>Mock App Path:</strong> mock-apps/office.json</p><p><strong>App Type:</strong> Microsoft Office</p></div>
+            </div>
+        </body>
+        </html>
+        

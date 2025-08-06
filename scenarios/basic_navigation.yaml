@@ -1,0 +1,22 @@
+# Basic navigation testing scenarios
+tests:
+  Basic Navigation:
+    description: Basic website navigation testing
+    scenarios:
+    - name: Home Page Navigation
+      steps:
+      - action: navigate_to_url
+        url: '{url}'
+      - action: wait_for_element
+        selector: 'body'
+        timeout: 5000
+      - action: accessibility_scan
+        scope: full_page
+    - name: Link Navigation Test
+      steps:
+      - action: navigate_to_url
+        url: '{url}'
+      - action: find_links
+        scope: all
+      - action: test_navigation
+        verify_response: true

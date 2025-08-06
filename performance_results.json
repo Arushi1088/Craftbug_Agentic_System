@@ -1,0 +1,61 @@
+{
+  "URL Analysis - Single Request": {
+    "response_time": 0.029298782348632812,
+    "status_code": 200,
+    "success": true,
+    "content_length": 102
+  },
+  "URL Analysis - Load Test": {
+    "total_requests": 6,
+    "successful_requests": 6,
+    "failed_requests": 0,
+    "success_rate": 100.0,
+    "total_time": 0.2175889015197754,
+    "requests_per_second": 27.57493584503755,
+    "avg_response_time": 0.004290421803792317,
+    "min_response_time": 0.0035490989685058594,
+    "max_response_time": 0.005052328109741211,
+    "median_response_time": 0.004175424575805664,
+    "p95_response_time": 0.005052328109741211
+  },
+  "Mock App Analysis - Single Request": {
+    "response_time": 0.003173828125,
+    "status_code": 200,
+    "success": true,
+    "content_length": 106
+  },
+  "Mock App Analysis - Load Test": {
+    "total_requests": 6,
+    "successful_requests": 6,
+    "failed_requests": 0,
+    "success_rate": 100.0,
+    "total_time": 0.22007203102111816,
+    "requests_per_second": 27.263800729972083,
+    "avg_response_time": 0.005313992500305176,
+    "min_response_time": 0.004029035568237305,
+    "max_response_time": 0.006128072738647461,
+    "median_response_time": 0.0053403377532958984,
+    "p95_response_time": 0.006128072738647461
+  },
+  "Report Retrieval - Concurrent": {
+    "total_requests": 15,
+    "successful_requests": 15,
+    "success_rate": 100.0,
+    "avg_response_time": 0.010469611485799153,
+    "max_response_time": 0.013298988342285156,
+    "requests_per_second": 633.6380940870774
+  },
+  "Proxy vs Direct Performance": {
+    "direct_avg": 0.0026515960693359376,
+    "proxy_avg": 0.0044097900390625,
+    "proxy_overhead": 0.0017581939697265624,
+    "proxy_overhead_percent": 66.30700618616025
+  },
+  "High Memory Load Test": {
+    "concurrent_requests": 10,
+    "successful_requests": 10,
+    "total_time": 0.01839280128479004,
+    "avg_response_time": 0.01077585220336914,
+    "memory_test_passed": true
+  }
+}

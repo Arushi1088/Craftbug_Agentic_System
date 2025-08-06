@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""
+UX Analyzer CLI Tool
+Command-line interface for scenario-based UX analysis
+"""
+
+import argparse
+import json
+import sys
+import os
+from pathlib import Path
+from datetime import datetime
+import requests
+import time
+
+# Add parent directory to path to import our modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scenario_executor import ScenarioExecutor, get_available_scenarios
+
+class UXAnalyzerCLI:
+    def __init__(self, deterministic_mode=False):
+        self.scenario_executor = ScenarioExecutor(deterministic_mode=deterministic_mode)
+        self.api_base_url = "http://localhost:8000"
+        self.deterministic_mode = deterministic_mode
+    
+    def url_scenario(self, url: str, scenario_path: str, output_dir: str = "reports", 
+                    json_out: bool = False, modules: dict = None):
+        """Execute URL scenario analysis"""
+        print(f"🎯 UX Analyzer - URL Scenario Analysis")
+        print(f"   URL: {url}")
+        print(f"   Scenario: {scenario_path}")
+        print(f"   Output Directory: {output_dir}")
+        
+        # Default modules if not specified
+        if modules is None:
+            modules = {
+                "performance": True,
+                "accessibility": True,
+                "keyboard": True,
+                "ux_heuristics": True,
+                "best_practices": True
+            }
+        
+        try:
+            # Execute scenario analysis
+            print(f"🔄 Executing scenario analysis...")
+            report = self.scenario_executor.execute_url_scenario(url, scenario_path, modules)
+            
+            # Create output directory
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Generate output filename
+            if self.deterministic_mode:
+                timestamp = "20250730_143000"  # Fixed timestamp for tests
+                analysis_id = "test12345"       # Fixed ID for tests
+            else:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                analysis_id = report.get("analysis_id", "unknown")
+            
+            if json_out:
+                output_file = f"{output_dir}/url_scenario_{analysis_id}_{timestamp}.json"
+                with open(output_file, 'w') as f:
+                    json.dump(report, f, indent=2)
+                print(f"✅ JSON report saved to: {output_file}")
+            else:
+                output_file = f"{output_dir}/url_scenario_{analysis_id}_{timestamp}.html"
+                html_content = self._generate_html_report(report)
+                with open(output_file, 'w') as f:
+                    f.write(html_content)
+                print(f"✅ HTML report saved to: {output_file}")
+            
+            # Print summary
+            overall_score = report.get("overall_score", 0)
+            scenarios_count = len(report.get("scenario_results", []))
+            print(f"\n📊 Analysis Summary:")
+            print(f"   Overall Score: {overall_score}/100")
+            print(f"   Scenarios Executed: {scenarios_count}")
+            print(f"   Analysis ID: {analysis_id}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Analysis failed: {e}")
+            return False
+    
+    def mock_scenario(self, app_path: str, scenario_path: str, output_dir: str = "reports", 
+                     json_out: bool = False, modules: dict = None):
+        """Execute mock app scenario analysis"""
+        print(f"🎯 UX Analyzer - Mock App Scenario Analysis")
+        print(f"   App Path: {app_path}")
+        print(f"   Scenario: {scenario_path}")
+        print(f"   Output Directory: {output_dir}")
+        
+        # Default modules if not specified
+        if modules is None:
+            modules = {
+                "performance": True,
+                "accessibility": True,
+                "keyboard": True,
+                "ux_heuristics": True,
+                "best_practices": True
+            }
+        
+        try:
+            # Execute scenario analysis
+            print(f"🔄 Executing mock scenario analysis...")
+            report = self.scenario_executor.execute_mock_scenario(app_path, scenario_path, modules)
+            
+            # Create output directory
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Generate output filename
+            if self.deterministic_mode:
+                timestamp = "20250730_143000"  # Fixed timestamp for tests
+                analysis_id = "test12345"       # Fixed ID for tests
+            else:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                analysis_id = report.get("analysis_id", "unknown")
+            
+            if json_out:
+                output_file = f"{output_dir}/mock_scenario_{analysis_id}_{timestamp}.json"
+                with open(output_file, 'w') as f:
+                    json.dump(report, f, indent=2)
+                print(f"✅ JSON report saved to: {output_file}")
+            else:
+                output_file = f"{output_dir}/mock_scenario_{analysis_id}_{timestamp}.html"
+                html_content = self._generate_html_report(report)
+                with open(output_file, 'w') as f:
+                    f.write(html_content)
+                print(f"✅ HTML report saved to: {output_file}")
+            
+            # Print summary
+            overall_score = report.get("overall_score", 0)
+            scenarios_count = len(report.get("scenario_results", []))
+            app_type = report.get("metadata", {}).get("app_type", "Unknown")
+            print(f"\n📊 Analysis Summary:")
+            print(f"   Overall Score: {overall_score}/100")
+            print(f"   App Type: {app_type}")
+            print(f"   Scenarios Executed: {scenarios_count}")
+            print(f"   Analysis ID: {analysis_id}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Analysis failed: {e}")
+            return False
+    
+    def list_scenarios(self):
+        """List available scenario files"""
+        print(f"📋 Available YAML Scenarios:")
+        print("-" * 40)
+        
+        try:
+            scenarios = get_available_scenarios()
+            
+            if not scenarios:
+                print("   No scenario files found in scenarios/ directory")
+                print("   Create .yaml files in the scenarios/ folder to get started")
+                return
+            
+            for i, scenario in enumerate(scenarios, 1):
+                print(f"{i}. {scenario['name']}")
+                print(f"   File: {scenario['filename']}")
+                print(f"   Description: {scenario['description']}")
+                print()
+        
+        except Exception as e:
+            print(f"❌ Failed to list scenarios: {e}")
+    
+    def validate_scenario(self, scenario_path: str):
+        """Validate a YAML scenario file"""
+        print(f"🔍 Validating Scenario: {scenario_path}")
+        
+        try:
+            scenario_data = self.scenario_executor.load_scenario(scenario_path)
+            
+            # Basic validation
+            if 'tests' not in scenario_data:
+                print("❌ Missing 'tests' section in YAML file")
+                return False
+            
+            tests = scenario_data['tests']
+            if not tests:
+                print("❌ No tests defined in YAML file")
+                return False
+            
+            test_count = 0
+            scenario_count = 0
+            
+            for test_name, test_config in tests.items():
+                test_count += 1
+                print(f"✅ Test: {test_name}")
+                
+                if 'scenarios' in test_config:
+                    scenarios = test_config['scenarios']
+                    scenario_count += len(scenarios)
+                    
+                    for scenario in scenarios:
+                        scenario_name = scenario.get('name', 'Unnamed Scenario')
+                        steps = scenario.get('steps', [])
+                        print(f"   ✅ Scenario: {scenario_name} ({len(steps)} steps)")
+            
+            print(f"\n📊 Validation Summary:")
+            print(f"   Tests: {test_count}")
+            print(f"   Scenarios: {scenario_count}")
+            print(f"   Status: ✅ Valid YAML scenario file")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Validation failed: {e}")
+            return False
+    
+    def _generate_html_report(self, report: dict) -> str:
+        """Generate HTML report from analysis results"""
+        analysis_id = report.get("analysis_id", "unknown")
+        timestamp = report.get("timestamp", datetime.now().isoformat())
+        overall_score = report.get("overall_score", 0)
+        report_type = report.get("type", "analysis")
+        
+        # Color based on score
+        score_color = "#4CAF50" if overall_score >= 80 else "#FF9800" if overall_score >= 60 else "#F44336"
+        
+        html = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>UX Analysis Report - {analysis_id}</title>
+            <style>
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 40px; line-height: 1.6; background: #f5f5f5; }}
+                .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }}
+                .score {{ font-size: 48px; font-weight: bold; color: {score_color}; text-align: center; margin: 20px 0; }}
+                .section {{ margin: 25px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; }}
+                .scenario {{ background: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; margin: 15px 0; border-radius: 5px; }}
+                .step {{ background: #f0f0f0; padding: 10px; margin: 5px 0; border-radius: 3px; font-family: monospace; }}
+                .success {{ border-left-color: #4CAF50; background: #e8f5e8; }}
+                .warning {{ border-left-color: #FF9800; background: #fff3e0; }}
+                .error {{ border-left-color: #F44336; background: #ffebee; }}
+                .metadata {{ background: #f3f4f6; padding: 20px; border-radius: 10px; margin-top: 30px; }}
+                table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
+                th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }}
+                th {{ background-color: #f2f2f2; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎯 UX Analyzer - Scenario Report</h1>
+                    <p><strong>Report ID:</strong> {analysis_id}</p>
+                    <p><strong>Generated:</strong> {timestamp}</p>
+                    <p><strong>Type:</strong> {report_type}</p>
+                </div>
+                
+                <div class="score">Overall Score: {overall_score}/100</div>
+        """
+        
+        # Add scenario results
+        scenario_results = report.get("scenario_results", [])
+        if scenario_results:
+            html += '<div class="section"><h2>📋 Scenario Results</h2>'
+            
+            for scenario in scenario_results:
+                status_class = scenario.get('status', 'unknown')
+                html += f'''
+                <div class="scenario {status_class}">
+                    <h3>{scenario.get("name", "Unknown Scenario")} - Score: {scenario.get("score", 0)}/100</h3>
+                    <p><strong>Duration:</strong> {scenario.get("duration_ms", 0)}ms</p>
+                    <p><strong>Status:</strong> {scenario.get("status", "unknown").title()}</p>
+                    
+                    <h4>Steps:</h4>
+                '''
+                
+                steps = scenario.get("steps", [])
+                for step in steps:
+                    step_status = step.get("status", "unknown")
+                    html += f'<div class="step {step_status}">'
+                    html += f'<strong>{step.get("action", "unknown")}:</strong> '
+                    html += f'{step.get("duration_ms", 0)}ms - {step_status}'
+                    if 'selector' in step:
+                        html += f' | Selector: {step["selector"]}'
+                    html += '</div>'
+                
+                html += '</div>'
+            
+            html += '</div>'
+        
+        # Add module results
+        module_results = report.get("module_results", {})
+        if module_results:
+            html += '<div class="section"><h2>📊 Module Analysis</h2><table>'
+            html += '<tr><th>Module</th><th>Score</th><th>Threshold Met</th><th>Analytics Enabled</th></tr>'
+            
+            for module, results in module_results.items():
+                threshold_met = "✅" if results.get("threshold_met", False) else "❌"
+                analytics_enabled = "✅" if results.get("analytics_enabled", False) else "❌"
+                
+                html += f'''
+                <tr>
+                    <td>{module.title()}</td>
+                    <td>{results.get("score", 0)}/100</td>
+                    <td>{threshold_met}</td>
+                    <td>{analytics_enabled}</td>
+                </tr>
+                '''
+            
+            html += '</table></div>'
+        
+        # Add metadata
+        metadata = report.get("metadata", {})
+        if metadata:
+            html += '<div class="metadata"><h3>📊 Analysis Metadata</h3>'
+            for key, value in metadata.items():
+                if key != "analytics_features":  # Skip complex data
+                    html += f'<p><strong>{key.replace("_", " ").title()}:</strong> {value}</p>'
+            html += '</div>'
+        
+        html += '''
+            </div>
+        </body>
+        </html>
+        '''
+        
+        return html
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="UX Analyzer CLI - YAML scenario-based UX analysis",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # URL analysis with scenario
+  %(prog)s url-scenario https://example.com scenarios/office_tests.yaml --json_out --output_dir=reports/
+
+  # Mock app analysis with scenario  
+  %(prog)s mock-scenario /path/to/mock-app scenarios/office_tests.yaml --output_dir=reports/
+
+  # List available scenarios
+  %(prog)s list-scenarios
+
+  # Validate a scenario file
+  %(prog)s validate scenarios/office_tests.yaml
+        """
+    )
+    
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    
+    # URL scenario command
+    url_parser = subparsers.add_parser('url-scenario', help='Analyze URL with YAML scenario')
+    url_parser.add_argument('url', help='URL to analyze')
+    url_parser.add_argument('scenario', help='Path to YAML scenario file')
+    url_parser.add_argument('--json_out', action='store_true', help='Output in JSON format')
+    url_parser.add_argument('--output_dir', default='reports', help='Output directory for reports')
+    url_parser.add_argument('--test-mode', action='store_true', help='Run in deterministic test mode')
+    
+    # Mock scenario command
+    mock_parser = subparsers.add_parser('mock-scenario', help='Analyze mock app with YAML scenario')
+    mock_parser.add_argument('app_path', help='Path to mock application')
+    mock_parser.add_argument('scenario', help='Path to YAML scenario file')
+    mock_parser.add_argument('--json_out', action='store_true', help='Output in JSON format')
+    mock_parser.add_argument('--output_dir', default='reports', help='Output directory for reports')
+    mock_parser.add_argument('--test-mode', action='store_true', help='Run in deterministic test mode')
+    
+    # List scenarios command
+    subparsers.add_parser('list-scenarios', help='List available YAML scenarios')
+    
+    # Validate scenario command
+    validate_parser = subparsers.add_parser('validate', help='Validate YAML scenario file')
+    validate_parser.add_argument('scenario', help='Path to YAML scenario file to validate')
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return 1
+    
+    cli = UXAnalyzerCLI(deterministic_mode=getattr(args, 'test_mode', False))
+    
+    if args.command == 'url-scenario':
+        success = cli.url_scenario(args.url, args.scenario, args.output_dir, args.json_out)
+        return 0 if success else 1
+        
+    elif args.command == 'mock-scenario':
+        success = cli.mock_scenario(args.app_path, args.scenario, args.output_dir, args.json_out)
+        return 0 if success else 1
+        
+    elif args.command == 'list-scenarios':
+        cli.list_scenarios()
+        return 0
+        
+    elif args.command == 'validate':
+        success = cli.validate_scenario(args.scenario)
+        return 0 if success else 1
+    
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
