@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Click Me</title>
+  <style>
+    /* Button styling - currently red */
+    .blue-button {
+      background-color: #28A745;
+      color: #FFF;
+      border: none;
+      padding: 15px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 25px;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      padding-top: 40px;
+    }
+    input, button {
+      font-size: 20px;
+    }
+    #agent-output {
+      width: 80%;
+      max-width: 600px;
+      height: 150px;
+      margin-top: 20px;
+      padding: 15px 30px;
+      background: #f4f4f4;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <!-- Your original button -->
+  <button class="blue-button" id="action-btn">Click Me</button>
+
+  <!-- Command input -->
+  <div style="margin-top: 30px; display: flex; gap: 8px;">
+    <input
+      type="text"
+      id="agent-input"
+      placeholder="Try: 'make button red', 'create task Fix login', 'fetch bug 123', 'list tasks'"
+      style="padding: 15px 30px; width: 450px;"
+    />
+    <button id="send-cmd" class="blue-button">Click Me</button>
+  </div>
+
+  <!-- Output area -->
+  <pre id="agent-output"></pre>
+
+  <script>
+    document.getElementById('send-cmd').addEventListener('click', async () => {
+      const cmd = document.getElementById('agent-input').value;
+      if (!cmd) return alert('Please enter a command');
+      document.getElementById('agent-output').textContent = '…working…';
+
+      try {
+        const res = await fetch('/agent', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({command: cmd})
+        });
+        const json = await res.json();
+        document.getElementById('agent-output').textContent =
+          json.result || json.error || 'No response';
+        
+        // Auto-reload for all successful commands to show changes
+        if (json.result && json.result.includes('✅')) {
+          setTimeout(() => location.reload(), 800);
+        }
+      } catch (e) {
+        document.getElementById('agent-output').textContent = 'Error: ' + e;
+      }
+    });
+  </script>
+</body>
+</html>

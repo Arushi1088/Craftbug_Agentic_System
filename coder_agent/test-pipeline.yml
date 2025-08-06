@@ -1,0 +1,29 @@
+# Minimal test pipeline to debug agent issues
+
+parameters:
+- name: TestMessage
+  displayName: 'Test Message'
+  type: string
+  default: 'Hello World'
+
+pool:
+  name: SelfHosted
+
+jobs:
+- job: SimpleTest
+  displayName: 'Simple Test Job'
+  steps:
+  - script: |
+      echo "Hello from Azure DevOps!"
+      echo "Test message: ${{ parameters.TestMessage }}"
+      echo "Current time: $(date)"
+      echo "Working directory: $(pwd)"
+      echo "User: $(whoami)"
+    displayName: 'Simple Echo Test'
+
+  - script: |
+      echo "Testing basic commands..."
+      which python3
+      python3 --version
+      echo "Success!"
+    displayName: 'Python Test'

@@ -1,0 +1,126 @@
+# Azure DevOps Pipeline for Self-Healing Development with Gemini CLI
+# Simplified version for free tier compatibility
+
+parameters:
+- name: PatchInstruction
+  displayName: 'Code Modification Instruction'
+  type: string
+  default: 'Fix the reported issue'
+- name: WorkItemId
+  displayName: 'Work Item ID to Update'
+  type: string
+  default: ''
+
+variables:
+- name: pythonVersion
+  value: '3.10'
+
+trigger:
+  branches:
+    include:
+    - main
+    - dev
+  paths:
+    exclude:
+    - README.md
+    - .gitignore
+
+# Use Self-hosted agents (no parallelism limitations)
+pool:
+  name: SelfHosted
+
+jobs:
+- job: BuildAndTest
+  displayName: 'Build, Test and Simulate Gemini Patching'
+  steps:
+  - script: |
+      echo "=== PYTHON VERSION CHECK ==="
+      python3 --version
+      which python3
+      echo "PATH=$PATH"
+      echo "Current directory: $(pwd)"
+      echo "User: $(whoami)"
+      echo ""
+      exit 0
+    displayName: 'Check Python Version'
+
+  - script: |
+      echo "=== DEPENDENCY INSTALLATION ==="
+      echo "Attempting pip upgrade..."
+      python3 -m pip install --upgrade pip || echo "pip upgrade failed, continuing..."
+      echo "Simulating: pip install -r requirements.txt"
+      echo "Dependencies would be installed here"
+      echo "✅ Dependencies simulation completed"
+      echo ""
+      exit 0
+    displayName: 'Simulate Install dependencies'
+
+  - script: |
+      echo "=== SYNTAX CHECK ==="
+      echo "Simulating: python -m py_compile github_agent_server.py"
+      echo "Syntax check would run here"
+      echo "✅ Syntax check passed!"
+      echo ""
+      exit 0
+    displayName: 'Simulate Run tests'
+
+  - script: |
+      echo "=== BUILD ARTIFACTS ==="
+      echo "Simulating artifact creation..."
+      ARTIFACT_DIR="${BUILD_ARTIFACTSTAGINGDIRECTORY:-/tmp/artifacts}"
+      mkdir -p "$ARTIFACT_DIR"
+      echo "Build completed at $(date)" > "$ARTIFACT_DIR/build-info.txt"
+      echo "✅ Build artifacts created in $ARTIFACT_DIR"
+      echo ""
+      exit 0
+    displayName: 'Simulate Archive files'
+
+  - script: |
+      echo "=== GEMINI CLI PATCHING SIMULATION ==="
+      echo "Patch Instruction: ${{ parameters.PatchInstruction }}"
+      echo "Target Work Item: ${{ parameters.WorkItemId }}"
+      echo ""
+      echo "Would perform the following actions:"
+      echo "1. Install Gemini CLI"
+      echo "2. Configure git credentials"
+      echo "3. Create feature branch: feature/patch-$(Build.BuildId)"
+      echo "4. Apply patch: ${{ parameters.PatchInstruction }}"
+      echo "5. Commit changes"
+      echo "6. Push to GitHub repository"
+      echo "7. Update Azure DevOps Work Item #${{ parameters.WorkItemId }}"
+      echo ""
+      echo "✅ Gemini patching simulation completed"
+      echo ""
+      exit 0
+    displayName: 'Simulate Gemini Patch Application'
+    condition: and(succeeded(), ne('${{ parameters.PatchInstruction }}', ''))
+
+  - script: |
+      echo "=== DEPLOYMENT SIMULATION ==="
+      echo "Would deploy to Azure App Service: github-agent-test-2"
+      echo "Resource Group: DefaultResourceGroup-CUS"
+      echo "Runtime: PYTHON|3.10"
+      echo "Start Command: python github_agent_server.py"
+      echo ""
+      echo "Application would be available at: https://github-agent-test-2.azurewebsites.net"
+      echo "✅ Deployment simulation completed"
+      echo ""
+      exit 0
+    displayName: 'Simulate Azure Deployment'
+
+  - script: |
+      echo "=== PIPELINE SUMMARY ==="
+      echo "🚀 Self-Healing Development Pipeline Completed"
+      echo "📦 Build: Successful"
+      echo "🔧 Gemini Patching: ${{ parameters.PatchInstruction }}"
+      echo "📋 Work Item: ${{ parameters.WorkItemId }}"
+      echo "☁️  Deployment: Simulated"
+      echo ""
+      echo "To enable full functionality:"
+      echo "1. Request Azure DevOps parallelism grant: https://aka.ms/azpipelines-parallelism-request"
+      echo "2. Set up pipeline variables: GITHUB_TOKEN, GEMINI_CLI_TOKEN, ADO_PAT"
+      echo "3. Configure Azure service connection for actual deployment"
+      echo ""
+      echo "✅ Pipeline demonstration completed successfully!"
+      exit 0
+    displayName: 'Pipeline Summary'

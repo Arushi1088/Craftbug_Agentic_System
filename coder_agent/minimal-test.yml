@@ -1,0 +1,8 @@
+pool:
+  name: SelfHosted
+
+jobs:
+- job: SimpleTest
+  steps:
+  - script: echo "Hello World"
+    displayName: 'Hello World Test'

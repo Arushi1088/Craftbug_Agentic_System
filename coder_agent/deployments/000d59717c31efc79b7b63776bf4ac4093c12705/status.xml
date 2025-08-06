@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>000d59717c31efc79b7b63776bf4ac4093c12705</id>
+  <author>Arushi Tandon</author>
+  <deployer>GitHub</deployer>
+  <authorEmail>arushitandon@ArushitekiMacBook-Pro.local</authorEmail>
+  <message>Fix numpy version for Python 3.10 compatibility</message>
+  <progress></progress>
+  <status>Success</status>
+  <statusText></statusText>
+  <lastSuccessEndTime>2025-07-31T18:57:37.9696601Z</lastSuccessEndTime>
+  <receivedTime>2025-07-31T18:56:39.2465491Z</receivedTime>
+  <startTime>2025-07-31T18:56:40.6535785Z</startTime>
+  <endTime>2025-07-31T18:57:37.9696601Z</endTime>
+  <complete>True</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>False</is_readonly>
+  <buildSummary />
+</deployment>

@@ -1,0 +1,4 @@
+<step title="Incoming Request" date="2025-07-31T18:55:11.997" instance="60e996" url="/dump" method="GET" type="request" pid="768,1,18" Host="github-agent-test-2.scm.azurewebsites.net" User-Agent="AZURECLI/2.75.0 (HOMEBREW)" Accept-Encoding="identity" Authorization="Bas..." x-ms-client-request-id="dd7bd5c2-6e3f-11f0-81fc-acde48001122" X-ARR-LOG-ID="dd7bd5c2-6e3f-11f0-81fc-acde48001122" CLIENT-IP="103.195.201.66:18333" X-SITE-DEPLOYMENT-ID="github-agent-test-2" WAS-DEFAULT-HOSTNAME="github-agent-test-2.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/dump" X-Client-IP="103.195.201.66" X-Client-Port="18333" >
+  <step title="Cleanup Xml Logs" date="2025-07-31T18:55:12.002" /><!-- duration: 8ms -->
+  <step title="Outgoing response" date="2025-07-31T18:55:12.303" type="response" statusCode="200" statusText="OK" /><!-- duration: 5ms -->
+</step><!-- duration: 314ms -->

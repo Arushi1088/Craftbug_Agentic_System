@@ -1,0 +1,9 @@
+<step title="Incoming Request" date="2025-07-31T17:21:32.240" instance="60e996" url="/api/deployments/latest?deployer=GitHub&amp;time=2025-07-31_17-21-21Z" method="GET" type="request" pid="767,1,5" Host="github-agent-rg-dgfgbfhkc9axh5dx.scm.canadacentral-01.azurewebsites.net" User-Agent="Azure-WebSites-Controller/104.0.7.211" Authorization="Bas..." x-ms-request-id="e9e719b0-4a41-4396-bc4e-905b7528b7eb" X-ARR-LOG-ID="e9e719b0-4a41-4396-bc4e-905b7528b7eb" CLIENT-IP="20.48.202.168:6720" X-SITE-DEPLOYMENT-ID="github-agent-rg" WAS-DEFAULT-HOSTNAME="github-agent-rg-dgfgbfhkc9axh5dx.scm.canadacentral-01.azurewebsites.net" X-MS-PLATFORM-INTERNAL="True" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest?deployer=GitHub&amp;time=2025-07-31_17-21-21Z" X-Client-IP="20.48.202.168" X-Client-Port="6720" >
+  <step title="Cleanup Xml Logs" date="2025-07-31T17:21:32.259" /><!-- duration: 9ms -->
+  <step title="DeploymentService.GetResult" date="2025-07-31T17:21:32.275" >
+    <step title="DeploymentService.GetLatestDeployment" date="2025-07-31T17:21:32.280" >
+      <step title="DeploymentManager.GetResults" date="2025-07-31T17:21:32.285" /><!-- duration: 94ms -->
+    </step><!-- duration: 104ms -->
+  </step><!-- duration: 190ms -->
+  <step title="Outgoing response" date="2025-07-31T17:21:32.472" type="response" statusCode="404" statusText="NotFound" /><!-- duration: 4ms -->
+</step><!-- duration: 246ms -->
