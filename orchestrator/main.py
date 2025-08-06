@@ -18,6 +18,9 @@ from pathlib import Path
 # Import ADO client
 from ado_client import AzureDevOpsClient, create_ado_ticket
 
+# Import Gemini handler
+from gemini_handler import GeminiHandler, fix_bug_with_gemini
+
 # Add paths for both agent systems
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'coder_agent'))
@@ -58,6 +61,7 @@ class OrchestratorAgent:
         self.ux_analyzer = None
         self.coder_agent = None
         self.ado_client = None
+        self.gemini_handler = None
         
     def fetch_ux_issues(self, url: str) -> Dict[str, Any]:
         """Fetch UX issues from FastAPI analyzer"""
@@ -193,6 +197,9 @@ class OrchestratorAgent:
             # Initialize Azure DevOps client
             await self._init_ado_client()
             
+            # Initialize Gemini handler
+            await self._init_gemini_handler()
+            
             self.logger.info("All agents initialized successfully")
             
         except Exception as e:
@@ -263,6 +270,21 @@ class OrchestratorAgent:
         except Exception as e:
             self.logger.warning(f"Azure DevOps client initialization failed: {e}")
             self.ado_client = None
+    
+    async def _init_gemini_handler(self):
+        """Initialize Gemini CLI handler"""
+        try:
+            self.gemini_handler = GeminiHandler()
+            
+            # Test Gemini CLI availability
+            if self.gemini_handler.test_gemini_cli():
+                self.logger.info("Gemini CLI handler initialized successfully")
+            else:
+                self.logger.warning("Gemini CLI not available. Install Gemini CLI or update GEMINI_CLI_PATH in .env")
+                
+        except Exception as e:
+            self.logger.warning(f"Gemini handler initialization failed: {e}")
+            self.gemini_handler = None
     
     async def analyze_website(self, url: str, custom_modules: Optional[Dict[str, bool]] = None) -> AnalysisResult:
         """Trigger UX analysis of a website using real FastAPI server"""
@@ -440,6 +462,71 @@ class OrchestratorAgent:
         self.logger.info(f"Successfully created {len(created_tickets)} ADO tickets: {created_tickets}")
         return created_tickets
     
+    async def apply_gemini_fixes(self, issues: List[Dict[str, Any]], analysis_id: str) -> Dict[str, Any]:
+        """Apply Gemini CLI fixes to UX issues"""
+        if not self.gemini_handler:
+            self.logger.warning("Gemini handler not available, skipping automatic fixes")
+            return {
+                "attempted": 0,
+                "successful": 0,
+                "failed": 0,
+                "results": []
+            }
+        
+        self.logger.info(f"Applying Gemini fixes for {len(issues)} issues from analysis {analysis_id}")
+        
+        results = {
+            "attempted": 0,
+            "successful": 0,
+            "failed": 0,
+            "results": []
+        }
+        
+        severity_threshold = self.config["orchestrator"]["severity_threshold"]
+        
+        for issue in issues:
+            if self._should_create_task(issue, severity_threshold):
+                results["attempted"] += 1
+                
+                try:
+                    # Add analysis context to issue
+                    issue_with_context = issue.copy()
+                    issue_with_context["analysis_id"] = analysis_id
+                    
+                    # Apply Gemini fix
+                    fix_successful = self.gemini_handler.fix_bug_with_gemini(issue_with_context)
+                    
+                    if fix_successful:
+                        results["successful"] += 1
+                        self.logger.info(f"✅ Successfully applied Gemini fix for {issue['type']} issue")
+                    else:
+                        results["failed"] += 1
+                        self.logger.error(f"❌ Failed to apply Gemini fix for {issue['type']} issue")
+                    
+                    results["results"].append({
+                        "issue_type": issue['type'],
+                        "issue_message": issue.get('message', ''),
+                        "severity": issue.get('severity', 'medium'),
+                        "fix_successful": fix_successful,
+                        "file": issue.get('file', 'unknown')
+                    })
+                        
+                except Exception as e:
+                    results["failed"] += 1
+                    self.logger.error(f"Error applying Gemini fix for issue: {e}")
+                    
+                    results["results"].append({
+                        "issue_type": issue.get('type', 'unknown'),
+                        "issue_message": issue.get('message', ''),
+                        "severity": issue.get('severity', 'medium'),
+                        "fix_successful": False,
+                        "error": str(e),
+                        "file": issue.get('file', 'unknown')
+                    })
+        
+        self.logger.info(f"Gemini fixes completed: {results['successful']} successful, {results['failed']} failed")
+        return results
+    
     def _should_create_task(self, issue: Dict[str, Any], threshold: str) -> bool:
         """Determine if an issue should trigger a coder task"""
         severity_levels = {"low": 1, "medium": 2, "high": 3}
@@ -546,7 +633,7 @@ class OrchestratorAgent:
             }
     
     async def orchestrate_full_cycle(self, url: str) -> Dict[str, Any]:
-        """Run complete orchestration cycle: analyze -> create tasks -> create ADO tickets -> execute fixes"""
+        """Run complete orchestration cycle: analyze -> create tasks -> create ADO tickets -> apply Gemini fixes -> execute fixes"""
         self.logger.info(f"Starting full orchestration cycle for: {url}")
         
         try:
@@ -559,12 +646,15 @@ class OrchestratorAgent:
             # Step 3: Create Azure DevOps tickets
             ado_tickets = await self.create_ado_tickets_from_issues(analysis_result.issues, analysis_result.analysis_id)
             
-            # Step 4: Execute fixes (if auto-fix is enabled)
+            # Step 4: Apply Gemini CLI fixes
+            gemini_results = await self.apply_gemini_fixes(analysis_result.issues, analysis_result.analysis_id)
+            
+            # Step 5: Execute additional fixes (if auto-fix is enabled)
             fix_results = None
             if self.config["orchestrator"]["auto_trigger_fixes"] and coder_tasks:
                 fix_results = await self.execute_coder_tasks(coder_tasks)
             
-            # Step 5: Generate report
+            # Step 6: Generate report
             report = {
                 "orchestration_id": f"orch_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                 "url": url,
@@ -590,6 +680,7 @@ class OrchestratorAgent:
                     "created": len(ado_tickets),
                     "ticket_ids": ado_tickets
                 },
+                "gemini_fixes": gemini_results,
                 "fixes": fix_results,
                 "recommendations": analysis_result.recommendations
             }
@@ -619,6 +710,12 @@ class OrchestratorAgent:
                     "org": self.ado_client.org if self.ado_client else None,
                     "project": self.ado_client.project if self.ado_client else None,
                     "configured": self.ado_client.is_configured() if self.ado_client else False
+                },
+                "gemini_handler": {
+                    "available": self.gemini_handler is not None,
+                    "cli_available": self.gemini_handler.test_gemini_cli() if self.gemini_handler else False,
+                    "frontend_path": self.gemini_handler.frontend_path if self.gemini_handler else None,
+                    "frontend_path_exists": self.gemini_handler.get_status()["frontend_path_exists"] if self.gemini_handler else False
                 }
             },
             "active_tasks": len(self.active_tasks),
