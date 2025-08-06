@@ -19,7 +19,7 @@ structlog==24.1.0
 colorlog==6.8.2
 
 # Task scheduling and orchestration
-celery==5.3.7
+celery==5.3.6
 redis==5.0.7
 schedule==1.2.2
 
@@ -37,7 +37,7 @@ openai==1.35.15
 
 # Database (for storing orchestration history)
 sqlalchemy==2.0.31
-sqlite3  # Built into Python
+# sqlite3 is built into Python - no need to install
 
 # Notification integrations
 slack-sdk==3.29.0

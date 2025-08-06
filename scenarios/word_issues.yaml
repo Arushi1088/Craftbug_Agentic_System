@@ -1,0 +1,65 @@
+name: "Word App UX Analysis"
+description: "Comprehensive UX analysis for the embedded Word application"
+base_url: "http://localhost:3001"
+
+tests:
+  - name: "Word App Accessibility Test"
+    description: "Test accessibility features in the Word app"
+    url: "/word"
+    checks:
+      - type: "accessibility"
+        severity: "high"
+        rules:
+          - "missing_alt_text"
+          - "missing_aria_labels"
+          - "insufficient_color_contrast"
+          - "keyboard_navigation"
+          - "focus_management"
+      
+      - type: "ux_heuristics"
+        severity: "medium"
+        rules:
+          - "visibility_of_system_status"
+          - "user_control_and_freedom"
+          - "consistency_and_standards"
+          - "error_prevention"
+      
+      - type: "performance"
+        severity: "medium"
+        thresholds:
+          page_load_time: 3000
+          first_contentful_paint: 1500
+          largest_contentful_paint: 2500
+
+  - name: "Word App Interaction Test"
+    description: "Test user interactions and functionality"
+    url: "/word"
+    actions:
+      - type: "click"
+        selector: "[data-testid='word-toolbar-bold']"
+        description: "Test bold button functionality"
+      
+      - type: "type"
+        selector: "[data-testid='word-document-content']"
+        text: "Testing document editing"
+        description: "Test text input"
+      
+      - type: "keyboard"
+        keys: ["Tab", "Tab", "Enter"]
+        description: "Test keyboard navigation"
+
+expected_issues:
+  - type: "accessibility"
+    message: "Missing alt text for toolbar icons"
+    severity: "medium"
+    file: "WordApp.tsx"
+  
+  - type: "keyboard"
+    message: "Focus trap not properly implemented"
+    severity: "medium"
+    file: "WordApp.tsx"
+  
+  - type: "ux_heuristics"
+    message: "Save status not clearly visible to users"
+    severity: "low"
+    file: "WordApp.tsx"

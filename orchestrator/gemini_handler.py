@@ -44,6 +44,9 @@ class GeminiHandler:
             bool: True if fix was successful, False otherwise
         """
         try:
+            # Get current Git branch
+            current_branch = self._get_current_branch()
+            
             # Determine file path
             file_path = self._get_file_path(issue)
             if not file_path:
@@ -60,9 +63,10 @@ class GeminiHandler:
             result = subprocess.run(
                 [
                     self.gemini_cli_path,
-                    "fix",
-                    "--file", file_path,
-                    "--prompt", prompt
+                    "patch",
+                    "--instruction", prompt,
+                    "--repo-path", self.frontend_path,
+                    "--branch", current_branch
                 ],
                 check=True,
                 capture_output=True,
@@ -228,6 +232,32 @@ class GeminiHandler:
         except Exception as e:
             self.logger.error(f"Validation failed: {e}")
             return False
+    
+    def _get_current_branch(self) -> str:
+        """
+        Get the current Git branch name
+        
+        Returns:
+            str: Current branch name, defaults to 'main' if unable to determine
+        """
+        try:
+            result = subprocess.run(
+                ["git", "branch", "--show-current"],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=self.frontend_path
+            )
+            branch = result.stdout.strip()
+            if branch:
+                self.logger.info(f"Using Git branch: {branch}")
+                return branch
+            else:
+                self.logger.warning("Could not determine current branch, defaulting to 'main'")
+                return "main"
+        except Exception as e:
+            self.logger.warning(f"Failed to get current branch: {e}, defaulting to 'main'")
+            return "main"
     
     def test_gemini_cli(self) -> bool:
         """

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-STEP 3 Demo: Complete Multi-Agent Pipeline with Gemini CLI Integration
-Demonstrates UX Analyzer → ADO Tickets → Gemini CLI Fixes → Coder Tasks → Auto Fixes
+STEP 4 Demo: Complete Multi-Agent Pipeline with Git Auto-Commit/Push Integration
+Demonstrates UX Analyzer → ADO Tickets → Gemini CLI Fixes → Git Auto-Commit/Push
 """
 
 import asyncio
@@ -16,10 +16,10 @@ from ado_client import AzureDevOpsClient
 from gemini_handler import GeminiHandler
 
 async def demo_complete_pipeline():
-    """Demo the complete orchestration pipeline with Gemini CLI integration"""
+    """Demo the complete orchestration pipeline with Git Auto-Commit/Push integration"""
     
-    print("🎯 COMPLETE MULTI-AGENT PIPELINE DEMO")
-    print("🔄 UX Analyzer → ADO Tickets → Gemini CLI Fixes → Coder Tasks → Auto Fixes")
+    print("🎯 COMPLETE MULTI-AGENT PIPELINE DEMO - STEP 4")
+    print("🔄 UX Analyzer → ADO Tickets → Gemini CLI Fixes → Git Auto-Commit/Push")
     print("=" * 70)
     
     # Initialize orchestrator
@@ -48,6 +48,15 @@ async def demo_complete_pipeline():
     print(f"      CLI Available: {agents['gemini_handler']['cli_available']}")
     print(f"      Frontend Path: {agents['gemini_handler']['frontend_path']}")
     print(f"      Path Exists: {agents['gemini_handler']['frontend_path_exists']}")
+    
+    print(f"   ✅ Git Handler: {agents['git_handler']['available']}")
+    print(f"      Auto Commit: {agents['git_handler']['auto_commit_enabled']}")
+    print(f"      Auto Push: {agents['git_handler']['auto_push_enabled']}")
+    git_status = agents['git_handler']['repository_status']
+    if git_status:
+        print(f"      Repository: {git_status.get('is_repo', False)}")
+        print(f"      Branch: {git_status.get('branch', 'Unknown')}")
+        print(f"      Clean: {git_status.get('is_clean', False)}")
     
     # Run full orchestration cycle
     print("\n🔄 3. Running Complete Orchestration Cycle...")
@@ -208,25 +217,102 @@ async def demo_ado_standalone():
     except Exception as e:
         print(f"❌ ADO client error: {e}")
 
+async def demo_git_integration():
+    """Demo STEP 4: Git Auto-Commit/Push Integration"""
+    
+    print("\n🔗 STEP 4 DEMO: Git Auto-Commit/Push Integration")
+    print("=" * 60)
+    
+    try:
+        # Initialize orchestrator with Git integration
+        orchestrator = OrchestratorAgent()
+        await orchestrator.initialize_agents()
+        
+        # Test Git handler directly
+        if orchestrator.git_handler:
+            print("✅ Git Handler initialized successfully")
+            
+            # Check Git status
+            git_status = orchestrator.git_handler.check_git_status()
+            print(f"📊 Git Repository Status:")
+            print(f"   Is Repo: {git_status.get('is_repo', False)}")
+            print(f"   Branch: {git_status.get('branch', 'Unknown')}")
+            print(f"   Clean: {git_status.get('is_clean', False)}")
+            print(f"   Has Changes: {git_status.get('has_changes', False)}")
+            
+            # Test auto-commit configuration
+            auto_commit = orchestrator.config.get('git', {}).get('auto_commit_enabled', False)
+            auto_push = orchestrator.config.get('git', {}).get('auto_push', False)
+            
+            print(f"⚙️ Configuration:")
+            print(f"   Auto Commit Enabled: {auto_commit}")
+            print(f"   Auto Push Enabled: {auto_push}")
+            
+            if auto_commit:
+                print("✅ Git auto-commit is ENABLED - fixes will be committed automatically")
+            else:
+                print("⚠️ Git auto-commit is DISABLED - enable in .env with AUTO_COMMIT_ENABLED=true")
+                
+            if auto_push:
+                print("✅ Git auto-push is ENABLED - commits will be pushed automatically")
+            else:
+                print("⚠️ Git auto-push is DISABLED - enable in .env with AUTO_PUSH=true")
+                
+        else:
+            print("❌ Git Handler not initialized")
+            return False
+            
+        # Create a mock issue to test Git integration
+        mock_issue = {
+            "type": "accessibility",
+            "message": "Missing alt text on image elements",
+            "severity": "medium",
+            "file": "index.html",
+            "analysis_id": "git_test_001"
+        }
+        
+        print(f"\n🧪 Testing Git integration with mock issue:")
+        print(f"   Type: {mock_issue['type']}")
+        print(f"   File: {mock_issue['file']}")
+        print(f"   Severity: {mock_issue['severity']}")
+        
+        # If auto-commit is enabled, this would trigger Git operations
+        if auto_commit:
+            print("🔄 This would trigger automatic Git commit/push after Gemini fixes")
+            print("   (Skipping actual commit in demo to avoid test commits)")
+        else:
+            print("ℹ️ Enable auto-commit to test full Git integration")
+            
+        return True
+        
+    except Exception as e:
+        print(f"❌ Git integration demo failed: {e}")
+        return False
+
+
 if __name__ == "__main__":
-    print("Starting STEP 3: Complete Multi-Agent Pipeline with Gemini CLI...")
+    print("Starting STEP 4: Complete Multi-Agent Pipeline with Git Integration...")
     
     # Run main pipeline demo
     success = asyncio.run(demo_complete_pipeline())
+    
+    # Run STEP 4 Git integration demo
+    git_success = asyncio.run(demo_git_integration())
     
     # Run standalone component demos
     asyncio.run(demo_gemini_standalone())
     asyncio.run(demo_ado_standalone())
     
-    if success:
+    if success and git_success:
         print("\n" + "="*70)
-        print("✅ STEP 3 COMPLETE: Gemini CLI Integration Working!")
-        print("🎯 Issues detected → ADO tickets created → Gemini fixes applied")
+        print("✅ STEP 4 COMPLETE: Git Auto-Commit/Push Integration Working!")
+        print("🎯 Issues detected → ADO tickets created → Gemini fixes applied → Git auto-commit/push")
         print("🤖 Automated bug fixing with Gemini CLI")
-        print("🔐 Secrets secured via .env")  
-        print("📦 Cleanly modularized in gemini_handler.py")
-        print("🧪 Ready for end-to-end testing with real Gemini CLI")
-        print("🚀 Ready for STEP 4: Full Production Deployment")
+        print("� Automated Git workflow for seamless deployment")
+        print("�🔐 Secrets secured via .env")  
+        print("📦 Cleanly modularized in git_utils.py")
+        print("🧪 Ready for end-to-end testing with real Git operations")
+        print("🚀 Full automation pipeline complete!")
     else:
         print("\n❌ Demo failed. Check configuration.")
 

@@ -63,7 +63,7 @@ class AzureDevOpsClient:
             return None
         
         try:
-            url = f"https://dev.azure.com/{self.org}/{self.project}/_apis/wit/workitems/$Bug?api-version=6.0"
+            url = f"https://dev.azure.com/{self.org}/{self.project}/_apis/wit/workitems/$Task?api-version=6.0"
             
             headers = {
                 'Content-Type': 'application/json-patch+json',
@@ -168,6 +168,45 @@ class AzureDevOpsClient:
         except Exception as e:
             logger.error(f"Error getting work item {work_item_id}: {e}")
             return None
+    
+    def close_work_item(self, work_item_id: int) -> bool:
+        """Close/mark a work item as Done"""
+        if not self.is_configured():
+            return False
+        
+        try:
+            url = f"https://dev.azure.com/{self.org}/{self.project}/_apis/wit/workitems/{work_item_id}?api-version=6.0"
+            
+            headers = {
+                'Content-Type': 'application/json-patch+json',
+            }
+            
+            payload = [
+                {
+                    "op": "add",
+                    "path": "/fields/System.State",
+                    "value": "Done"
+                }
+            ]
+            
+            response = requests.patch(
+                url,
+                json=payload,
+                headers=headers,
+                auth=('', self.token),
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                logger.info(f"✅ Work item {work_item_id} marked as Done")
+                return True
+            else:
+                logger.error(f"Failed to close work item {work_item_id}: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error closing work item {work_item_id}: {e}")
+            return False
     
     def test_connection(self) -> bool:
         """Test the Azure DevOps connection"""

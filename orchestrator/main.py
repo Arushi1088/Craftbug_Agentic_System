@@ -19,7 +19,13 @@ from pathlib import Path
 from ado_client import AzureDevOpsClient, create_ado_ticket
 
 # Import Gemini handler
-from gemini_handler import GeminiHandler, fix_bug_with_gemini
+from gemini_handler import GeminiHandler
+
+# Import Git utilities
+from git_utils import GitHandler, commit_and_push_fix
+
+# Setup module-level logger
+logger = logging.getLogger('orchestrator')
 
 # Add paths for both agent systems
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -62,6 +68,7 @@ class OrchestratorAgent:
         self.coder_agent = None
         self.ado_client = None
         self.gemini_handler = None
+        self.git_handler = None
         
     def fetch_ux_issues(self, url: str) -> Dict[str, Any]:
         """Fetch UX issues from FastAPI analyzer"""
@@ -119,7 +126,7 @@ class OrchestratorAgent:
         """Load orchestrator configuration"""
         default_config = {
             "ux_analyzer": {
-                "api_endpoint": "http://localhost:8000",
+                "api_endpoint": os.getenv("UX_ANALYZER_API_ENDPOINT", "http://localhost:8000"),
                 "modules": {
                     "performance": True,
                     "accessibility": True,
@@ -142,6 +149,11 @@ class OrchestratorAgent:
                 "auto_trigger_fixes": False,
                 "analysis_interval_minutes": 60,
                 "report_format": "json"
+            },
+            "git": {
+                "auto_push": os.getenv("AUTO_PUSH", "false").lower() == "true",
+                "auto_commit_enabled": os.getenv("AUTO_COMMIT_ENABLED", "false").lower() == "true",
+                "default_branch": "orchestrator"
             }
         }
         
@@ -199,6 +211,9 @@ class OrchestratorAgent:
             
             # Initialize Gemini handler
             await self._init_gemini_handler()
+            
+            # Initialize Git handler
+            await self._init_git_handler()
             
             self.logger.info("All agents initialized successfully")
             
@@ -285,6 +300,30 @@ class OrchestratorAgent:
         except Exception as e:
             self.logger.warning(f"Gemini handler initialization failed: {e}")
             self.gemini_handler = None
+    
+    async def _init_git_handler(self):
+        """Initialize Git handler for automated commits"""
+        try:
+            self.git_handler = GitHandler()
+            
+            # Check if this is a Git repository
+            git_status = self.git_handler.check_git_status()
+            
+            if git_status.get("is_git_repo"):
+                self.logger.info(f"Git handler initialized successfully")
+                self.logger.info(f"Current branch: {git_status.get('current_branch', 'unknown')}")
+                
+                if self.config["git"]["auto_push"]:
+                    self.logger.info("Auto-push is enabled")
+                if self.config["git"]["auto_commit_enabled"]:
+                    self.logger.info("Auto-commit is enabled")
+                    
+            else:
+                self.logger.warning("Not a Git repository. Git auto-commit/push disabled.")
+                
+        except Exception as e:
+            self.logger.warning(f"Git handler initialization failed: {e}")
+            self.git_handler = None
     
     async def analyze_website(self, url: str, custom_modules: Optional[Dict[str, bool]] = None) -> AnalysisResult:
         """Trigger UX analysis of a website using real FastAPI server"""
@@ -499,6 +538,27 @@ class OrchestratorAgent:
                     if fix_successful:
                         results["successful"] += 1
                         self.logger.info(f"✅ Successfully applied Gemini fix for {issue['type']} issue")
+                        
+                        # Auto-commit and push if enabled
+                        if (self.config.get('git', {}).get('auto_commit_enabled', False) and 
+                            self.git_handler):
+                            try:
+                                # Identify files that were likely fixed
+                                fixed_files = self._identify_files_to_fix(issue)
+                                
+                                # Commit and push the fix
+                                commit_result = self.git_handler.commit_and_push_fix(
+                                    issue_with_context, 
+                                    fixed_files
+                                )
+                                
+                                if commit_result["success"]:
+                                    self.logger.info(f"🔄 Auto-committed fix: {commit_result['commit_sha']}")
+                                else:
+                                    self.logger.warning(f"⚠️ Auto-commit failed: {commit_result['error']}")
+                                    
+                            except Exception as git_error:
+                                self.logger.error(f"Git auto-commit error: {git_error}")
                     else:
                         results["failed"] += 1
                         self.logger.error(f"❌ Failed to apply Gemini fix for {issue['type']} issue")
@@ -692,6 +752,17 @@ class OrchestratorAgent:
             self.logger.error(f"Orchestration cycle failed: {e}")
             raise
     
+    def get_work_item_details(self, work_item_id: int) -> Optional[Dict[str, Any]]:
+        """Get details for a specific ADO work item"""
+        if not self.ado_client:
+            return None
+        
+        try:
+            return self.ado_client.get_work_item(work_item_id)
+        except Exception as e:
+            self.logger.error(f"Failed to get work item {work_item_id}: {e}")
+            return None
+    
     def get_status(self) -> Dict[str, Any]:
         """Get current orchestrator status"""
         return {
@@ -716,6 +787,12 @@ class OrchestratorAgent:
                     "cli_available": self.gemini_handler.test_gemini_cli() if self.gemini_handler else False,
                     "frontend_path": self.gemini_handler.frontend_path if self.gemini_handler else None,
                     "frontend_path_exists": self.gemini_handler.get_status()["frontend_path_exists"] if self.gemini_handler else False
+                },
+                "git_handler": {
+                    "available": self.git_handler is not None,
+                    "auto_commit_enabled": self.config.get('git', {}).get('auto_commit_enabled', False),
+                    "auto_push_enabled": self.config.get('git', {}).get('auto_push', False),
+                    "repository_status": self.git_handler.check_git_status() if self.git_handler else None
                 }
             },
             "active_tasks": len(self.active_tasks),
@@ -727,6 +804,54 @@ class OrchestratorAgent:
             },
             "timestamp": datetime.now().isoformat()
         }
+
+def trigger_fix_for_work_item(work_item_id: int) -> bool:
+    """
+    Trigger orchestrator fix for a specific ADO work item
+    This function is called by the comment trigger system
+    """
+    try:
+        logger.info(f"🎯 Triggering fix for ADO Work Item #{work_item_id}")
+        
+        # Create orchestrator instance
+        orchestrator = OrchestratorAgent()
+        
+        # Initialize agents synchronously
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            loop.run_until_complete(orchestrator.initialize_agents())
+            
+            # Get work item details from ADO
+            work_item_details = orchestrator.get_work_item_details(work_item_id)
+            if not work_item_details:
+                logger.error(f"Could not retrieve details for work item {work_item_id}")
+                return False
+            
+            # Extract URL from work item if available, otherwise use demo URL
+            url = work_item_details.get("url", "https://example.com")
+            
+            # Run the orchestration cycle
+            result = loop.run_until_complete(orchestrator.orchestrate_full_cycle(url))
+            
+            # Mark the work item as done
+            if orchestrator.ado_client:
+                success = orchestrator.ado_client.close_work_item(work_item_id)
+                if success:
+                    logger.info(f"✅ Work item #{work_item_id} marked as Done")
+                else:
+                    logger.warning(f"⚠️ Could not mark work item #{work_item_id} as Done")
+            
+            logger.info(f"✅ Successfully completed fix for work item #{work_item_id}")
+            return True
+            
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"❌ Error triggering fix for work item {work_item_id}: {e}")
+        return False
 
 async def main():
     """Main entry point for orchestrator"""

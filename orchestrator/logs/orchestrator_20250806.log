@@ -1,0 +1,522 @@
+2025-08-06 14:19:12,634 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:19:12,902 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:19:12,902 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:19:12,902 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:19:12,903 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:19:12,903 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:19:12,924 - orchestrator - INFO - Received analysis response: c2f20121
+2025-08-06 14:19:12,931 - orchestrator - ERROR - Error calling UX Analyzer API: 404 Client Error: Not Found for url: http://localhost:8000/api/reports/c2f20121
+2025-08-06 14:19:12,931 - orchestrator - ERROR - UX analysis failed: 404 Client Error: Not Found for url: http://localhost:8000/api/reports/c2f20121
+2025-08-06 14:19:12,932 - orchestrator - INFO - Falling back to mock data for development
+2025-08-06 14:19:53,625 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:19:53,740 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:19:53,740 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:19:53,740 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:19:53,741 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:19:53,741 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:19:53,748 - orchestrator - INFO - Received analysis response: 8dbdc7d3
+2025-08-06 14:19:53,748 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 14:19:53,748 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_141953
+2025-08-06 14:19:53,749 - orchestrator - INFO - Creating coder tasks from analysis: ux_mock_20250806_141953
+2025-08-06 14:19:53,749 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 14:20:05,565 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:20:05,565 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:20:05,575 - orchestrator - INFO - Received analysis response: aa61aa98
+2025-08-06 14:20:05,576 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 14:20:05,576 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_142005
+2025-08-06 14:21:20,210 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:21:20,328 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:21:20,329 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:21:20,329 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:21:20,329 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:21:20,329 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:21:20,336 - orchestrator - INFO - Received analysis response: 9f3f1777
+2025-08-06 14:21:20,336 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 14:21:20,336 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_142120
+2025-08-06 14:21:20,337 - orchestrator - INFO - Creating coder tasks from analysis: ux_mock_20250806_142120
+2025-08-06 14:21:20,337 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 14:27:49,105 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:27:49,223 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:27:49,223 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:27:49,940 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 14:27:49,940 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:28:35,879 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:28:35,992 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:28:35,992 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:28:36,296 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 14:28:36,296 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:28:36,296 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 14:28:36,296 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:28:36,296 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:28:36,302 - orchestrator - INFO - Received analysis response: 96f9a181
+2025-08-06 14:28:36,303 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 14:28:36,303 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_142836
+2025-08-06 14:28:36,303 - orchestrator - INFO - Creating coder tasks from analysis: ux_mock_20250806_142836
+2025-08-06 14:28:36,303 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 14:28:36,303 - orchestrator - INFO - Creating ADO tickets for 2 issues from analysis ux_mock_20250806_142836
+2025-08-06 14:28:36,570 - orchestrator - ERROR - ❌ Failed to create ADO ticket for accessibility issue
+2025-08-06 14:28:36,837 - orchestrator - ERROR - ❌ Failed to create ADO ticket for performance issue
+2025-08-06 14:28:36,838 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 14:28:36,838 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_142836
+2025-08-06 14:36:55,703 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:36:55,823 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:36:55,823 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:36:56,325 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 14:36:56,448 - orchestrator - WARNING - Gemini CLI not available. Install Gemini CLI or update GEMINI_CLI_PATH in .env
+2025-08-06 14:36:56,448 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:36:56,554 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 14:36:56,554 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:36:56,554 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:36:56,560 - orchestrator - INFO - Received analysis response: 5ed3cf10
+2025-08-06 14:36:56,560 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 14:36:56,560 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_143656
+2025-08-06 14:36:56,560 - orchestrator - INFO - Creating coder tasks from analysis: ux_mock_20250806_143656
+2025-08-06 14:36:56,560 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 14:36:56,561 - orchestrator - INFO - Creating ADO tickets for 2 issues from analysis ux_mock_20250806_143656
+2025-08-06 14:36:56,811 - orchestrator - ERROR - ❌ Failed to create ADO ticket for accessibility issue
+2025-08-06 14:36:57,051 - orchestrator - ERROR - ❌ Failed to create ADO ticket for performance issue
+2025-08-06 14:36:57,051 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 14:36:57,051 - orchestrator - INFO - Applying Gemini fixes for 2 issues from analysis ux_mock_20250806_143656
+2025-08-06 14:36:57,051 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 14:36:57,052 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 14:36:57,052 - orchestrator - INFO - Gemini fixes completed: 0 successful, 2 failed
+2025-08-06 14:36:57,052 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_143657
+2025-08-06 14:39:06,414 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:39:06,530 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:39:06,531 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:39:06,762 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 14:39:06,819 - orchestrator - WARNING - Gemini CLI not available. Install Gemini CLI or update GEMINI_CLI_PATH in .env
+2025-08-06 14:39:06,819 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:39:06,913 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 14:39:06,914 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:39:06,914 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:39:06,921 - orchestrator - INFO - Received analysis response: 79472245
+2025-08-06 14:39:06,921 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 14:39:06,922 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_143906
+2025-08-06 14:39:06,922 - orchestrator - INFO - Creating coder tasks from analysis: ux_mock_20250806_143906
+2025-08-06 14:39:06,922 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 14:39:06,922 - orchestrator - INFO - Creating ADO tickets for 2 issues from analysis ux_mock_20250806_143906
+2025-08-06 14:39:07,170 - orchestrator - ERROR - ❌ Failed to create ADO ticket for accessibility issue
+2025-08-06 14:39:07,412 - orchestrator - ERROR - ❌ Failed to create ADO ticket for performance issue
+2025-08-06 14:39:07,412 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 14:39:07,412 - orchestrator - INFO - Applying Gemini fixes for 2 issues from analysis ux_mock_20250806_143906
+2025-08-06 14:39:07,466 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 14:39:07,521 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 14:39:07,521 - orchestrator - INFO - Gemini fixes completed: 0 successful, 2 failed
+2025-08-06 14:39:07,521 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_143907
+2025-08-06 14:49:43,908 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:49:44,027 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:49:44,028 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:49:44,479 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 14:49:44,539 - orchestrator - WARNING - Gemini CLI not available. Install Gemini CLI or update GEMINI_CLI_PATH in .env
+2025-08-06 14:49:45,253 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 14:49:45,253 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 14:49:45,253 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 14:49:45,253 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 14:49:45,253 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 14:49:45,670 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 14:49:45,670 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 14:49:45,671 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 14:49:45,676 - orchestrator - INFO - Received analysis response: 523be5e1
+2025-08-06 14:49:45,676 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 14:49:45,676 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_144945
+2025-08-06 14:49:45,676 - orchestrator - INFO - Creating coder tasks from analysis: ux_mock_20250806_144945
+2025-08-06 14:49:45,676 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 14:49:45,676 - orchestrator - INFO - Creating ADO tickets for 2 issues from analysis ux_mock_20250806_144945
+2025-08-06 14:49:45,914 - orchestrator - ERROR - ❌ Failed to create ADO ticket for accessibility issue
+2025-08-06 14:49:46,182 - orchestrator - ERROR - ❌ Failed to create ADO ticket for performance issue
+2025-08-06 14:49:46,182 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 14:49:46,182 - orchestrator - INFO - Applying Gemini fixes for 2 issues from analysis ux_mock_20250806_144945
+2025-08-06 14:49:46,237 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 14:49:46,290 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 14:49:46,290 - orchestrator - INFO - Gemini fixes completed: 0 successful, 2 failed
+2025-08-06 14:49:46,290 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_144946
+2025-08-06 14:49:46,292 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 14:49:46,405 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 14:49:46,405 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 14:49:46,654 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 14:49:46,706 - orchestrator - WARNING - Gemini CLI not available. Install Gemini CLI or update GEMINI_CLI_PATH in .env
+2025-08-06 14:49:47,064 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 14:49:47,065 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 14:49:47,065 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 14:49:47,065 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 14:49:47,065 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:12:43,322 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:12:43,466 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 15:12:43,466 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:12:44,295 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 15:12:44,390 - orchestrator - WARNING - Gemini CLI not available. Install Gemini CLI or update GEMINI_CLI_PATH in .env
+2025-08-06 15:12:45,113 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:12:45,113 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:12:45,113 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:12:45,114 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:12:45,114 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:12:45,686 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 15:12:45,686 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 15:12:45,686 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 15:12:45,699 - orchestrator - INFO - Received analysis response: 25df7bdb
+2025-08-06 15:12:45,699 - orchestrator - WARNING - Unexpected API response format, using mock data
+2025-08-06 15:12:45,699 - orchestrator - INFO - UX analysis completed: ux_mock_20250806_151245
+2025-08-06 15:12:45,699 - orchestrator - INFO - Creating coder tasks from analysis: ux_mock_20250806_151245
+2025-08-06 15:12:45,699 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 15:12:45,699 - orchestrator - INFO - Creating ADO tickets for 2 issues from analysis ux_mock_20250806_151245
+2025-08-06 15:12:46,252 - orchestrator - ERROR - ❌ Failed to create ADO ticket for accessibility issue
+2025-08-06 15:12:47,328 - orchestrator - ERROR - ❌ Failed to create ADO ticket for performance issue
+2025-08-06 15:12:47,329 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 15:12:47,329 - orchestrator - INFO - Applying Gemini fixes for 2 issues from analysis ux_mock_20250806_151245
+2025-08-06 15:12:47,389 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 15:12:47,450 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 15:12:47,450 - orchestrator - INFO - Gemini fixes completed: 0 successful, 2 failed
+2025-08-06 15:12:47,450 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_151247
+2025-08-06 15:12:47,452 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:12:47,562 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 15:12:47,562 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:12:47,977 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 15:12:48,037 - orchestrator - WARNING - Gemini CLI not available. Install Gemini CLI or update GEMINI_CLI_PATH in .env
+2025-08-06 15:12:48,501 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:12:48,502 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:12:48,502 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:12:48,502 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:12:48,502 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:25:56,395 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:25:56,411 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8001
+2025-08-06 15:25:56,411 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:25:57,141 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 15:26:02,286 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:26:03,253 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:26:03,253 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:26:03,253 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:26:03,253 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:26:03,254 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:26:07,041 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 15:26:07,041 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 15:26:07,041 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8001/api/analyze
+2025-08-06 15:26:07,047 - orchestrator - INFO - Received analysis response: 84789e0a
+2025-08-06 15:26:08,056 - orchestrator - INFO - UX analysis completed: 84789e0a
+2025-08-06 15:26:08,057 - orchestrator - INFO - Creating coder tasks from analysis: 84789e0a
+2025-08-06 15:26:08,057 - orchestrator - INFO - Created 3 coder tasks
+2025-08-06 15:26:08,057 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 84789e0a
+2025-08-06 15:26:08,749 - orchestrator - ERROR - ❌ Failed to create ADO ticket for accessibility issue
+2025-08-06 15:26:09,449 - orchestrator - ERROR - ❌ Failed to create ADO ticket for keyboard issue
+2025-08-06 15:26:10,097 - orchestrator - ERROR - ❌ Failed to create ADO ticket for ux_heuristics issue
+2025-08-06 15:26:10,097 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 15:26:10,097 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 84789e0a
+2025-08-06 15:26:11,735 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 15:26:13,342 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for keyboard issue
+2025-08-06 15:26:14,937 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for ux_heuristics issue
+2025-08-06 15:26:14,937 - orchestrator - INFO - Gemini fixes completed: 0 successful, 3 failed
+2025-08-06 15:26:14,937 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_152614
+2025-08-06 15:26:14,939 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:26:14,944 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8001
+2025-08-06 15:26:14,945 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:26:15,537 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 15:26:17,225 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:26:17,918 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:26:17,919 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:26:17,919 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:26:17,919 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:26:17,919 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:35:10,564 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:35:10,598 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8002
+2025-08-06 15:35:10,598 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:35:11,262 - orchestrator - WARNING - Azure DevOps connection test failed
+2025-08-06 15:35:21,461 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:35:22,318 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:35:22,319 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:35:22,319 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:35:22,319 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:35:22,319 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:35:26,469 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 15:35:26,470 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 15:35:26,470 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8002/api/analyze
+2025-08-06 15:35:26,475 - orchestrator - INFO - Received analysis response: 835f294f
+2025-08-06 15:35:27,483 - orchestrator - INFO - UX analysis completed: 835f294f
+2025-08-06 15:35:27,483 - orchestrator - INFO - Creating coder tasks from analysis: 835f294f
+2025-08-06 15:35:27,483 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 15:35:27,483 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 835f294f
+2025-08-06 15:35:27,874 - orchestrator - ERROR - ❌ Failed to create ADO ticket for performance issue
+2025-08-06 15:35:28,246 - orchestrator - ERROR - ❌ Failed to create ADO ticket for ux_heuristics issue
+2025-08-06 15:35:28,247 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 15:35:28,247 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 835f294f
+2025-08-06 15:35:30,001 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 15:35:31,750 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for ux_heuristics issue
+2025-08-06 15:35:31,750 - orchestrator - INFO - Gemini fixes completed: 0 successful, 2 failed
+2025-08-06 15:35:31,750 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_153531
+2025-08-06 15:46:00,788 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:46:00,793 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8002
+2025-08-06 15:46:00,793 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:46:00,947 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 15:46:02,292 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:46:02,752 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:46:02,753 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:46:02,753 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:46:02,753 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:46:02,753 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:46:22,826 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:46:22,840 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8002
+2025-08-06 15:46:22,840 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:46:23,010 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 15:46:24,138 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:46:24,640 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:46:24,640 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:46:24,640 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:46:24,640 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:46:24,640 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:46:27,520 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 15:46:27,520 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 15:46:27,520 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8002/api/analyze
+2025-08-06 15:46:27,527 - orchestrator - INFO - Received analysis response: a8f4ec76
+2025-08-06 15:46:28,535 - orchestrator - INFO - UX analysis completed: a8f4ec76
+2025-08-06 15:46:28,535 - orchestrator - INFO - Creating coder tasks from analysis: a8f4ec76
+2025-08-06 15:46:28,536 - orchestrator - INFO - Created 3 coder tasks
+2025-08-06 15:46:28,536 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis a8f4ec76
+2025-08-06 15:46:28,707 - orchestrator - ERROR - ❌ Failed to create ADO ticket for accessibility issue
+2025-08-06 15:46:28,897 - orchestrator - ERROR - ❌ Failed to create ADO ticket for keyboard issue
+2025-08-06 15:46:29,078 - orchestrator - ERROR - ❌ Failed to create ADO ticket for health_alerts issue
+2025-08-06 15:46:29,078 - orchestrator - INFO - Successfully created 0 ADO tickets: []
+2025-08-06 15:46:29,078 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis a8f4ec76
+2025-08-06 15:46:30,380 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 15:46:33,260 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for keyboard issue
+2025-08-06 15:46:34,937 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for health_alerts issue
+2025-08-06 15:46:34,937 - orchestrator - INFO - Gemini fixes completed: 0 successful, 3 failed
+2025-08-06 15:46:34,937 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_154634
+2025-08-06 15:48:31,966 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:48:31,989 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8002
+2025-08-06 15:48:31,989 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:48:32,190 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 15:48:33,702 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:48:34,247 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:48:34,248 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:48:34,248 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:48:34,248 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:48:34,248 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:48:38,348 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 15:48:38,348 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 15:48:38,348 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8002/api/analyze
+2025-08-06 15:48:38,354 - orchestrator - INFO - Received analysis response: 032a8fe6
+2025-08-06 15:48:39,363 - orchestrator - INFO - UX analysis completed: 032a8fe6
+2025-08-06 15:48:39,363 - orchestrator - INFO - Creating coder tasks from analysis: 032a8fe6
+2025-08-06 15:48:39,363 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 15:48:39,364 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 032a8fe6
+2025-08-06 15:48:39,639 - orchestrator - INFO - ✅ Created ADO ticket #18 for accessibility issue
+2025-08-06 15:48:39,923 - orchestrator - INFO - ✅ Created ADO ticket #19 for best_practices issue
+2025-08-06 15:48:39,923 - orchestrator - INFO - Successfully created 2 ADO tickets: [18, 19]
+2025-08-06 15:48:39,923 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 032a8fe6
+2025-08-06 15:48:41,755 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 15:48:43,529 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for best_practices issue
+2025-08-06 15:48:43,529 - orchestrator - INFO - Gemini fixes completed: 0 successful, 2 failed
+2025-08-06 15:48:43,529 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_154843
+2025-08-06 15:50:50,570 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:50:50,610 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8002
+2025-08-06 15:50:50,611 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:50:50,849 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 15:50:57,149 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:50:58,030 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:50:58,031 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:50:58,031 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:50:58,031 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:50:58,031 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:51:02,163 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 15:51:02,164 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 15:51:02,164 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8002/api/analyze
+2025-08-06 15:51:02,170 - orchestrator - INFO - Received analysis response: 25b187a0
+2025-08-06 15:51:03,179 - orchestrator - INFO - UX analysis completed: 25b187a0
+2025-08-06 15:51:03,179 - orchestrator - INFO - Creating coder tasks from analysis: 25b187a0
+2025-08-06 15:51:03,179 - orchestrator - INFO - Created 5 coder tasks
+2025-08-06 15:51:03,179 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 25b187a0
+2025-08-06 15:51:03,432 - orchestrator - INFO - ✅ Created ADO ticket #20 for performance issue
+2025-08-06 15:51:03,717 - orchestrator - INFO - ✅ Created ADO ticket #21 for accessibility issue
+2025-08-06 15:51:03,960 - orchestrator - INFO - ✅ Created ADO ticket #22 for keyboard issue
+2025-08-06 15:51:04,190 - orchestrator - INFO - ✅ Created ADO ticket #23 for ux_heuristics issue
+2025-08-06 15:51:04,428 - orchestrator - INFO - ✅ Created ADO ticket #24 for best_practices issue
+2025-08-06 15:51:04,428 - orchestrator - INFO - Successfully created 5 ADO tickets: [20, 21, 22, 23, 24]
+2025-08-06 15:51:04,428 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 25b187a0
+2025-08-06 15:51:06,295 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 15:51:08,609 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 15:51:10,338 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for keyboard issue
+2025-08-06 15:51:12,152 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for ux_heuristics issue
+2025-08-06 15:51:13,860 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for best_practices issue
+2025-08-06 15:51:13,861 - orchestrator - INFO - Gemini fixes completed: 0 successful, 5 failed
+2025-08-06 15:51:13,861 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_155113
+2025-08-06 15:57:24,206 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 15:57:24,230 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8003
+2025-08-06 15:57:24,230 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 15:57:24,415 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 15:57:25,974 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 15:57:26,499 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 15:57:26,500 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 15:57:26,500 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 15:57:26,500 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 15:57:26,500 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 15:57:29,950 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 15:57:29,950 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 15:57:29,950 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8003/api/analyze
+2025-08-06 15:57:29,956 - orchestrator - INFO - Received analysis response: 49f67138
+2025-08-06 15:57:30,964 - orchestrator - INFO - UX analysis completed: 49f67138
+2025-08-06 15:57:30,964 - orchestrator - INFO - Creating coder tasks from analysis: 49f67138
+2025-08-06 15:57:30,964 - orchestrator - INFO - Created 3 coder tasks
+2025-08-06 15:57:30,964 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 49f67138
+2025-08-06 15:57:31,192 - orchestrator - INFO - ✅ Created ADO ticket #25 for accessibility issue
+2025-08-06 15:57:31,544 - orchestrator - INFO - ✅ Created ADO ticket #26 for keyboard issue
+2025-08-06 15:57:31,788 - orchestrator - INFO - ✅ Created ADO ticket #27 for health_alerts issue
+2025-08-06 15:57:31,788 - orchestrator - INFO - Successfully created 3 ADO tickets: [25, 26, 27]
+2025-08-06 15:57:31,788 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 49f67138
+2025-08-06 15:57:33,338 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 15:57:34,882 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for keyboard issue
+2025-08-06 15:57:36,391 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for health_alerts issue
+2025-08-06 15:57:36,391 - orchestrator - INFO - Gemini fixes completed: 0 successful, 3 failed
+2025-08-06 15:57:36,391 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_155736
+2025-08-06 16:04:58,901 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 16:04:58,928 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 16:04:58,928 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 16:04:59,105 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 16:05:03,448 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 16:05:04,479 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 16:05:04,479 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 16:05:04,479 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 16:05:04,479 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 16:05:04,479 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 16:05:07,497 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 16:05:07,497 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 16:05:07,497 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 16:05:07,503 - orchestrator - INFO - Received analysis response: ec76cf31
+2025-08-06 16:05:08,513 - orchestrator - INFO - UX analysis completed: ec76cf31
+2025-08-06 16:05:08,513 - orchestrator - INFO - Creating coder tasks from analysis: ec76cf31
+2025-08-06 16:05:08,513 - orchestrator - INFO - Created 4 coder tasks
+2025-08-06 16:05:08,513 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis ec76cf31
+2025-08-06 16:05:08,738 - orchestrator - INFO - ✅ Created ADO ticket #28 for performance issue
+2025-08-06 16:05:08,979 - orchestrator - INFO - ✅ Created ADO ticket #29 for accessibility issue
+2025-08-06 16:05:09,202 - orchestrator - INFO - ✅ Created ADO ticket #30 for best_practices issue
+2025-08-06 16:05:09,428 - orchestrator - INFO - ✅ Created ADO ticket #31 for health_alerts issue
+2025-08-06 16:05:09,428 - orchestrator - INFO - Successfully created 4 ADO tickets: [28, 29, 30, 31]
+2025-08-06 16:05:09,428 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis ec76cf31
+2025-08-06 16:05:10,689 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 16:05:11,937 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 16:05:13,184 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for best_practices issue
+2025-08-06 16:05:14,447 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for health_alerts issue
+2025-08-06 16:05:14,447 - orchestrator - INFO - Gemini fixes completed: 0 successful, 4 failed
+2025-08-06 16:05:14,447 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_160514
+2025-08-06 16:14:54,537 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 16:14:54,541 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 16:14:54,541 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 16:14:54,699 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 16:14:55,759 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 16:14:56,416 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 16:14:56,416 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 16:14:56,416 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 16:14:56,416 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 16:14:56,416 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 16:14:56,588 - orchestrator - INFO - Starting full orchestration cycle for: https://dev.azure.com/nayararushi0668/35ea6af7-bdea-4c4e-9132-a6018ee68d2a/_apis/wit/workItems/11
+2025-08-06 16:14:56,588 - orchestrator - INFO - Starting UX analysis for: https://dev.azure.com/nayararushi0668/35ea6af7-bdea-4c4e-9132-a6018ee68d2a/_apis/wit/workItems/11
+2025-08-06 16:14:56,588 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 16:14:56,592 - orchestrator - INFO - Received analysis response: 49a15861
+2025-08-06 16:14:57,603 - orchestrator - INFO - UX analysis completed: 49a15861
+2025-08-06 16:14:57,603 - orchestrator - INFO - Creating coder tasks from analysis: 49a15861
+2025-08-06 16:14:57,603 - orchestrator - INFO - Created 4 coder tasks
+2025-08-06 16:14:57,603 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 49a15861
+2025-08-06 16:14:57,926 - orchestrator - INFO - ✅ Created ADO ticket #32 for accessibility issue
+2025-08-06 16:14:58,135 - orchestrator - INFO - ✅ Created ADO ticket #33 for keyboard issue
+2025-08-06 16:14:58,356 - orchestrator - INFO - ✅ Created ADO ticket #34 for ux_heuristics issue
+2025-08-06 16:14:58,586 - orchestrator - INFO - ✅ Created ADO ticket #35 for health_alerts issue
+2025-08-06 16:14:58,587 - orchestrator - INFO - Successfully created 4 ADO tickets: [32, 33, 34, 35]
+2025-08-06 16:14:58,587 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 49a15861
+2025-08-06 16:14:59,555 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 16:15:00,544 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for keyboard issue
+2025-08-06 16:15:01,524 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for ux_heuristics issue
+2025-08-06 16:15:02,593 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for health_alerts issue
+2025-08-06 16:15:02,594 - orchestrator - INFO - Gemini fixes completed: 0 successful, 4 failed
+2025-08-06 16:15:02,594 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_161502
+2025-08-06 16:15:02,846 - orchestrator - INFO - ✅ Work item #11 marked as Done
+2025-08-06 16:15:02,847 - orchestrator - INFO - ✅ Successfully completed fix for work item #11
+2025-08-06 16:16:17,700 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 16:16:17,704 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 16:16:17,704 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 16:16:17,868 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 16:16:19,640 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 16:16:20,262 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 16:16:20,262 - orchestrator - INFO - Current branch: orchestrator
+2025-08-06 16:16:20,263 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 16:16:20,263 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 16:16:20,263 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 16:16:20,428 - orchestrator - INFO - Starting full orchestration cycle for: https://dev.azure.com/nayararushi0668/35ea6af7-bdea-4c4e-9132-a6018ee68d2a/_apis/wit/workItems/35
+2025-08-06 16:16:20,428 - orchestrator - INFO - Starting UX analysis for: https://dev.azure.com/nayararushi0668/35ea6af7-bdea-4c4e-9132-a6018ee68d2a/_apis/wit/workItems/35
+2025-08-06 16:16:20,428 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 16:16:20,432 - orchestrator - INFO - Received analysis response: aae2b996
+2025-08-06 16:16:21,440 - orchestrator - INFO - UX analysis completed: aae2b996
+2025-08-06 16:16:21,441 - orchestrator - INFO - Creating coder tasks from analysis: aae2b996
+2025-08-06 16:16:21,441 - orchestrator - INFO - Created 2 coder tasks
+2025-08-06 16:16:21,441 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis aae2b996
+2025-08-06 16:16:21,708 - orchestrator - INFO - ✅ Created ADO ticket #36 for performance issue
+2025-08-06 16:16:21,948 - orchestrator - INFO - ✅ Created ADO ticket #37 for ux_heuristics issue
+2025-08-06 16:16:21,948 - orchestrator - INFO - Successfully created 2 ADO tickets: [36, 37]
+2025-08-06 16:16:21,948 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis aae2b996
+2025-08-06 16:16:23,432 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 16:16:24,909 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for ux_heuristics issue
+2025-08-06 16:16:24,909 - orchestrator - INFO - Gemini fixes completed: 0 successful, 2 failed
+2025-08-06 16:16:24,909 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_161624
+2025-08-06 16:16:25,245 - orchestrator - INFO - ✅ Work item #35 marked as Done
+2025-08-06 16:16:25,245 - orchestrator - INFO - ✅ Successfully completed fix for work item #35
+2025-08-06 16:30:06,961 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 16:30:06,986 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 16:30:06,986 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 16:30:07,169 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 16:30:09,063 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 16:30:09,679 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 16:30:09,680 - orchestrator - INFO - Current branch: feature/test-auto-fix-flow
+2025-08-06 16:30:09,680 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 16:30:09,680 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 16:30:09,681 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 16:30:13,644 - orchestrator - INFO - Starting full orchestration cycle for: https://example.com
+2025-08-06 16:30:13,644 - orchestrator - INFO - Starting UX analysis for: https://example.com
+2025-08-06 16:30:13,644 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 16:30:13,659 - orchestrator - INFO - Received analysis response: 2f617ef6
+2025-08-06 16:30:14,676 - orchestrator - INFO - UX analysis completed: 2f617ef6
+2025-08-06 16:30:14,676 - orchestrator - INFO - Creating coder tasks from analysis: 2f617ef6
+2025-08-06 16:30:14,676 - orchestrator - INFO - Created 4 coder tasks
+2025-08-06 16:30:14,676 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 2f617ef6
+2025-08-06 16:30:14,910 - orchestrator - INFO - ✅ Created ADO ticket #38 for accessibility issue
+2025-08-06 16:30:15,193 - orchestrator - INFO - ✅ Created ADO ticket #39 for keyboard issue
+2025-08-06 16:30:15,435 - orchestrator - INFO - ✅ Created ADO ticket #40 for ux_heuristics issue
+2025-08-06 16:30:15,654 - orchestrator - INFO - ✅ Created ADO ticket #41 for health_alerts issue
+2025-08-06 16:30:15,654 - orchestrator - INFO - Successfully created 4 ADO tickets: [38, 39, 40, 41]
+2025-08-06 16:30:15,654 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 2f617ef6
+2025-08-06 16:30:17,379 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 16:30:19,254 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for keyboard issue
+2025-08-06 16:30:20,956 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for ux_heuristics issue
+2025-08-06 16:30:22,670 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for health_alerts issue
+2025-08-06 16:30:22,670 - orchestrator - INFO - Gemini fixes completed: 0 successful, 4 failed
+2025-08-06 16:30:22,670 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_163022
+2025-08-06 16:31:27,833 - orchestrator - INFO - Initializing agent connections...
+2025-08-06 16:31:27,843 - orchestrator - INFO - UX Analyzer API connection established: http://localhost:8000
+2025-08-06 16:31:27,843 - orchestrator - INFO - Coder Agent connection established
+2025-08-06 16:31:28,008 - orchestrator - INFO - Azure DevOps client initialized successfully
+2025-08-06 16:31:29,845 - orchestrator - INFO - Gemini CLI handler initialized successfully
+2025-08-06 16:31:30,431 - orchestrator - INFO - Git handler initialized successfully
+2025-08-06 16:31:30,432 - orchestrator - INFO - Current branch: feature/test-auto-fix-flow
+2025-08-06 16:31:30,432 - orchestrator - INFO - Auto-push is enabled
+2025-08-06 16:31:30,432 - orchestrator - INFO - Auto-commit is enabled
+2025-08-06 16:31:30,432 - orchestrator - INFO - All agents initialized successfully
+2025-08-06 16:31:30,608 - orchestrator - INFO - Starting full orchestration cycle for: https://dev.azure.com/nayararushi0668/35ea6af7-bdea-4c4e-9132-a6018ee68d2a/_apis/wit/workItems/18
+2025-08-06 16:31:30,608 - orchestrator - INFO - Starting UX analysis for: https://dev.azure.com/nayararushi0668/35ea6af7-bdea-4c4e-9132-a6018ee68d2a/_apis/wit/workItems/18
+2025-08-06 16:31:30,609 - orchestrator - INFO - Calling UX Analyzer API: http://localhost:8000/api/analyze
+2025-08-06 16:31:30,614 - orchestrator - INFO - Received analysis response: 638f60b6
+2025-08-06 16:31:31,628 - orchestrator - INFO - UX analysis completed: 638f60b6
+2025-08-06 16:31:31,628 - orchestrator - INFO - Creating coder tasks from analysis: 638f60b6
+2025-08-06 16:31:31,628 - orchestrator - INFO - Created 5 coder tasks
+2025-08-06 16:31:31,628 - orchestrator - INFO - Creating ADO tickets for 6 issues from analysis 638f60b6
+2025-08-06 16:31:31,841 - orchestrator - INFO - ✅ Created ADO ticket #42 for performance issue
+2025-08-06 16:31:32,226 - orchestrator - INFO - ✅ Created ADO ticket #43 for accessibility issue
+2025-08-06 16:31:32,439 - orchestrator - INFO - ✅ Created ADO ticket #44 for keyboard issue
+2025-08-06 16:31:32,670 - orchestrator - INFO - ✅ Created ADO ticket #45 for ux_heuristics issue
+2025-08-06 16:31:32,892 - orchestrator - INFO - ✅ Created ADO ticket #46 for best_practices issue
+2025-08-06 16:31:32,892 - orchestrator - INFO - Successfully created 5 ADO tickets: [42, 43, 44, 45, 46]
+2025-08-06 16:31:32,892 - orchestrator - INFO - Applying Gemini fixes for 6 issues from analysis 638f60b6
+2025-08-06 16:31:34,575 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for performance issue
+2025-08-06 16:31:36,177 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for accessibility issue
+2025-08-06 16:31:37,780 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for keyboard issue
+2025-08-06 16:31:39,394 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for ux_heuristics issue
+2025-08-06 16:31:41,013 - orchestrator - ERROR - ❌ Failed to apply Gemini fix for best_practices issue
+2025-08-06 16:31:41,013 - orchestrator - INFO - Gemini fixes completed: 0 successful, 5 failed
+2025-08-06 16:31:41,013 - orchestrator - INFO - Orchestration cycle completed: orch_20250806_163141
+2025-08-06 16:31:41,254 - orchestrator - INFO - ✅ Work item #18 marked as Done
+2025-08-06 16:31:41,255 - orchestrator - INFO - ✅ Successfully completed fix for work item #18
