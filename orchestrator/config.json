@@ -1,0 +1,73 @@
+{
+  "ux_analyzer": {
+    "api_endpoint": "http://localhost:8000",
+    "modules": {
+      "performance": true,
+      "accessibility": true,
+      "keyboard": true,
+      "ux_heuristics": true,
+      "best_practices": true,
+      "health_alerts": true,
+      "functional": false
+    },
+    "timeout_seconds": 30,
+    "retry_attempts": 3
+  },
+  "coder_agent": {
+    "azure_devops_org": null,
+    "project": null,
+    "gemini_api_key": null,
+    "auto_fix_enabled": false,
+    "max_concurrent_fixes": 3,
+    "supported_languages": ["javascript", "typescript", "python", "html", "css"],
+    "file_size_limit_mb": 10
+  },
+  "orchestrator": {
+    "severity_threshold": "medium",
+    "auto_trigger_fixes": false,
+    "analysis_interval_minutes": 60,
+    "report_format": "json",
+    "max_analysis_history": 100,
+    "enable_real_time_monitoring": false,
+    "notification_channels": []
+  },
+  "logging": {
+    "level": "INFO",
+    "file_rotation": true,
+    "max_log_files": 10,
+    "log_format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  },
+  "security": {
+    "enable_auto_deployment": false,
+    "require_manual_approval": true,
+    "allowed_domains": ["localhost", "127.0.0.1"],
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 60
+    }
+  },
+  "integrations": {
+    "slack": {
+      "enabled": false,
+      "webhook_url": null,
+      "channels": {
+        "alerts": "#ux-alerts",
+        "reports": "#ux-reports"
+      }
+    },
+    "email": {
+      "enabled": false,
+      "smtp_server": null,
+      "admin_emails": []
+    }
+  },
+  "performance": {
+    "connection_pool_size": 10,
+    "request_timeout": 30,
+    "batch_processing": {
+      "enabled": true,
+      "batch_size": 5,
+      "max_wait_time": 10
+    }
+  }
+}
