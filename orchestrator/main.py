@@ -15,6 +15,9 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from pathlib import Path
 
+# Import ADO client
+from ado_client import AzureDevOpsClient, create_ado_ticket
+
 # Add paths for both agent systems
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'coder_agent'))
@@ -54,6 +57,7 @@ class OrchestratorAgent:
         # Initialize connections to both agents
         self.ux_analyzer = None
         self.coder_agent = None
+        self.ado_client = None
         
     def fetch_ux_issues(self, url: str) -> Dict[str, Any]:
         """Fetch UX issues from FastAPI analyzer"""
@@ -186,6 +190,9 @@ class OrchestratorAgent:
             # Initialize Coder Agent connection
             await self._init_coder_agent()
             
+            # Initialize Azure DevOps client
+            await self._init_ado_client()
+            
             self.logger.info("All agents initialized successfully")
             
         except Exception as e:
@@ -238,6 +245,24 @@ class OrchestratorAgent:
                 self.logger.warning("Coder Agent path not found")
         except Exception as e:
             self.logger.warning(f"Coder Agent not available: {e}")
+    
+    async def _init_ado_client(self):
+        """Initialize Azure DevOps client"""
+        try:
+            self.ado_client = AzureDevOpsClient()
+            
+            if self.ado_client.is_configured():
+                # Test connection
+                if self.ado_client.test_connection():
+                    self.logger.info("Azure DevOps client initialized successfully")
+                else:
+                    self.logger.warning("Azure DevOps connection test failed")
+            else:
+                self.logger.warning("Azure DevOps not configured. Set ADO_ORG, ADO_PROJECT, ADO_TOKEN in .env")
+                
+        except Exception as e:
+            self.logger.warning(f"Azure DevOps client initialization failed: {e}")
+            self.ado_client = None
     
     async def analyze_website(self, url: str, custom_modules: Optional[Dict[str, bool]] = None) -> AnalysisResult:
         """Trigger UX analysis of a website using real FastAPI server"""
@@ -384,6 +409,37 @@ class OrchestratorAgent:
         self.logger.info(f"Created {len(tasks)} coder tasks")
         return tasks
     
+    async def create_ado_tickets_from_issues(self, issues: List[Dict[str, Any]], analysis_id: str) -> List[int]:
+        """Create Azure DevOps tickets from UX issues"""
+        if not self.ado_client or not self.ado_client.is_configured():
+            self.logger.warning("Azure DevOps not configured, skipping ticket creation")
+            return []
+        
+        self.logger.info(f"Creating ADO tickets for {len(issues)} issues from analysis {analysis_id}")
+        
+        created_tickets = []
+        severity_threshold = self.config["orchestrator"]["severity_threshold"]
+        
+        for issue in issues:
+            if self._should_create_task(issue, severity_threshold):
+                try:
+                    # Add analysis context to issue
+                    issue_with_context = issue.copy()
+                    issue_with_context["analysis_id"] = analysis_id
+                    
+                    ticket_id = self.ado_client.create_ado_ticket(issue_with_context)
+                    if ticket_id:
+                        created_tickets.append(ticket_id)
+                        self.logger.info(f"✅ Created ADO ticket #{ticket_id} for {issue['type']} issue")
+                    else:
+                        self.logger.error(f"❌ Failed to create ADO ticket for {issue['type']} issue")
+                        
+                except Exception as e:
+                    self.logger.error(f"Error creating ADO ticket for issue: {e}")
+        
+        self.logger.info(f"Successfully created {len(created_tickets)} ADO tickets: {created_tickets}")
+        return created_tickets
+    
     def _should_create_task(self, issue: Dict[str, Any], threshold: str) -> bool:
         """Determine if an issue should trigger a coder task"""
         severity_levels = {"low": 1, "medium": 2, "high": 3}
@@ -490,7 +546,7 @@ class OrchestratorAgent:
             }
     
     async def orchestrate_full_cycle(self, url: str) -> Dict[str, Any]:
-        """Run complete orchestration cycle: analyze -> create tasks -> execute fixes"""
+        """Run complete orchestration cycle: analyze -> create tasks -> create ADO tickets -> execute fixes"""
         self.logger.info(f"Starting full orchestration cycle for: {url}")
         
         try:
@@ -500,12 +556,15 @@ class OrchestratorAgent:
             # Step 2: Create coder tasks
             coder_tasks = await self.create_coder_tasks(analysis_result)
             
-            # Step 3: Execute fixes (if auto-fix is enabled)
+            # Step 3: Create Azure DevOps tickets
+            ado_tickets = await self.create_ado_tickets_from_issues(analysis_result.issues, analysis_result.analysis_id)
+            
+            # Step 4: Execute fixes (if auto-fix is enabled)
             fix_results = None
             if self.config["orchestrator"]["auto_trigger_fixes"] and coder_tasks:
                 fix_results = await self.execute_coder_tasks(coder_tasks)
             
-            # Step 4: Generate report
+            # Step 5: Generate report
             report = {
                 "orchestration_id": f"orch_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                 "url": url,
@@ -526,6 +585,10 @@ class OrchestratorAgent:
                             "bug_type": task.bug_type
                         } for task in coder_tasks
                     ]
+                },
+                "ado_tickets": {
+                    "created": len(ado_tickets),
+                    "ticket_ids": ado_tickets
                 },
                 "fixes": fix_results,
                 "recommendations": analysis_result.recommendations
@@ -550,6 +613,12 @@ class OrchestratorAgent:
                 "coder_agent": {
                     "available": self.coder_agent is not None and self.coder_agent.get("available", False),
                     "path": self.coder_agent.get("path", "Unknown") if self.coder_agent else None
+                },
+                "ado_client": {
+                    "available": self.ado_client is not None and self.ado_client.is_configured(),
+                    "org": self.ado_client.org if self.ado_client else None,
+                    "project": self.ado_client.project if self.ado_client else None,
+                    "configured": self.ado_client.is_configured() if self.ado_client else False
                 }
             },
             "active_tasks": len(self.active_tasks),
