@@ -35,6 +35,7 @@ export interface AnalysisReport {
   type?: string;
   scenario_file?: string;
   overall_score?: number;
+  has_screenshots?: boolean;  // New field for screenshot support
   
   // Real backend format fields
   scenario_results?: Array<{
@@ -51,6 +52,8 @@ export interface AnalysisReport {
       scope?: string;
       selector?: string;
       url?: string;
+      screenshot?: string;  // New field for step screenshots
+      errors?: string[];
     }>;
   }>;
   

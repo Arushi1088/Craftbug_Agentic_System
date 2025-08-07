@@ -28,6 +28,19 @@ interface ModuleFinding {
   severity: string;
   element?: string;
   recommendation: string;
+  fixed?: boolean;
+  fix_timestamp?: string;
+}
+
+// Interface for scenario step data
+interface ScenarioStep {
+  action: string;
+  status: string;
+  duration_ms: number;
+  screenshot?: string;
+  selector?: string;
+  url?: string;
+  errors?: string[];
 }
 
 const moduleIcons: { [key: string]: React.ReactNode } = {
@@ -579,7 +592,80 @@ export function ReportPage() {
                             <span>Steps:</span>
                             <span>{scenario.steps?.length || 0}</span>
                           </div>
+                          {/* Show if screenshots are available */}
+                          {report.has_screenshots && (
+                            <div className="flex justify-between">
+                              <span>Screenshots:</span>
+                              <span className="text-green-600 text-xs font-medium">✓ Available</span>
+                            </div>
+                          )}
                         </div>
+                        
+                        {/* Step Details with Screenshots */}
+                        {scenario.steps && scenario.steps.length > 0 && (
+                          <div className="mt-3 border-t pt-3">
+                            <h5 className="text-sm font-medium text-gray-700 mb-2">Step Details:</h5>
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                              {scenario.steps.map((step: ScenarioStep, stepIndex: number) => (
+                                <div key={stepIndex} className="text-xs border rounded p-2 bg-gray-50">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="font-medium text-gray-700 capitalize">
+                                      {step.action.replace('_', ' ')}
+                                    </span>
+                                    <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                      step.status === 'success' ? 'bg-green-100 text-green-700' :
+                                      step.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                      'bg-yellow-100 text-yellow-700'
+                                    }`}>
+                                      {step.status}
+                                    </span>
+                                  </div>
+                                  
+                                  {step.url && (
+                                    <div className="text-gray-600 truncate mb-1">
+                                      URL: {step.url}
+                                    </div>
+                                  )}
+                                  
+                                  {step.selector && (
+                                    <div className="text-gray-600 truncate mb-1">
+                                      Selector: {step.selector}
+                                    </div>
+                                  )}
+                                  
+                                  <div className="text-gray-500">
+                                    Duration: {step.duration_ms}ms
+                                  </div>
+                                  
+                                  {step.errors && step.errors.length > 0 && (
+                                    <div className="text-red-600 text-xs mt-1">
+                                      Error: {step.errors[0]}
+                                    </div>
+                                  )}
+                                  
+                                  {/* 🖼️ Screenshot Display */}
+                                  {step.screenshot && (
+                                    <div className="mt-2">
+                                      <img
+                                        src={`http://localhost:8000/reports/${step.screenshot}`}
+                                        alt={`Screenshot for ${step.action} step`}
+                                        className="w-full border rounded shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                        onClick={() => window.open(`http://localhost:8000/reports/${step.screenshot}`, '_blank')}
+                                        onError={(e) => {
+                                          console.error('Failed to load screenshot:', step.screenshot);
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                      />
+                                      <div className="text-xs text-gray-500 mt-1 text-center">
+                                        Click to view full size
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
