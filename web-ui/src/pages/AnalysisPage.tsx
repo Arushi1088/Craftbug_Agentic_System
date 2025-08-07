@@ -41,6 +41,13 @@ interface Scenario {
   description: string;
 }
 
+interface AnalysisModule {
+  key: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
 export function AnalysisPage() {
   const navigate = useNavigate();
   const { 
@@ -56,6 +63,7 @@ export function AnalysisPage() {
   const { isConnected } = useConnectionStatus();
   
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [modules, setModules] = useState<AnalysisModule[]>([]);
   const [config, setConfig] = useState<AnalysisConfig>({
     mode: 'url',
     enablePerformance: true,
@@ -76,7 +84,7 @@ export function AnalysisPage() {
     { id: 'integration', name: 'Integration Hub (Mock)', path: 'mocks/integration.html' }
   ];
 
-  // Load available scenarios on component mount
+  // Load available scenarios and modules on component mount
   useEffect(() => {
     const defaultScenarios = [
       { name: 'Basic Navigation', filename: 'basic_navigation.yaml', path: 'scenarios/basic_navigation.yaml', description: 'Test basic page navigation and menu interactions' },
@@ -84,22 +92,47 @@ export function AnalysisPage() {
       { name: 'Office Tests', filename: 'office_tests.yaml', path: 'scenarios/office_tests.yaml', description: 'Comprehensive Office application testing scenarios' }
     ];
 
-    const loadScenarios = async () => {
+    const defaultModules = [
+      { key: 'performance', name: 'Performance Analysis', description: 'Core Web Vitals and loading metrics', enabled: true },
+      { key: 'accessibility', name: 'Accessibility Audit', description: 'WCAG 2.1 compliance testing', enabled: true },
+      { key: 'keyboard', name: 'Keyboard Navigation', description: 'Keyboard accessibility evaluation', enabled: true },
+      { key: 'ux_heuristics', name: 'UX Heuristics', description: 'Nielsen\'s usability principles', enabled: true },
+      { key: 'best_practices', name: 'Best Practices', description: 'Modern web development standards', enabled: true },
+      { key: 'health_alerts', name: 'Health Alerts', description: 'Critical issues detection', enabled: true },
+      { key: 'functional', name: 'Functional Testing', description: 'User journey validation', enabled: false }
+    ];
+
+    const loadScenariosAndModules = async () => {
       try {
+        // Load scenarios
         const scenarioList = await apiClient.getScenarios();
-        setScenarios(scenarioList.map((name: string) => ({
-          name: name.replace(/\.yaml$/, '').replace(/_/g, ' '),
-          filename: name,
-          path: `scenarios/${name}`,
-          description: `Test scenario: ${name.replace(/\.yaml$/, '').replace(/_/g, ' ')}`
+        setScenarios(scenarioList.map((scenario) => ({
+          name: scenario.name || scenario.filename.replace(/\.yaml$/, '').replace(/_/g, ' '),
+          filename: scenario.filename,
+          path: scenario.path,
+          description: scenario.description || `Test scenario: ${scenario.name || scenario.filename.replace(/\.yaml$/, '').replace(/_/g, ' ')}`
         })));
+
+        // Load modules
+        const moduleList = await apiClient.getModules();
+        setModules(moduleList);
+        
+        // Initialize config with default module states
+        const initialModuleConfig = moduleList.reduce((acc, module) => ({
+          ...acc,
+          [`enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}`]: module.enabled
+        }), {});
+        
+        setConfig(prev => ({ ...prev, ...initialModuleConfig }));
+
       } catch (error) {
-        console.error('Failed to load scenarios, using defaults:', error);
+        console.error('Failed to load scenarios and modules, using defaults:', error);
         setScenarios(defaultScenarios);
+        setModules(defaultModules);
       }
     };
 
-    loadScenarios();
+    loadScenariosAndModules();
   }, []);
 
   // Handle analysis completion
@@ -107,7 +140,7 @@ export function AnalysisPage() {
     if (currentAnalysis && currentAnalysis.status === 'completed') {
       // Navigate to results page after a short delay
       setTimeout(() => {
-        navigate(`/analysis/${currentAnalysis.analysis_id}`);
+        navigate(`/report/${currentAnalysis.analysis_id}`);
       }, 2000);
     }
   }, [currentAnalysis, navigate]);
@@ -141,16 +174,6 @@ export function AnalysisPage() {
       description: 'Test prototypes with predefined user journeys',
       placeholder: '/path/to/mock-app.json'
     }
-  ];
-
-  const analysisModules = [
-    { key: 'enablePerformance', label: 'Performance Analysis', description: 'Core Web Vitals and loading metrics' },
-    { key: 'enableAccessibility', label: 'Accessibility Audit', description: 'WCAG 2.1 compliance testing' },
-    { key: 'enableKeyboard', label: 'Keyboard Navigation', description: 'Keyboard accessibility evaluation' },
-    { key: 'enableUxHeuristics', label: 'UX Heuristics', description: 'Nielsen\'s usability principles' },
-    { key: 'enableBestPractices', label: 'Best Practices', description: 'Modern web development standards' },
-    { key: 'enableHealthAlerts', label: 'Health Alerts', description: 'Critical issues detection' },
-    { key: 'enableFunctional', label: 'Functional Testing', description: 'User journey validation' }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -397,17 +420,25 @@ export function AnalysisPage() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                   disabled={isAnalyzing}
+                  title={scenarios.find(s => s.path === config.scenarioFile)?.description || 'Select a scenario to see description'}
                 >
                   <option value="">Choose a scenario...</option>
                   {scenarios.map((scenario) => (
-                    <option key={scenario.filename} value={scenario.path}>
+                    <option key={scenario.filename} value={scenario.path} title={scenario.description}>
                       {scenario.name} - {scenario.description}
                     </option>
                   ))}
                 </select>
                 {scenarios.length === 0 && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    Loading scenarios...
+                  <p className="text-sm text-gray-500 mt-2 flex items-center">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading scenarios from backend...
+                  </p>
+                )}
+                {scenarios.length > 0 && (
+                  <p className="text-sm text-green-600 mt-2 flex items-center">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    {scenarios.length} scenarios loaded from API
                   </p>
                 )}
               </div>
@@ -421,27 +452,35 @@ export function AnalysisPage() {
             Analysis Modules
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {analysisModules.map((module) => (
-              <label
-                key={module.key}
-                className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={config[module.key as keyof AnalysisConfig] as boolean}
-                  onChange={(e) => setConfig(prev => ({ 
-                    ...prev, 
-                    [module.key]: e.target.checked 
-                  }))}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  disabled={isAnalyzing}
-                />
-                <div>
-                  <h3 className="font-medium text-gray-900">{module.label}</h3>
-                  <p className="text-sm text-gray-600">{module.description}</p>
-                </div>
-              </label>
-            ))}
+            {modules.map((module) => {
+              const configKey = `enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}` as keyof AnalysisConfig;
+              return (
+                <label
+                  key={module.key}
+                  className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={config[configKey] as boolean}
+                    onChange={(e) => setConfig(prev => ({ 
+                      ...prev, 
+                      [configKey]: e.target.checked 
+                    }))}
+                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    disabled={isAnalyzing}
+                  />
+                  <div>
+                    <h3 className="font-medium text-gray-900">{module.name}</h3>
+                    <p className="text-sm text-gray-600">{module.description}</p>
+                  </div>
+                </label>
+              );
+            })}
+            {modules.length === 0 && (
+              <p className="text-sm text-gray-500 col-span-2 text-center">
+                Loading analysis modules...
+              </p>
+            )}
           </div>
         </div>
 

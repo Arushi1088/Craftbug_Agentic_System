@@ -26,15 +26,61 @@ export interface UXIssue {
 }
 
 export interface AnalysisReport {
-  report_id: string;
+  report_id?: string;
   analysis_id: string;
   url?: string;
   timestamp: string;
-  status: string;
-  app_type: string;
-  total_issues: number;
-  ai_analysis_enabled: boolean;
-  ux_issues: UXIssue[];
+  status?: string;
+  app_type?: string;
+  type?: string;
+  scenario_file?: string;
+  overall_score?: number;
+  
+  // Real backend format fields
+  scenario_results?: Array<{
+    name: string;
+    score: number;
+    status: string;
+    duration_ms: number;
+    steps: Array<{
+      action: string;
+      status: string;
+      duration_ms: number;
+      analytics?: any[];
+      violations?: number;
+      scope?: string;
+      selector?: string;
+      url?: string;
+    }>;
+  }>;
+  
+  module_results?: Record<string, {
+    score: number;
+    threshold_met: boolean;
+    analytics_enabled: boolean;
+    findings: Array<{
+      type: string;
+      message: string;
+      severity: string;
+      element?: string;
+      recommendation: string;
+    }>;
+    recommendations: string[];
+  }>;
+  
+  metadata?: {
+    total_scenarios: number;
+    total_steps: number;
+    analysis_duration: number;
+    scenarios_passed: number;
+    analytics_features: any[];
+    deterministic_mode: boolean;
+  };
+  
+  // Legacy fields for backward compatibility
+  total_issues?: number;
+  ai_analysis_enabled?: boolean;
+  ux_issues?: UXIssue[];
   performance_metrics?: {
     load_time: number;
     page_size: number;
@@ -42,7 +88,6 @@ export interface AnalysisReport {
   };
   accessibility_score?: number;
   usability_score?: number;
-  overall_score?: number;
 }
 
 export interface DashboardAnalytics {
@@ -254,8 +299,38 @@ class APIClient {
   }
 
   // Utility Methods
-  async getScenarios(): Promise<string[]> {
-    return this.request<string[]>('/api/scenarios');
+  async getScenarios(): Promise<Array<{
+    filename: string;
+    path: string;
+    name: string;
+    description: string;
+  }>> {
+    const response = await this.request<{
+      scenarios: Array<{
+        filename: string;
+        path: string;
+        name: string;
+        description: string;
+      }>
+    }>('/api/scenarios');
+    return response.scenarios;
+  }
+
+  async getModules(): Promise<Array<{
+    key: string;
+    name: string;
+    description: string;
+    enabled: boolean;
+  }>> {
+    const response = await this.request<{
+      modules: Array<{
+        key: string;
+        name: string;
+        description: string;
+        enabled: boolean;
+      }>
+    }>('/api/modules');
+    return response.modules;
   }
 
   async getStatistics(): Promise<Record<string, any>> {
@@ -279,7 +354,7 @@ class APIClient {
         throw new Error('Server not responding');
       }
     } catch (error) {
-      throw new Error(`Health check failed: ${error.message}`);
+      throw new Error(`Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

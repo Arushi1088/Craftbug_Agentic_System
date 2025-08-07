@@ -644,6 +644,55 @@ async def get_scenarios():
         logger.error(f"Error loading scenarios: {e}")
         return {"scenarios": []}
 
+@app.get("/api/modules")
+async def get_available_modules():
+    """Get available analysis modules with descriptions"""
+    modules = [
+        {
+            "key": "performance",
+            "name": "Performance Analysis",
+            "description": "Core Web Vitals and loading metrics",
+            "enabled": True
+        },
+        {
+            "key": "accessibility", 
+            "name": "Accessibility Audit",
+            "description": "WCAG 2.1 compliance testing",
+            "enabled": True
+        },
+        {
+            "key": "keyboard",
+            "name": "Keyboard Navigation", 
+            "description": "Keyboard accessibility evaluation",
+            "enabled": True
+        },
+        {
+            "key": "ux_heuristics",
+            "name": "UX Heuristics",
+            "description": "Nielsen's usability principles", 
+            "enabled": True
+        },
+        {
+            "key": "best_practices",
+            "name": "Best Practices",
+            "description": "Modern web development standards",
+            "enabled": True
+        },
+        {
+            "key": "health_alerts", 
+            "name": "Health Alerts",
+            "description": "Critical issues detection",
+            "enabled": True
+        },
+        {
+            "key": "functional",
+            "name": "Functional Testing",
+            "description": "User journey validation", 
+            "enabled": False
+        }
+    ]
+    return {"modules": modules}
+
 @app.post("/api/reports/cleanup")
 async def cleanup_reports(days_to_keep: int = 30):
     """Clean up old reports"""

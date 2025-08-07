@@ -1,0 +1,184 @@
+{
+  "analysis_id": "902dac04",
+  "timestamp": "2025-08-07T16:48:59.486043",
+  "type": "url_scenario",
+  "url": "https://example.com",
+  "scenario_file": "YAML scenario",
+  "overall_score": 86,
+  "scenario_results": [
+    {
+      "name": "Home Page Navigation",
+      "score": 78,
+      "steps": [
+        {
+          "action": "navigate_to_url",
+          "status": "success",
+          "duration_ms": 119,
+          "analytics": [],
+          "url": "{url}"
+        },
+        {
+          "action": "wait_for_element",
+          "status": "success",
+          "duration_ms": 91,
+          "analytics": []
+        },
+        {
+          "action": "accessibility_scan",
+          "status": "success",
+          "duration_ms": 263,
+          "analytics": [],
+          "violations": 1,
+          "scope": "full_page"
+        }
+      ],
+      "duration_ms": 473,
+      "status": "warning"
+    },
+    {
+      "name": "Link Navigation Test",
+      "score": 86,
+      "steps": [
+        {
+          "action": "navigate_to_url",
+          "status": "warning",
+          "duration_ms": 141,
+          "analytics": [],
+          "url": "{url}"
+        },
+        {
+          "action": "find_links",
+          "status": "success",
+          "duration_ms": 203,
+          "analytics": []
+        },
+        {
+          "action": "test_navigation",
+          "status": "success",
+          "duration_ms": 219,
+          "analytics": []
+        }
+      ],
+      "duration_ms": 563,
+      "status": "passed"
+    }
+  ],
+  "module_results": {
+    "accessibility": {
+      "score": 81,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [
+        {
+          "type": "warning",
+          "message": "Low color contrast ratio detected (3.2:1)",
+          "severity": "medium",
+          "element": ".secondary-text",
+          "recommendation": "Increase contrast to meet WCAG AA standards (4.5:1)"
+        }
+      ],
+      "recommendations": [
+        "Add proper ARIA labels and roles",
+        "Ensure sufficient color contrast",
+        "Implement proper heading hierarchy"
+      ]
+    },
+    "performance": {
+      "score": 84,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [
+        {
+          "type": "warning",
+          "message": "Page load time exceeds 3 seconds",
+          "severity": "medium",
+          "element": "document",
+          "recommendation": "Optimize asset loading and reduce bundle size"
+        }
+      ],
+      "recommendations": [
+        "Implement lazy loading for images and components",
+        "Minimize and compress JavaScript and CSS files",
+        "Use CDN for static assets"
+      ]
+    },
+    "keyboard": {
+      "score": 80,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [
+        {
+          "type": "warning",
+          "message": "Missing visible focus indicators on interactive elements",
+          "severity": "medium",
+          "element": ".btn-secondary, .nav-link",
+          "recommendation": "Add clear focus indicators for keyboard navigation"
+        }
+      ],
+      "recommendations": [
+        "Ensure logical tab order",
+        "Add visible focus indicators",
+        "Implement keyboard shortcuts"
+      ]
+    },
+    "ux_heuristics": {
+      "score": 94,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [],
+      "recommendations": [
+        "Follow ux_heuristics best practices",
+        "Regularly audit ux_heuristics compliance",
+        "Implement ux_heuristics monitoring"
+      ]
+    },
+    "best_practices": {
+      "score": 89,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [
+        {
+          "type": "warning",
+          "message": "Missing meta viewport tag for mobile optimization",
+          "severity": "medium",
+          "element": "head section",
+          "recommendation": "Add responsive viewport meta tag"
+        }
+      ],
+      "recommendations": [
+        "Follow best_practices best practices",
+        "Regularly audit best_practices compliance",
+        "Implement best_practices monitoring"
+      ]
+    },
+    "health_alerts": {
+      "score": 92,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [],
+      "recommendations": [
+        "Follow health_alerts best practices",
+        "Regularly audit health_alerts compliance",
+        "Implement health_alerts monitoring"
+      ]
+    }
+  },
+  "analytics_config": {},
+  "thresholds": {},
+  "metadata": {
+    "total_scenarios": 2,
+    "total_steps": 6,
+    "analysis_duration": 1.036,
+    "scenarios_passed": 1,
+    "analytics_features": [],
+    "deterministic_mode": false
+  },
+  "storage_metadata": {
+    "analysis_id": "770e915e",
+    "saved_timestamp": "2025-08-07T16:48:59.487503",
+    "file_path": "reports/analysis/analysis_770e915e_20250807_164859.json",
+    "filename": "analysis_770e915e_20250807_164859.json",
+    "version": "2.0",
+    "file_size_bytes": 4998
+  }
+}

@@ -130,10 +130,18 @@ export function ReportPage() {
     try {
       const reportData = await fetchReport(id);
       setReport(reportData);
-      // Set first available module as active tab if overview not desired
-      if (reportData.ux_issues && reportData.ux_issues.length > 0) {
+      
+      // Determine active tab based on available data
+      if (reportData.module_results && Object.keys(reportData.module_results).length > 0) {
+        // Use first module from backend data
+        const moduleKeys = Object.keys(reportData.module_results);
+        setActiveTab(moduleKeys[0]);
+      } else if (reportData.ux_issues && reportData.ux_issues.length > 0) {
+        // Fallback to legacy format
         const issueTypes = [...new Set(reportData.ux_issues.map(issue => issue.type))];
         setActiveTab(issueTypes[0] || 'overview');
+      } else {
+        setActiveTab('overview');
       }
     } catch (err) {
       console.error('Failed to load report:', err);
@@ -210,15 +218,37 @@ export function ReportPage() {
     );
   }
 
-  // Group issues by type for tab navigation
+  // Group issues by type for tab navigation - handle both legacy and new format
   const issuesByType = report.ux_issues?.reduce((acc, issue) => {
     if (!acc[issue.type]) acc[issue.type] = [];
     acc[issue.type].push(issue);
     return acc;
   }, {} as Record<string, UXIssue[]>) || {};
 
-  const totalIssues = report.ux_issues?.length || 0;
-  const criticalIssues = report.ux_issues?.filter(issue => issue.severity === 'critical' || issue.severity === 'high').length || 0;
+  // Extract data from new backend format
+  const moduleResults = report.module_results || {};
+  const scenarioResults = report.scenario_results || [];
+  
+  // Calculate metrics from available data
+  const totalIssues = report.total_issues || 
+    report.ux_issues?.length || 
+    Object.values(moduleResults).reduce((sum, module) => sum + (module.findings?.length || 0), 0);
+    
+  const criticalIssues = report.ux_issues?.filter(issue => 
+    issue.severity === 'critical' || issue.severity === 'high'
+  ).length || 
+  Object.values(moduleResults).reduce((sum, module) => 
+    sum + (module.findings?.filter(f => f.severity === 'critical' || f.severity === 'high').length || 0), 0
+  );
+
+  const overallScore = report.overall_score || 
+    (Object.keys(moduleResults).length > 0 
+      ? Math.round(Object.values(moduleResults).reduce((sum, m) => sum + m.score, 0) / Object.keys(moduleResults).length)
+      : 75);
+
+  // Get scenarios that passed/failed
+  const scenariosPassed = scenarioResults.filter(s => s.status === 'completed' || s.status === 'passed').length;
+  const totalScenarios = scenarioResults.length;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -287,8 +317,8 @@ export function ReportPage() {
               <h3 className="text-lg font-semibold text-gray-900">Overall Score</h3>
               <p className="text-sm text-gray-600">Composite UX rating</p>
             </div>
-            <div className={`text-3xl font-bold ${getScoreColor(report.overall_score || 0)}`}>
-              {report.overall_score || 'N/A'}
+            <div className={`text-3xl font-bold ${getScoreColor(overallScore)}`}>
+              {overallScore}
             </div>
           </div>
         </div>
@@ -344,6 +374,26 @@ export function ReportPage() {
             >
               Overview
             </button>
+            {/* Module tabs from backend data */}
+            {Object.keys(moduleResults).map((moduleKey) => (
+              <button
+                key={moduleKey}
+                onClick={() => setActiveTab(moduleKey)}
+                className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center ${
+                  activeTab === moduleKey
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {moduleIcons[moduleKey] || <AlertTriangle className="w-5 h-5" />}
+                <span className="ml-2 capitalize">{moduleNames[moduleKey] || moduleKey.replace('_', ' ')}</span>
+                <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                  {moduleResults[moduleKey].findings?.length || 0}
+                </span>
+              </button>
+            ))}
+            
+            {/* Legacy issue type tabs */}
             {Object.keys(issuesByType).map((type) => (
               <button
                 key={type}
@@ -368,7 +418,7 @@ export function ReportPage() {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Issues Summary Chart */}
-              {Object.keys(issuesByType).length > 0 && (
+              {(Object.keys(moduleResults).length > 0 || Object.keys(issuesByType).length > 0) && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Issues by Category
@@ -376,14 +426,23 @@ export function ReportPage() {
                   <Plot
                     data={[
                       {
-                        x: Object.keys(issuesByType).map(type => type.replace('_', ' ')),
-                        y: Object.values(issuesByType).map(issues => issues.length),
+                        x: Object.keys(moduleResults).length > 0 
+                          ? Object.keys(moduleResults).map(key => moduleNames[key] || key.replace('_', ' '))
+                          : Object.keys(issuesByType).map(type => type.replace('_', ' ')),
+                        y: Object.keys(moduleResults).length > 0
+                          ? Object.values(moduleResults).map(module => module.findings?.length || 0)
+                          : Object.values(issuesByType).map(issues => issues.length),
                         type: 'bar',
                         marker: {
-                          color: Object.values(issuesByType).map(issues => {
-                            const criticalCount = issues.filter(i => i.severity === 'critical' || i.severity === 'high').length;
-                            return criticalCount > 0 ? '#ef4444' : '#3b82f6';
-                          })
+                          color: Object.keys(moduleResults).length > 0
+                            ? Object.values(moduleResults).map(module => {
+                                const criticalCount = module.findings?.filter(f => f.severity === 'critical' || f.severity === 'high').length || 0;
+                                return criticalCount > 0 ? '#ef4444' : '#3b82f6';
+                              })
+                            : Object.values(issuesByType).map(issues => {
+                                const criticalCount = issues.filter(i => i.severity === 'critical' || i.severity === 'high').length;
+                                return criticalCount > 0 ? '#ef4444' : '#3b82f6';
+                              })
                         }
                       }
                     ]}
@@ -400,44 +459,193 @@ export function ReportPage() {
                 </div>
               )}
 
+              {/* Scenario Results Overview */}
+              {scenarioResults.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Scenario Test Results
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {scenarioResults.map((scenario, index) => (
+                      <div key={index} className="bg-white border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900 truncate">{scenario.name}</h4>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            scenario.status === 'completed' || scenario.status === 'passed' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {scenario.status}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div className="flex justify-between">
+                            <span>Score:</span>
+                            <span className={`font-medium ${getScoreColor(scenario.score)}`}>
+                              {scenario.score}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Duration:</span>
+                            <span>{scenario.duration_ms}ms</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Steps:</span>
+                            <span>{scenario.steps?.length || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Recent Issues */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Recent Issues Found
                 </h3>
                 <div className="space-y-3">
-                  {report.ux_issues?.slice(0, 5).map((issue) => (
-                    <div
-                      key={issue.issue_id}
-                      className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)}`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{issue.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
-                          {issue.location && (
-                            <p className="text-xs text-gray-500 mt-1">Location: {issue.location}</p>
-                          )}
+                  {/* Show issues from module results if available */}
+                  {Object.keys(moduleResults).length > 0 ? (
+                    Object.entries(moduleResults).slice(0, 5).flatMap(([moduleKey, module]) => 
+                      module.findings?.slice(0, 2).map((finding, index) => (
+                        <div
+                          key={`${moduleKey}-${index}`}
+                          className={`p-4 rounded-lg border ${getSeverityColor(finding.severity)}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">
+                                [{moduleNames[moduleKey] || moduleKey}] {finding.type}
+                              </h4>
+                              <p className="text-sm text-gray-600 mt-1">{finding.message}</p>
+                              {finding.element && (
+                                <p className="text-xs text-gray-500 mt-1">Element: {finding.element}</p>
+                              )}
+                            </div>
+                            <div className="ml-4 text-right">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
+                                {finding.severity}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="ml-4 text-right">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
-                            {issue.severity}
-                          </span>
-                          <FixNowButton 
-                            issue={issue} 
-                            reportId={reportId!} 
-                            onFixApplied={onFixApplied}
-                          />
+                      )) || []
+                    )
+                  ) : (
+                    /* Fallback to legacy format */
+                    report.ux_issues?.slice(0, 5).map((issue) => (
+                      <div
+                        key={issue.issue_id}
+                        className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)}`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{issue.title}</h4>
+                            <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                            {issue.location && (
+                              <p className="text-xs text-gray-500 mt-1">Location: {issue.location}</p>
+                            )}
+                          </div>
+                          <div className="ml-4 text-right">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
+                              {issue.severity}
+                            </span>
+                            <FixNowButton 
+                              issue={issue} 
+                              reportId={reportId!} 
+                              onFixApplied={onFixApplied}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )) || []
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {activeTab !== 'overview' && issuesByType[activeTab] && (
+          {/* Module results view (new backend format) */}
+          {activeTab !== 'overview' && moduleResults[activeTab] && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {moduleNames[activeTab] || activeTab.replace('_', ' ')} Analysis 
+                  ({moduleResults[activeTab].findings?.length || 0} findings)
+                </h3>
+                <div className="text-sm text-gray-600 flex items-center space-x-4">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    moduleResults[activeTab].score >= 80 ? 'bg-green-100 text-green-800' :
+                    moduleResults[activeTab].score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    Score: {moduleResults[activeTab].score}
+                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    moduleResults[activeTab].threshold_met ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {moduleResults[activeTab].threshold_met ? 'Threshold Met' : 'Below Threshold'}
+                  </span>
+                  {moduleResults[activeTab].analytics_enabled && (
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Analytics Enabled
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Module Findings */}
+              <div className="space-y-4">
+                {moduleResults[activeTab].findings?.map((finding, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg border ${getSeverityColor(finding.severity)}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{finding.type}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{finding.message}</p>
+                        {finding.element && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            <span className="font-medium">Element:</span> {finding.element}
+                          </p>
+                        )}
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-gray-700 mb-1">Recommendation:</p>
+                          <p className="text-xs text-gray-600">{finding.recommendation}</p>
+                        </div>
+                      </div>
+                      <div className="ml-4 text-right">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
+                          {finding.severity}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Module Recommendations */}
+              {moduleResults[activeTab].recommendations && moduleResults[activeTab].recommendations.length > 0 && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Module Recommendations:</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    {moduleResults[activeTab].recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="mr-2">•</span>
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Legacy issues view */}
+          {activeTab !== 'overview' && issuesByType[activeTab] && !moduleResults[activeTab] && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">
