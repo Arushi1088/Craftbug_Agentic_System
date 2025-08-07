@@ -11,7 +11,6 @@ import {
 import {
   AlertTriangle,
   CheckCircle,
-  ExternalLink,
   RefreshCw,
   Eye,
   TrendingUp,
@@ -22,6 +21,8 @@ import {
   Activity
 } from 'lucide-react';
 import { useReportsSummary, useConnectionStatus } from '../hooks/useAPI';
+import { IssueTable } from '../components/IssueTable';
+import { IssueDetailPanel } from '../components/IssueDetailPanel';
 
 const COLORS = {
   primary: '#3b82f6',
@@ -141,44 +142,6 @@ function FixHistoryTimeline({ history }: FixHistoryProps) {
   );
 }
 
-// Issue Status Badge Component
-interface StatusBadgeProps {
-  status: 'open' | 'fixed' | 'ignored';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-}
-
-function StatusBadge({ status, severity }: StatusBadgeProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'fixed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'ignored': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'open': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  return (
-    <div className="flex items-center space-x-2">
-      <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(status)}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-      <span className={`px-2 py-1 text-xs font-medium rounded border ${getSeverityColor(severity)}`}>
-        {severity.charAt(0).toUpperCase() + severity.slice(1)}
-      </span>
-    </div>
-  );
-}
-
 // Main ADO Dashboard Page Component
 export function AdoDashboardPage() {
   const { summary, loading, error, availableFilters, fetchSummary } = useReportsSummary();
@@ -190,6 +153,8 @@ export function AdoDashboardPage() {
   const [selectedReport, setSelectedReport] = useState<string>('');
   const [screenshotModal, setScreenshotModal] = useState<{isOpen: boolean, issue?: EnhancedIssue}>({isOpen: false});
   const [showTimeline, setShowTimeline] = useState<string | null>(null);
+  const [selectedIssue, setSelectedIssue] = useState<EnhancedIssue | null>(null);
+  const [showDetailPanel, setShowDetailPanel] = useState(false);
 
   // Convert summary data to enhanced issues for granular management
   const enhancedIssues = useMemo(() => {
@@ -241,6 +206,19 @@ export function AdoDashboardPage() {
       return true;
     });
   }, [enhancedIssues, statusFilter, selectedModule, selectedReport]);
+
+  // Handle issue status changes
+  const handleStatusChange = (issueId: string, newStatus: 'open' | 'fixed' | 'ignored') => {
+    // In a real app, this would update the backend
+    console.log(`Changing issue ${issueId} status to ${newStatus}`);
+    // For now, we'll just log it - the actual implementation would update the state
+  };
+
+  // Handle issue selection for detailed view
+  const handleIssueSelect = (issue: EnhancedIssue) => {
+    setSelectedIssue(issue);
+    setShowDetailPanel(true);
+  };
 
   // Calculate stats for filtered issues
   const filteredStats = useMemo(() => {
@@ -464,79 +442,14 @@ export function AdoDashboardPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Issue Triage Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Issue Triage Table</h3>
-          <p className="text-sm text-gray-600">{filteredIssues.length} issues found</p>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredIssues.slice(0, 10).map((issue) => (
-                <tr key={issue.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{issue.title}</div>
-                      <div className="text-sm text-gray-500">{issue.element}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {issue.module}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={issue.status} severity={issue.severity} />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(issue.timestamp).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    {issue.screenshot_path && (
-                      <button
-                        onClick={() => setScreenshotModal({isOpen: true, issue})}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View Screenshot"
-                      >
-                        <Camera className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setShowTimeline(showTimeline === issue.id ? null : issue.id)}
-                      className="text-purple-600 hover:text-purple-900"
-                      title="View Timeline"
-                    >
-                      <Clock className="w-4 h-4" />
-                    </button>
-                    {issue.ado_link && (
-                      <a
-                        href={issue.ado_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-600 hover:text-green-900"
-                        title="Open in ADO"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Enhanced Issue Triage Table */}
+      <IssueTable
+        issues={filteredIssues}
+        onIssueSelect={handleIssueSelect}
+        onScreenshotView={(issue) => setScreenshotModal({isOpen: true, issue})}
+        onTimelineView={(issue) => setShowTimeline(showTimeline === issue.id ? null : issue.id)}
+        onStatusChange={handleStatusChange}
+      />
 
       {/* Fix History Timeline (Expandable) */}
       {showTimeline && (
@@ -567,6 +480,18 @@ export function AdoDashboardPage() {
         onClose={() => setScreenshotModal({isOpen: false})}
         screenshotPath={screenshotModal.issue?.screenshot_path}
         issueTitle={screenshotModal.issue?.title || ''}
+      />
+
+      {/* Issue Detail Panel */}
+      <IssueDetailPanel
+        issue={selectedIssue}
+        isOpen={showDetailPanel}
+        onClose={() => {
+          setShowDetailPanel(false);
+          setSelectedIssue(null);
+        }}
+        onStatusChange={handleStatusChange}
+        onScreenshotView={(issue) => setScreenshotModal({isOpen: true, issue})}
       />
     </div>
   );
