@@ -28,6 +28,11 @@ class UXIssue:
     scenario_title: str
     reproduction_steps: List[str] = None
     acceptance_criteria: List[str] = None
+    # Azure DevOps integration metadata
+    ado_work_item_id: Optional[str] = None
+    ado_status: Optional[str] = None
+    ado_url: Optional[str] = None
+    ado_created_date: Optional[str] = None
 
 @dataclass
 class WorkItemConfig:
@@ -121,11 +126,23 @@ class AzureDevOpsClient:
             
             if response.status_code == 200:
                 work_item = response.json()
+                work_item_id = str(work_item.get("id"))
+                work_item_url = work_item.get("_links", {}).get("html", {}).get("href", "")
+                work_item_state = work_item.get("fields", {}).get("System.State", "New")
+                
+                # Update the UXIssue object with ADO metadata
+                ux_issue.ado_work_item_id = work_item_id
+                ux_issue.ado_status = work_item_state
+                ux_issue.ado_url = work_item_url
+                ux_issue.ado_created_date = datetime.now().isoformat()
+                
                 return {
                     "success": True,
-                    "work_item_id": work_item.get("id"),
-                    "work_item_url": work_item.get("_links", {}).get("html", {}).get("href", ""),
-                    "title": ux_issue.title
+                    "work_item_id": work_item_id,
+                    "work_item_url": work_item_url,
+                    "work_item_state": work_item_state,
+                    "title": ux_issue.title,
+                    "ux_issue": ux_issue  # Return updated UXIssue with ADO metadata
                 }
             else:
                 return {
@@ -238,15 +255,24 @@ class AzureDevOpsClient:
     def _create_demo_work_item(self, ux_issue: UXIssue, config: WorkItemConfig) -> Dict[str, Any]:
         """Create demo work item response when not connected to ADO"""
         
-        demo_id = hash(f"{ux_issue.title}{datetime.now()}") % 10000
+        demo_id = str(hash(f"{ux_issue.title}{datetime.now()}") % 10000)
+        demo_url = f"https://dev.azure.com/{self.organization}/{self.project}/_workitems/edit/{demo_id}"
+        
+        # Update the UXIssue object with demo ADO metadata
+        ux_issue.ado_work_item_id = demo_id
+        ux_issue.ado_status = "New"
+        ux_issue.ado_url = demo_url
+        ux_issue.ado_created_date = datetime.now().isoformat()
         
         return {
             "success": True,
             "work_item_id": demo_id,
-            "work_item_url": f"https://dev.azure.com/{self.organization}/{self.project}/_workitems/edit/{demo_id}",
+            "work_item_url": demo_url,
+            "work_item_state": "New",
             "title": ux_issue.title,
             "demo_mode": True,
-            "note": "Demo mode - work item not actually created in Azure DevOps"
+            "note": "Demo mode - work item not actually created in Azure DevOps",
+            "ux_issue": ux_issue  # Return updated UXIssue with ADO metadata
         }
     
     def create_bulk_work_items(self, ux_issues: List[UXIssue], config: WorkItemConfig = None) -> Dict[str, Any]:
@@ -609,11 +635,80 @@ class UXAnalysisToADOConverter:
         # Create work items in bulk
         sync_results = self.ado_client.create_bulk_work_items(ux_issues, config)
         
+        # Update the original analysis file with ADO metadata
+        if sync_results['successful_creations'] > 0:
+            self._update_analysis_with_ado_metadata(analysis_file, ux_issues)
+        
         print(f"✅ Successfully created {sync_results['successful_creations']} work items")
         if sync_results['failed_creations'] > 0:
             print(f"❌ Failed to create {sync_results['failed_creations']} work items")
         
         return sync_results
+
+    def _update_analysis_with_ado_metadata(self, analysis_file: str, ux_issues: List[UXIssue]):
+        """Update the analysis file with ADO metadata from created work items"""
+        try:
+            import json
+            
+            # Load the original analysis file
+            with open(analysis_file, 'r') as f:
+                analysis_data = json.load(f)
+            
+            # Create a mapping of UX issues to their ADO metadata
+            ado_metadata_map = {}
+            for ux_issue in ux_issues:
+                if ux_issue.ado_work_item_id:
+                    # Create a unique key for this issue
+                    issue_key = f"{ux_issue.category}_{ux_issue.title}_{ux_issue.severity}"
+                    ado_metadata_map[issue_key] = {
+                        "ado_work_item_id": ux_issue.ado_work_item_id,
+                        "ado_status": ux_issue.ado_status,
+                        "ado_url": ux_issue.ado_url,
+                        "ado_created_date": ux_issue.ado_created_date
+                    }
+            
+            # Update module_results findings with ADO metadata
+            if "module_results" in analysis_data:
+                for module_name, module_data in analysis_data["module_results"].items():
+                    if "findings" in module_data:
+                        for finding in module_data["findings"]:
+                            finding_key = f"{module_name}_{finding.get('message', '')}_{finding.get('severity', '')}"
+                            if finding_key in ado_metadata_map:
+                                finding.update(ado_metadata_map[finding_key])
+            
+            # Update legacy ux_issues array with ADO metadata 
+            if "ux_issues" in analysis_data:
+                for issue in analysis_data["ux_issues"]:
+                    issue_key = f"{issue.get('category', '')}_{issue.get('title', '')}_{issue.get('severity', '')}"
+                    if issue_key in ado_metadata_map:
+                        issue.update(ado_metadata_map[issue_key])
+            
+            # Update scenario craft_bugs with ADO metadata
+            if "scenario_results" in analysis_data:
+                for scenario in analysis_data["scenario_results"]:
+                    if "steps" in scenario:
+                        for step in scenario["steps"]:
+                            if "craft_bugs" in step:
+                                for bug in step["craft_bugs"]:
+                                    bug_key = f"{bug.get('category', '')}_{bug.get('title', '')}_{bug.get('severity', '')}"
+                                    if bug_key in ado_metadata_map:
+                                        bug.update(ado_metadata_map[bug_key])
+            
+            # Add ADO sync metadata to the analysis
+            analysis_data.setdefault("ado_integration", {}).update({
+                "last_sync_date": datetime.now().isoformat(),
+                "work_items_created": len([ux for ux in ux_issues if ux.ado_work_item_id]),
+                "sync_status": "completed"
+            })
+            
+            # Save the updated analysis back to file
+            with open(analysis_file, 'w') as f:
+                json.dump(analysis_data, f, indent=2)
+            
+            print(f"📝 Updated analysis file with ADO metadata for {len(ado_metadata_map)} issues")
+            
+        except Exception as e:
+            logger.error(f"Failed to update analysis file with ADO metadata: {e}")
 
 def main():
     """Main execution for Azure DevOps integration testing"""
