@@ -6,6 +6,7 @@ import { ReportPage } from './pages/ReportPage';
 import { AnalysisLoadingPage } from './pages/AnalysisLoadingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EnhancedDashboardPage } from './pages/EnhancedDashboardPage';
+import { AdoDashboardPage } from './pages/AdoDashboardPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/report/:reportId" element={<ReportPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/dashboard/enhanced" element={<EnhancedDashboardPage />} />
+            <Route path="/dashboard/ado" element={<AdoDashboardPage />} />
           </Routes>
         </main>
       </div>
