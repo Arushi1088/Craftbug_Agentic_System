@@ -23,6 +23,11 @@ export interface UXIssue {
   fix_applied?: boolean;
   fix_timestamp?: string;
   fix_suggestions?: string[];
+  // Azure DevOps integration metadata
+  ado_work_item_id?: string;
+  ado_status?: string;
+  ado_url?: string;
+  ado_created_date?: string;
 }
 
 export interface AnalysisReport {

@@ -30,6 +30,11 @@ interface ModuleFinding {
   recommendation: string;
   fixed?: boolean;
   fix_timestamp?: string;
+  // Azure DevOps integration metadata
+  ado_work_item_id?: string;
+  ado_status?: string;
+  ado_url?: string;
+  ado_created_date?: string;
 }
 
 // Interface for scenario step data
@@ -61,6 +66,56 @@ const moduleNames: { [key: string]: string } = {
   best_practices: 'Best Practices',
   health_alerts: 'Health Alerts',
   functional: 'Functional Testing'
+};
+
+// ADO Integration Status Component
+const ADOStatus: React.FC<{ 
+  ado_work_item_id?: string;
+  ado_status?: string;
+  ado_url?: string;
+  ado_created_date?: string;
+}> = ({ ado_work_item_id, ado_status, ado_url, ado_created_date }) => {
+  if (!ado_work_item_id) return null;
+
+  const getStatusColor = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case 'resolved':
+      case 'closed':
+        return 'bg-green-100 text-green-800';
+      case 'active':
+      case 'new':
+        return 'bg-blue-100 text-blue-800';
+      case 'in progress':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-1">
+        <ExternalLink className="w-3 h-3 text-blue-600" />
+        {ado_url ? (
+          <a 
+            href={ado_url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            ADO #{ado_work_item_id}
+          </a>
+        ) : (
+          <span className="text-gray-600 font-medium">ADO #{ado_work_item_id}</span>
+        )}
+      </div>
+      {ado_status && (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ado_status)}`}>
+          {ado_status}
+        </span>
+      )}
+    </div>
+  );
 };
 
 // Fix Now Button Component for Legacy Issues
@@ -516,6 +571,55 @@ export function ReportPage() {
                 </div>
               )}
               
+              {/* ADO Integration Summary */}
+              {(report as any)?.ado_integration && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Azure DevOps Integration
+                  </h3>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <ExternalLink className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Work Items Created:</span>
+                            <span className="ml-2 font-medium text-gray-900">
+                              {(report as any).ado_integration.work_items_created || 0}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Last Sync:</span>
+                            <span className="ml-2 font-medium text-gray-900">
+                              {(report as any).ado_integration.last_sync_date 
+                                ? new Date((report as any).ado_integration.last_sync_date).toLocaleDateString()
+                                : 'Never'
+                              }
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Sync Status:</span>
+                            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                              (report as any).ado_integration.sync_status === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {(report as any).ado_integration.sync_status || 'Unknown'}
+                            </span>
+                          </div>
+                        </div>
+                        {(report as any).ado_integration.work_items_created > 0 && (
+                          <p className="text-xs text-gray-600 mt-2">
+                            UX issues have been automatically synchronized with Azure DevOps work items. 
+                            See individual issues for work item links and status updates.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {/* Issues Summary Chart */}
               {(Object.keys(moduleResults).length > 0 || Object.keys(issuesByType).length > 0) && (
                 <div>
@@ -854,6 +958,17 @@ export function ReportPage() {
                             <p className="text-xs font-medium text-gray-700 mb-1">Recommendation:</p>
                             <p className="text-xs text-gray-600">{finding.recommendation}</p>
                           </div>
+                          
+                          {/* ADO Integration Status */}
+                          <div className="mt-2">
+                            <ADOStatus 
+                              ado_work_item_id={(finding as any).ado_work_item_id}
+                              ado_status={(finding as any).ado_status}
+                              ado_url={(finding as any).ado_url}
+                              ado_created_date={(finding as any).ado_created_date}
+                            />
+                          </div>
+                          
                           {/* Show fix timestamp if available */}
                           {(finding as any).fixed && (finding as any).fix_timestamp && (
                             <div className="text-xs text-gray-500 mt-2">
@@ -960,6 +1075,17 @@ export function ReportPage() {
                               </ul>
                             </div>
                           )}
+                          
+                          {/* ADO Integration Status */}
+                          <div className="mt-2">
+                            <ADOStatus 
+                              ado_work_item_id={issue.ado_work_item_id}
+                              ado_status={issue.ado_status}
+                              ado_url={issue.ado_url}
+                              ado_created_date={issue.ado_created_date}
+                            />
+                          </div>
+                          
                           {issue.fix_applied && issue.fix_timestamp && (
                             <div className="text-xs text-gray-500 mt-2">
                               Fixed on: {new Date(issue.fix_timestamp).toLocaleString()}
