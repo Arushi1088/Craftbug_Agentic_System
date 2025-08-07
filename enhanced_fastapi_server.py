@@ -7,6 +7,7 @@ Provides API endpoints with real browser automation and craft bug detection
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 import json
@@ -61,6 +62,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for serving screenshots
+app.mount("/reports", StaticFiles(directory="reports"), name="reports")
 
 # Include orchestrator routes if available
 if orchestrator_router:
