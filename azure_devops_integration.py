@@ -6,11 +6,15 @@ Connects UX analysis results with Azure DevOps work items and dashboards
 
 import os
 import json
+import logging
 import requests
 import base64
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 @dataclass
 class UXIssue:
@@ -278,6 +282,197 @@ class AzureDevOpsClient:
                 })
         
         return results
+    
+    def update_work_item(self, work_item_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Update an existing work item in Azure DevOps"""
+        if not self.authenticated:
+            return self._create_demo_update_response(work_item_id, updates)
+            
+        try:
+            url = f"{self.base_url}/wit/workitems/{work_item_id}?api-version={self.api_version}"
+            
+            # Convert updates to ADO patch format
+            patch_data = []
+            for field, value in updates.items():
+                if field == "status":
+                    patch_data.append({
+                        "op": "replace",
+                        "path": "/fields/System.State",
+                        "value": value
+                    })
+                elif field == "title":
+                    patch_data.append({
+                        "op": "replace", 
+                        "path": "/fields/System.Title",
+                        "value": value
+                    })
+                elif field == "description":
+                    patch_data.append({
+                        "op": "replace",
+                        "path": "/fields/System.Description", 
+                        "value": value
+                    })
+                elif field == "tags":
+                    patch_data.append({
+                        "op": "replace",
+                        "path": "/fields/System.Tags",
+                        "value": value
+                    })
+                elif field.startswith("custom_"):
+                    # Handle custom fields
+                    field_name = field.replace("custom_", "")
+                    patch_data.append({
+                        "op": "replace",
+                        "path": f"/fields/{field_name}",
+                        "value": value
+                    })
+            
+            headers = {
+                "Content-Type": "application/json-patch+json",
+                "Authorization": f"Basic {base64.b64encode(f'{self.username}:{self.pat}'.encode()).decode()}"
+            }
+            
+            response = requests.patch(url, json=patch_data, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "updated_fields": list(updates.keys()),
+                "response": response.json()
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to update work item {work_item_id}: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "work_item_id": work_item_id
+            }
+
+    def attach_screenshot(self, work_item_id: str, screenshot_path: str, filename: str = None) -> Dict[str, Any]:
+        """Attach a screenshot to an existing work item"""
+        if not self.authenticated:
+            return self._create_demo_attachment_response(work_item_id, screenshot_path, filename)
+            
+        try:
+            import os
+            if not os.path.exists(screenshot_path):
+                raise FileNotFoundError(f"Screenshot file not found: {screenshot_path}")
+            
+            # Step 1: Upload the attachment
+            upload_url = f"{self.base_url}/wit/attachments?fileName={filename or os.path.basename(screenshot_path)}&api-version={self.api_version}"
+            
+            headers = {
+                "Content-Type": "application/octet-stream",
+                "Authorization": f"Basic {base64.b64encode(f'{self.username}:{self.pat}'.encode()).decode()}"
+            }
+            
+            with open(screenshot_path, 'rb') as file:
+                upload_response = requests.post(upload_url, data=file, headers=headers, timeout=60)
+                upload_response.raise_for_status()
+            
+            attachment_ref = upload_response.json()
+            
+            # Step 2: Link the attachment to the work item
+            link_url = f"{self.base_url}/wit/workitems/{work_item_id}?api-version={self.api_version}"
+            
+            patch_data = [{
+                "op": "add",
+                "path": "/relations/-",
+                "value": {
+                    "rel": "AttachedFile",
+                    "url": attachment_ref["url"],
+                    "attributes": {
+                        "comment": "UX Analysis Screenshot",
+                        "name": filename or os.path.basename(screenshot_path)
+                    }
+                }
+            }]
+            
+            headers = {
+                "Content-Type": "application/json-patch+json",
+                "Authorization": f"Basic {base64.b64encode(f'{self.username}:{self.pat}'.encode()).decode()}"
+            }
+            
+            link_response = requests.patch(link_url, json=patch_data, headers=headers, timeout=30)
+            link_response.raise_for_status()
+            
+            return {
+                "success": True,
+                "work_item_id": work_item_id,
+                "attachment_id": attachment_ref["id"],
+                "attachment_url": attachment_ref["url"],
+                "filename": filename or os.path.basename(screenshot_path)
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to attach screenshot to work item {work_item_id}: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "work_item_id": work_item_id,
+                "screenshot_path": screenshot_path
+            }
+
+    def mark_issue_fixed(self, work_item_id: str, fix_details: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Mark a UX issue as fixed in Azure DevOps"""
+        try:
+            # Prepare update data
+            updates = {
+                "status": "Resolved",
+                "tags": "UX-Analysis; Fixed; Automated"
+            }
+            
+            if fix_details:
+                # Add fix details to description/comments
+                fix_summary = f"\n\n--- FIX APPLIED ---\n"
+                fix_summary += f"Fixed on: {fix_details.get('timestamp', 'N/A')}\n"
+                fix_summary += f"Fix type: {fix_details.get('fix_type', 'N/A')}\n"
+                if fix_details.get('fix_suggestions'):
+                    fix_summary += f"Applied fixes: {', '.join(fix_details['fix_suggestions'])}\n"
+                
+                updates["description"] = f"Original issue description...\n{fix_summary}"
+            
+            return self.update_work_item(work_item_id, updates)
+            
+        except Exception as e:
+            logger.error(f"Failed to mark work item {work_item_id} as fixed: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "work_item_id": work_item_id
+            }
+
+    def _create_demo_update_response(self, work_item_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a demo response for work item updates"""
+        return {
+            "success": True,
+            "work_item_id": work_item_id,
+            "updated_fields": list(updates.keys()),
+            "demo_mode": True,
+            "response": {
+                "id": work_item_id,
+                "url": f"https://dev.azure.com/demo-org/demo-project/_workitems/edit/{work_item_id}",
+                "fields": {
+                    "System.State": updates.get("status", "Active"),
+                    "System.Title": updates.get("title", "Demo UX Issue"),
+                    "System.Tags": updates.get("tags", "UX-Analysis")
+                }
+            }
+        }
+
+    def _create_demo_attachment_response(self, work_item_id: str, screenshot_path: str, filename: str = None) -> Dict[str, Any]:
+        """Create a demo response for screenshot attachments"""
+        import os
+        return {
+            "success": True,
+            "work_item_id": work_item_id,
+            "attachment_id": f"demo-attachment-{work_item_id}",
+            "attachment_url": f"https://dev.azure.com/demo-org/demo-project/_apis/wit/attachments/demo-{work_item_id}",
+            "filename": filename or os.path.basename(screenshot_path),
+            "demo_mode": True
+        }
     
     def get_project_work_items(self, query_filter: str = None) -> List[Dict[str, Any]]:
         """Retrieve work items from the project"""
