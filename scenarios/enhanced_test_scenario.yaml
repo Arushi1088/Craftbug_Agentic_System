@@ -1,0 +1,140 @@
+name: "Enhanced UX Test Scenario"
+description: "Comprehensive test scenario for enhanced UX analysis with craft bug detection"
+
+tests:
+  enhanced_ux_test:
+    description: "Enhanced UX analysis test with realistic user interactions"
+    
+    analytics:
+      performance:
+        enabled: true
+        core_web_vitals: true
+        page_load_timing: true
+        interaction_tracking: true
+      
+      accessibility:
+        enabled: true
+        wcag_level: "AA" 
+        color_contrast: true
+        keyboard_navigation: true
+        screen_reader_compat: true
+      
+      craft_bug_detection:
+        enabled: true
+        navigation_confusion: true
+        unclear_labeling: true
+        cognitive_overload: true
+        accessibility_gaps: true
+      
+      realistic_execution:
+        enabled: true
+        browser_automation: true
+        screenshot_capture: true
+        performance_monitoring: true
+
+    thresholds:
+      overall_score: 80
+      performance: 75
+      accessibility: 85
+      craft_bugs_max: 3
+
+    scenarios:
+      - name: "Basic Navigation and Interaction"
+        description: "Test basic page navigation and user interactions"
+        steps:
+          - action: "navigate_to_url"
+            url: "{server_url}"
+            analytics: ["performance", "accessibility"]
+          
+          - action: "wait"
+            duration: 2000
+            description: "Wait for page to fully load"
+          
+          - action: "screenshot"
+            description: "Capture initial page state"
+            analytics: ["craft_bug_detection"]
+          
+          - action: "scroll"
+            direction: "down"
+            amount: 500
+            description: "Scroll down to reveal more content"
+          
+          - action: "wait"
+            duration: 1000
+            description: "Brief pause after scrolling"
+          
+          - action: "screenshot"
+            description: "Capture scrolled state"
+
+      - name: "Form Interaction Test"
+        description: "Test form interactions and input validation"
+        steps:
+          - action: "navigate_to_url"
+            url: "{server_url}"
+          
+          - action: "click"
+            selector: "input[type='text'], input[type='email'], textarea, [contenteditable]"
+            description: "Click on first available input field"
+            analytics: ["accessibility", "craft_bug_detection"]
+          
+          - action: "type"
+            selector: "input[type='text'], input[type='email'], textarea, [contenteditable]"
+            text: "Test input for UX analysis"
+            description: "Enter test data"
+            analytics: ["performance"]
+          
+          - action: "wait"
+            duration: 500
+            description: "Brief pause after typing"
+          
+          - action: "screenshot"
+            description: "Capture form with input"
+
+      - name: "Navigation and Menu Test"
+        description: "Test navigation elements and menu interactions"
+        steps:
+          - action: "navigate_to_url"
+            url: "{server_url}"
+          
+          - action: "click"
+            selector: "nav, .navigation, .menu, [role='navigation'], .navbar"
+            description: "Click on navigation element"
+            analytics: ["craft_bug_detection", "accessibility"]
+          
+          - action: "wait"
+            duration: 1000
+            description: "Wait for navigation response"
+          
+          - action: "hover"
+            selector: "a, button, [role='button']"
+            description: "Hover over interactive elements"
+            analytics: ["accessibility"]
+          
+          - action: "screenshot"
+            description: "Capture navigation state"
+
+      - name: "Accessibility and UX Validation"
+        description: "Comprehensive accessibility and UX checks"
+        steps:
+          - action: "navigate_to_url"
+            url: "{server_url}"
+          
+          - action: "wait"
+            duration: 1500
+            description: "Allow full page load"
+          
+          - action: "assert_element_visible"
+            selector: "main, [role='main'], .main-content"
+            description: "Verify main content is visible"
+          
+          - action: "click"
+            selector: "button, [role='button'], .btn"
+            description: "Test button interactions"
+            analytics: ["craft_bug_detection"]
+          
+          - action: "wait"
+            duration: 500
+            description: "Wait for button response"
+          
+          - action: "screenshot"
+            description: "Final state capture"

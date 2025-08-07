@@ -1,0 +1,30 @@
+# Environment files with API keys
+.env
+production.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Test results
+test_results_*.json
+reports/screenshots/
+
+# Backup files
+*.backup
+*.save

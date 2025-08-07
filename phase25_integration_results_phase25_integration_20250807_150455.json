@@ -1,0 +1,67 @@
+{
+  "test_run_id": "phase25_integration_20250807_150455",
+  "timestamp": "2025-08-07T15:04:55.276354",
+  "phase": "2.5",
+  "description": "Azure DevOps Dashboard Integration",
+  "components_tested": [
+    "azure_devops_integration",
+    "ux_analytics_dashboard",
+    "enhanced_ai_integration"
+  ],
+  "test_results": {
+    "azure_devops": {
+      "ado_client_init": true,
+      "converter_init": true,
+      "mock_issue_creation": false,
+      "bulk_operations": false
+    },
+    "dashboard": {
+      "dashboard_init": true,
+      "database_init": true,
+      "analytics_generation": true,
+      "alert_system": true
+    },
+    "ai_integration": {
+      "prompt_engine_init": true,
+      "app_specific_prompts": true,
+      "validation_framework": true
+    },
+    "end_to_end_workflow": {
+      "ux_analysis": true,
+      "ai_enhancement": true,
+      "ado_integration": false,
+      "dashboard_update": false
+    },
+    "dashboard_ui": {
+      "html_file_exists": true,
+      "file_accessible": true,
+      "content_valid": true
+    }
+  },
+  "issues_found": [],
+  "ado_integration": {
+    "demo_mode": true,
+    "work_items_created": 4,
+    "bulk_operations_tested": true
+  },
+  "dashboard_analytics": {
+    "total_scenarios": 5,
+    "total_issues": 8,
+    "alerts_count": 0,
+    "recommendations": 1
+  },
+  "overall_status": "good",
+  "e2e_workflow": {
+    "total_issues_processed": 5,
+    "work_items_created": 0,
+    "dashboard_updated": false,
+    "ai_enhanced": true
+  },
+  "test_summary": {
+    "total_tests": 18,
+    "passed_tests": 14,
+    "failed_tests": 4,
+    "success_rate": 77.77777777777779
+  },
+  "completed_at": "2025-08-07T15:04:55.301781"
+}

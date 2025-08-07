@@ -1,0 +1,13 @@
+{
+  "test_run_id": "phase25_integration_20250807_150419",
+  "timestamp": "2025-08-07T15:04:19.602128",
+  "phase": "2.5",
+  "description": "Azure DevOps Dashboard Integration",
+  "components_tested": [],
+  "test_results": {},
+  "issues_found": [],
+  "ado_integration": {},
+  "dashboard_analytics": {},
+  "overall_status": "failed",
+  "error": "UXAnalysisToADOConverter.__init__() takes 1 positional argument but 2 were given"
+}

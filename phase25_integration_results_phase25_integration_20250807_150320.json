@@ -1,0 +1,13 @@
+{
+  "test_run_id": "phase25_integration_20250807_150320",
+  "timestamp": "2025-08-07T15:03:20.217191",
+  "phase": "2.5",
+  "description": "Azure DevOps Dashboard Integration",
+  "components_tested": [],
+  "test_results": {},
+  "issues_found": [],
+  "ado_integration": {},
+  "dashboard_analytics": {},
+  "overall_status": "failed",
+  "error": "AzureDevOpsClient.__init__() got an unexpected keyword argument 'demo_mode'"
+}
