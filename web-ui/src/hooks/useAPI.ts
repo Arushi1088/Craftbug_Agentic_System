@@ -1,12 +1,13 @@
 // React hooks for UX Analyzer API integration
 // Provides state management and real-time updates
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import apiClient, { 
   AnalysisResponse, 
   AnalysisReport, 
   DashboardAnalytics, 
-  DashboardAlert 
+  DashboardAlert,
+  ReportSummary
 } from '../services/api';
 
 // Custom hook for analysis workflow
@@ -233,6 +234,76 @@ export function useReports() {
     searchReports,
     downloadReport,
     setCurrentReport,
+  };
+}
+
+// Custom hook for reports summary with filtering
+export function useReportsSummary() {
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    app_type: '',
+    task_type: '',
+    module: ''
+  });
+
+  const fetchSummary = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const summaryData = await apiClient.getReportsSummary();
+      setSummary(summaryData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch summary');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const filteredReports = useMemo(() => {
+    if (!summary) return [];
+    
+    return summary.reports.filter(report => {
+      if (filters.app_type && report.app_type !== filters.app_type) return false;
+      if (filters.task_type && report.task_type !== filters.task_type) return false;
+      if (filters.module && !report.modules.includes(filters.module)) return false;
+      return true;
+    });
+  }, [summary, filters]);
+
+  const filteredSummary = useMemo(() => {
+    if (!summary || !filteredReports.length) return summary;
+    
+    const totalIssues = filteredReports.reduce((sum: number, r: any) => sum + r.total_issues, 0);
+    const totalFixed = filteredReports.reduce((sum: number, r: any) => sum + r.fixed_issues, 0);
+    const avgFixRate = totalIssues > 0 ? (totalFixed / totalIssues * 100) : 0;
+    
+    return {
+      ...summary,
+      summary: {
+        total_reports: filteredReports.length,
+        total_issues: totalIssues,
+        total_fixed: totalFixed,
+        avg_fix_rate: Number(avgFixRate.toFixed(1))
+      },
+      reports: filteredReports
+    };
+  }, [summary, filteredReports]);
+
+  // Auto-fetch on mount
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
+
+  return {
+    summary: filteredSummary,
+    loading,
+    error,
+    filters,
+    setFilters,
+    fetchSummary,
+    availableFilters: summary?.filters || { app_types: [], task_types: [], modules: [] }
   };
 }
 

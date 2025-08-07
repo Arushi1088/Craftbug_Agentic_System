@@ -128,6 +128,36 @@ export interface DashboardAlert {
   acknowledged: boolean;
 }
 
+export interface ReportSummary {
+  summary: {
+    total_reports: number;
+    total_issues: number;
+    total_fixed: number;
+    avg_fix_rate: number;
+  };
+  reports: Array<{
+    analysis_id: string;
+    report_name: string;
+    timestamp: string;
+    total_issues: number;
+    fixed_issues: number;
+    fix_rate: number;
+    app_type: string;
+    task_type: string;
+    modules: string[];
+    ado_integration: {
+      work_items_created: number;
+      last_sync_date?: string;
+      sync_status: string;
+    };
+  }>;
+  filters: {
+    app_types: string[];
+    task_types: string[];
+    modules: string[];
+  };
+}
+
 // API Client Class
 class APIClient {
   private baseUrl: string;
@@ -223,6 +253,10 @@ class APIClient {
 
   async getAllReports(): Promise<AnalysisReport[]> {
     return this.request<AnalysisReport[]>('/api/reports');
+  }
+
+  async getReportsSummary(): Promise<ReportSummary> {
+    return this.request<ReportSummary>('/api/reports/summary');
   }
 
   async getReportStatistics(): Promise<{

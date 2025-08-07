@@ -622,6 +622,94 @@ async def report_statistics():
     """Get comprehensive report statistics"""
     return get_report_statistics()
 
+@app.get("/api/reports/summary")
+async def get_reports_summary():
+    """Get summary data for dashboard charts including fix rates, apps, and modules"""
+    try:
+        # Get all reports
+        all_reports = list_saved_reports(limit=1000)["reports"]
+        
+        summary_data = []
+        app_types = set()
+        modules = set()
+        task_types = set()
+        
+        for report in all_reports:
+            # Calculate fix rate for this report
+            total_issues = report.get("total_issues", 0)
+            fixed_count = 0
+            
+            # Count fixed issues from module results
+            if report.get("module_results"):
+                for module_name, module_data in report["module_results"].items():
+                    if isinstance(module_data, dict) and "findings" in module_data:
+                        for finding in module_data["findings"]:
+                            if finding.get("fixed", False):
+                                fixed_count += 1
+            
+            # Also check ux_issues for fixed status
+            if report.get("ux_issues"):
+                for issue in report["ux_issues"]:
+                    if issue.get("fixed", False):
+                        fixed_count += 1
+            
+            fix_rate = (fixed_count / total_issues * 100) if total_issues > 0 else 0
+            
+            # Extract metadata
+            scenario_meta = report.get("scenario_metadata", {})
+            app_type = scenario_meta.get("app_type", "Unknown")
+            task_type = scenario_meta.get("task_type", "Unknown")
+            
+            app_types.add(app_type)
+            task_types.add(task_type)
+            
+            # Extract module names
+            if report.get("module_results"):
+                for module_name in report["module_results"].keys():
+                    modules.add(module_name)
+            
+            summary_data.append({
+                "analysis_id": report["analysis_id"],
+                "report_name": f"{app_type} - {task_type}" if app_type != "Unknown" else report.get("url", "Unknown"),
+                "timestamp": report["timestamp"],
+                "total_issues": total_issues,
+                "fixed_issues": fixed_count,
+                "fix_rate": round(fix_rate, 1),
+                "app_type": app_type,
+                "task_type": task_type,
+                "modules": list(report.get("module_results", {}).keys()) if report.get("module_results") else [],
+                "ado_integration": {
+                    "work_items_created": len([issue for issue in report.get("ux_issues", []) if issue.get("ado_work_item_id")]),
+                    "last_sync_date": report.get("ado_integration", {}).get("last_sync_date"),
+                    "sync_status": report.get("ado_integration", {}).get("sync_status", "none")
+                }
+            })
+        
+        # Calculate aggregate stats
+        total_reports = len(summary_data)
+        total_issues_all = sum(r["total_issues"] for r in summary_data)
+        total_fixed_all = sum(r["fixed_issues"] for r in summary_data)
+        avg_fix_rate = (total_fixed_all / total_issues_all * 100) if total_issues_all > 0 else 0
+        
+        return {
+            "summary": {
+                "total_reports": total_reports,
+                "total_issues": total_issues_all,
+                "total_fixed": total_fixed_all,
+                "avg_fix_rate": round(avg_fix_rate, 1)
+            },
+            "reports": summary_data,
+            "filters": {
+                "app_types": sorted(list(app_types)),
+                "task_types": sorted(list(task_types)),
+                "modules": sorted(list(modules))
+            }
+        }
+    
+    except Exception as e:
+        logger.error(f"Error generating reports summary: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate summary: {str(e)}")
+
 @app.get("/api/statistics")
 async def statistics():
     """Get comprehensive report statistics (alternative endpoint)"""
