@@ -19,6 +19,24 @@ import sys
 import asyncio
 import logging
 
+# Load environment variables and validate API key
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    load_dotenv("production.env")
+    print("✅ Environment variables loaded")
+except ImportError:
+    print("⚠️ python-dotenv not available, using OS environment only")
+
+# Validate OpenAI API Key early
+api_key = os.getenv("OPENAI_API_KEY")
+if api_key and api_key != "your-openai-api-key-here" and api_key.startswith("sk-"):
+    print(f"✅ OpenAI API Key Loaded: {api_key[:8]}... (truncated)")
+else:
+    print("⚠️ OpenAI API key not properly configured")
+    print("   Server will start but AI features may not work")
+    print("   Run: python3 validate_api_key.py for detailed diagnosis")
+
 # Import enhanced components
 from scenario_executor import ScenarioExecutor, get_available_scenarios
 from enhanced_scenario_runner import execute_realistic_scenario, EnhancedScenarioRunner
@@ -1071,6 +1089,41 @@ async def analyze_scenario(
         logger.error(f"Scenario analysis failed: {e}")
         raise HTTPException(status_code=500, detail=f"Scenario analysis failed: {str(e)}")
 
+async def update_ado_work_item_on_fix(issue_data: Dict[str, Any], fix_details: Dict[str, Any]) -> Dict[str, Any]:
+    """Update Azure DevOps work item when a fix is applied"""
+    try:
+        # Check if this issue has an associated ADO work item
+        ado_work_item_id = issue_data.get("ado_work_item_id")
+        if not ado_work_item_id:
+            return {"ado_updated": False, "reason": "No ADO work item ID found"}
+        
+        # Initialize ADO client
+        ado_client = AzureDevOpsClient()
+        
+        # Prepare fix details for ADO update
+        fix_result = ado_client.mark_issue_fixed(ado_work_item_id, fix_details)
+        
+        if fix_result.get("success"):
+            return {
+                "ado_updated": True,
+                "work_item_id": ado_work_item_id,
+                "ado_status": "Resolved",
+                "ado_response": fix_result
+            }
+        else:
+            return {
+                "ado_updated": False,
+                "error": fix_result.get("error", "Unknown ADO error"),
+                "work_item_id": ado_work_item_id
+            }
+            
+    except Exception as e:
+        logger.error(f"Failed to update ADO work item: {e}")
+        return {
+            "ado_updated": False,
+            "error": str(e)
+        }
+
 @app.post("/api/fix-now")
 async def fix_now(
     issue_id: str = Form(...),
@@ -1132,7 +1185,19 @@ async def fix_now(
                     MOCK_REPORTS[report_id] = report_data
                     save_analysis_to_disk(report_id, report_data)
                 
-                return JSONResponse(content={
+                # Update Azure DevOps work item if applicable
+                ado_update_result = await update_ado_work_item_on_fix(
+                    target_finding, 
+                    {
+                        "timestamp": target_finding["fix_timestamp"],
+                        "fix_type": fix_type,
+                        "finding_type": target_finding.get("type", "unknown"),
+                        "message": target_finding.get("message", "")
+                    }
+                )
+                
+                # Include ADO update in response
+                response_content = {
                     "status": "success",
                     "message": f"Issue '{issue_id}' marked as fixed",
                     "finding": {
@@ -1140,8 +1205,11 @@ async def fix_now(
                         "message": target_finding.get("message"),
                         "fixed": True
                     },
-                    "fix_timestamp": target_finding["fix_timestamp"]
-                })
+                    "fix_timestamp": target_finding["fix_timestamp"],
+                    "ado_integration": ado_update_result
+                }
+                
+                return JSONResponse(content=response_content)
                 
             except (IndexError, ValueError) as e:
                 raise HTTPException(status_code=400, detail=f"Invalid issue_id format: {issue_id}")
@@ -1203,11 +1271,23 @@ async def fix_now(
             MOCK_REPORTS[report_id] = report_data
             save_analysis_to_disk(report_id, report_data)
         
+        # Update Azure DevOps work item if applicable
+        ado_update_result = await update_ado_work_item_on_fix(
+            issue,
+            {
+                "timestamp": issue["fix_timestamp"],
+                "fix_type": fix_type,
+                "fix_suggestions": fix_suggestions,
+                "issue_type": issue.get("type", "general")
+            }
+        )
+        
         return JSONResponse(content={
             "status": "success",
             "message": f"Fix initiated for issue {issue_id}",
             "fix_suggestions": fix_suggestions,
-            "issue_status": "fixing"
+            "issue_status": "fixing",
+            "ado_integration": ado_update_result
         })
         
     except Exception as e:
