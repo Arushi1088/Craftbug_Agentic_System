@@ -21,6 +21,15 @@ import {
 import { useReports, useFixManager } from '../hooks/useAPI';
 import { AnalysisReport, UXIssue } from '../services/api';
 
+// Interface for module findings from real backend data
+interface ModuleFinding {
+  type: string;
+  message: string;
+  severity: string;
+  element?: string;
+  recommendation: string;
+}
+
 const moduleIcons: { [key: string]: React.ReactNode } = {
   performance: <Zap className="w-5 h-5" />,
   accessibility: <Eye className="w-5 h-5" />,
@@ -41,7 +50,7 @@ const moduleNames: { [key: string]: string } = {
   functional: 'Functional Testing'
 };
 
-// Fix Now Button Component
+// Fix Now Button Component for Legacy Issues
 interface FixNowButtonProps {
   issue: UXIssue;
   reportId: string;
@@ -87,6 +96,78 @@ function FixNowButton({ issue, reportId, onFixApplied }: FixNowButtonProps) {
           <>
             <CheckCircle className="w-3 h-3 mr-1" />
             Fix Applied
+          </>
+        ) : (
+          <>
+            <Settings className="w-3 h-3 mr-1" />
+            Fix Now
+          </>
+        )}
+      </button>
+
+      {/* Show fix suggestions after applying */}
+      {showSuggestions && fixResult && (
+        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+          <h5 className="font-medium text-green-800 mb-2">Fix Suggestions Applied:</h5>
+          <ul className="text-sm text-green-700 space-y-1">
+            {fixResult.fix_suggestions.map((suggestion: string, index: number) => (
+              <li key={index} className="flex items-start">
+                <span className="mr-2">•</span>
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Fix Now Button Component for Module Findings (New Backend Format)
+interface ModuleFixNowButtonProps {
+  finding: ModuleFinding;
+  moduleKey: string;
+  findingIndex: number;
+  reportId: string;
+  onFixApplied: () => void;
+}
+
+function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixApplied }: ModuleFixNowButtonProps) {
+  const { applyFix, isFixing, getFixResult } = useFixManager();
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Generate unique issue ID from module and finding index
+  const issueId = `${moduleKey}-${findingIndex}`;
+
+  const handleFix = async () => {
+    try {
+      // Use real backend API with constructed issue ID
+      await applyFix(issueId, reportId, moduleKey);
+      onFixApplied();
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Fix failed:', error);
+    }
+  };
+
+  const fixResult = getFixResult(issueId);
+  const fixing = isFixing(issueId);
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={handleFix}
+        disabled={fixing}
+        className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+          fixing
+            ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+        }`}
+      >
+        {fixing ? (
+          <>
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Fixing...
           </>
         ) : (
           <>
@@ -528,6 +609,13 @@ export function ReportPage() {
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
                                 {finding.severity}
                               </span>
+                              <ModuleFixNowButton 
+                                finding={finding}
+                                moduleKey={moduleKey}
+                                findingIndex={index}
+                                reportId={reportId!}
+                                onFixApplied={onFixApplied}
+                              />
                             </div>
                           </div>
                         </div>
@@ -621,6 +709,13 @@ export function ReportPage() {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
                           {finding.severity}
                         </span>
+                        <ModuleFixNowButton 
+                          finding={finding}
+                          moduleKey={activeTab}
+                          findingIndex={index}
+                          reportId={reportId!}
+                          onFixApplied={onFixApplied}
+                        />
                       </div>
                     </div>
                   </div>
