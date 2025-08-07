@@ -18,27 +18,51 @@ except ImportError:
     OPENAI_AVAILABLE = False
     print("⚠️ OpenAI not installed. Run: pip install openai")
 
-def load_env_file(env_path: str = ".env"):
-    """Load environment variables from .env file"""
-    if not os.path.exists(env_path):
-        return
+# Load environment variables with validation
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env file
+    load_dotenv("production.env")  # Also try production.env
+    print("✅ Environment variables loaded from .env files")
+except ImportError:
+    print("⚠️ python-dotenv not available, using manual .env loading")
     
-    try:
-        with open(env_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    key = key.strip()
-                    value = value.strip().strip('"').strip("'")
-                    if not os.getenv(key):  # Don't override existing env vars
-                        os.environ[key] = value
-    except Exception as e:
-        print(f"Warning: Could not load .env file: {e}")
+    def load_env_file(env_path: str = ".env"):
+        """Load environment variables from .env file"""
+        if not os.path.exists(env_path):
+            return
+        
+        try:
+            with open(env_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        key = key.strip()
+                        value = value.strip().strip('"').strip("'")
+                        if not os.getenv(key):  # Don't override existing env vars
+                            os.environ[key] = value
+        except Exception as e:
+            print(f"Warning: Could not load .env file: {e}")
 
-# Load .env file if it exists
-load_env_file()
-load_env_file("production.env")  # Also try production.env
+    # Load .env file if it exists
+    load_env_file()
+    load_env_file("production.env")  # Also try production.env
+
+# Validate OpenAI API Key with explicit logging
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key or api_key == "your-openai-api-key-here":
+    print("❌ OPENAI_API_KEY not found or still using placeholder.")
+    print("🔧 Please update your .env file with a valid OpenAI API key.")
+    print("💡 Get your key from: https://platform.openai.com/api-keys")
+    OPENAI_KEY_AVAILABLE = False
+elif api_key.startswith("sk-"):
+    print(f"✅ OpenAI Key Loaded: {api_key[:8]}... (truncated)")
+    OPENAI_KEY_AVAILABLE = True
+else:
+    print("❌ Invalid OpenAI API key format. Should start with 'sk-'")
+    OPENAI_KEY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -50,18 +74,33 @@ class DynamicUXAnalyzer:
         self.fallback_mode = True
         
         if OPENAI_AVAILABLE:
-            # Try to initialize OpenAI client
+            # Get API key from parameter or environment
             api_key = api_key or os.getenv("OPENAI_API_KEY")
-            if api_key:
+            
+            if not api_key or api_key == "your-openai-api-key-here":
+                print("❌ OPENAI_API_KEY not found or still using placeholder.")
+                print("🔧 Please update your .env file with a valid OpenAI API key.")
+                print("💡 Get your key from: https://platform.openai.com/api-keys")
+                # Don't raise an error, but make it very clear
+                logger.warning("⚠️ OpenAI API key not configured. Using fallback mode.")
+                self.fallback_mode = True
+            elif not api_key.startswith("sk-"):
+                print("❌ Invalid OpenAI API key format. Should start with 'sk-'")
+                logger.warning("⚠️ Invalid OpenAI API key format. Using fallback mode.")
+                self.fallback_mode = True
+            else:
                 try:
                     self.client = OpenAI(api_key=api_key)
                     self.fallback_mode = False
+                    print(f"✅ OpenAI client initialized: {api_key[:8]}... (truncated)")
                     logger.info("✅ OpenAI client initialized successfully")
                 except Exception as e:
+                    print(f"❌ OpenAI initialization failed: {e}")
                     logger.warning(f"⚠️ OpenAI initialization failed: {e}")
                     self.fallback_mode = True
-            else:
-                logger.warning("⚠️ OpenAI API key not found. Using fallback mode.")
+        else:
+            print("⚠️ OpenAI package not available. Using fallback mode.")
+            logger.warning("⚠️ OpenAI package not available. Using fallback mode.")
         
         # Initialize enhanced static patterns for fallback
         self.ux_patterns = self._initialize_ux_patterns()

@@ -74,7 +74,9 @@
           "message": "Low color contrast ratio detected (3.2:1)",
           "severity": "medium",
           "element": ".secondary-text",
-          "recommendation": "Increase contrast to meet WCAG AA standards (4.5:1)"
+          "recommendation": "Increase contrast to meet WCAG AA standards (4.5:1)",
+          "fixed": true,
+          "fix_timestamp": "2025-08-07T19:31:56.741590"
         }
       ],
       "recommendations": [
@@ -93,7 +95,9 @@
           "message": "Page load time exceeds 3 seconds",
           "severity": "medium",
           "element": "document",
-          "recommendation": "Optimize asset loading and reduce bundle size"
+          "recommendation": "Optimize asset loading and reduce bundle size",
+          "fixed": true,
+          "fix_timestamp": "2025-08-07T19:31:47.749153"
         }
       ],
       "recommendations": [
@@ -112,7 +116,9 @@
           "message": "Missing visible focus indicators on interactive elements",
           "severity": "medium",
           "element": ".btn-secondary, .nav-link",
-          "recommendation": "Add clear focus indicators for keyboard navigation"
+          "recommendation": "Add clear focus indicators for keyboard navigation",
+          "fixed": true,
+          "fix_timestamp": "2025-08-07T19:15:57.447362"
         }
       ],
       "recommendations": [
@@ -180,5 +186,49 @@
     "filename": "analysis_770e915e_20250807_164859.json",
     "version": "2.0",
     "file_size_bytes": 4998
-  }
+  },
+  "fix_history": [
+    {
+      "issue_id": "accessibility-0",
+      "fixed_by": "system",
+      "timestamp": "2025-08-07T19:14:57.433938",
+      "finding_type": "warning",
+      "message": "Low color contrast ratio detected (3.2:1)"
+    },
+    {
+      "issue_id": "performance-0",
+      "fixed_by": "system",
+      "timestamp": "2025-08-07T19:15:50.156355",
+      "finding_type": "warning",
+      "message": "Page load time exceeds 3 seconds"
+    },
+    {
+      "issue_id": "keyboard-0",
+      "fixed_by": "system",
+      "timestamp": "2025-08-07T19:15:57.447375",
+      "finding_type": "warning",
+      "message": "Missing visible focus indicators on interactive elements"
+    },
+    {
+      "issue_id": "accessibility-0",
+      "fixed_by": "system",
+      "timestamp": "2025-08-07T19:16:04.685002",
+      "finding_type": "warning",
+      "message": "Low color contrast ratio detected (3.2:1)"
+    },
+    {
+      "issue_id": "performance-0",
+      "fixed_by": "system",
+      "timestamp": "2025-08-07T19:31:47.749276",
+      "finding_type": "warning",
+      "message": "Page load time exceeds 3 seconds"
+    },
+    {
+      "issue_id": "accessibility-0",
+      "fixed_by": "system",
+      "timestamp": "2025-08-07T19:31:56.741605",
+      "finding_type": "warning",
+      "message": "Low color contrast ratio detected (3.2:1)"
+    }
+  ]
 }

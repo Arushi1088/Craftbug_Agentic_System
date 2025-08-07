@@ -1,0 +1,147 @@
+{
+  "analysis_id": "5c261fe9",
+  "timestamp": "2025-08-07T20:30:02.718039",
+  "type": "url_scenario",
+  "url": "https://example.com",
+  "scenario_file": "basic_navigation.yaml",
+  "overall_score": 43,
+  "has_screenshots": true,
+  "scenario_results": [
+    {
+      "name": "Screenshot Test Scenario",
+      "score": 43,
+      "status": "completed",
+      "duration_ms": 101804,
+      "steps": [
+        {
+          "step_index": 0,
+          "action": "navigate_to_url",
+          "status": "error",
+          "start_time": 1754578702.494035,
+          "duration_ms": 30014,
+          "errors": [
+            "Unexpected error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://example.com/\", waiting until \"networkidle\"\n"
+          ],
+          "craft_bugs": [],
+          "performance_metrics": {},
+          "screenshot": null,
+          "end_time": 1754578732.5082119
+        },
+        {
+          "step_index": 1,
+          "action": "wait",
+          "status": "success",
+          "start_time": 1754578733.008516,
+          "duration_ms": 59326,
+          "errors": [],
+          "craft_bugs": [
+            {
+              "title": "Extended Wait Time Without Feedback",
+              "severity": "medium",
+              "user_impact": "Users may feel uncertain about the progress of their task, leading to frustration or abandonment of the task.",
+              "recommended_fix": "Implement a progress indicator or animation to inform users that their task is being processed.",
+              "affected_component": "Progress Indicator",
+              "category": "interaction",
+              "generated_by": "ai",
+              "step": "wait",
+              "timestamp": "2025-08-07T20:29:52.260951"
+            },
+            {
+              "title": "Lack of Cancel Option During Wait",
+              "severity": "low",
+              "user_impact": "Users might feel trapped in the wait without an option to cancel if they change their mind or need to correct a mistake.",
+              "recommended_fix": "Provide a 'Cancel' button that allows users to stop the process and return to the previous step if needed.",
+              "affected_component": "Cancel Button",
+              "category": "navigation",
+              "generated_by": "ai",
+              "step": "wait",
+              "timestamp": "2025-08-07T20:29:52.260969"
+            },
+            {
+              "title": "No Explanation for Long Wait Time",
+              "severity": "medium",
+              "user_impact": "Users may not understand why the wait time is as long as it is, leading to confusion and potential distrust in the system.",
+              "recommended_fix": "Offer a brief explanation or tip during the wait time to educate users about why this process takes time.",
+              "affected_component": "Information Tooltip",
+              "category": "cognitive_load",
+              "generated_by": "ai",
+              "step": "wait",
+              "timestamp": "2025-08-07T20:29:52.260974"
+            }
+          ],
+          "performance_metrics": {
+            "navigationStart": 1754578702510.2,
+            "marks": {},
+            "timings": {},
+            "interactions": []
+          },
+          "screenshot": null,
+          "duration_param": 2000,
+          "end_time": 1754578792.335029
+        },
+        {
+          "step_index": 2,
+          "action": "screenshot",
+          "status": "success",
+          "start_time": 1754578792.835236,
+          "duration_ms": 9345,
+          "errors": [],
+          "craft_bugs": [
+            {
+              "title": "Limited visual feedback on link interaction",
+              "severity": "medium",
+              "user_impact": "Users may not realize they have successfully clicked a link, leading to potential confusion or repeated clicks.",
+              "recommended_fix": "Add hover and active states to the link with distinct styles to provide clear visual feedback.",
+              "affected_component": "Link to 'More information...'",
+              "category": "interaction",
+              "generated_by": "ai",
+              "step": "screenshot",
+              "timestamp": "2025-08-07T20:30:02.144232"
+            },
+            {
+              "title": "Text might be hard to read on small devices",
+              "severity": "medium",
+              "user_impact": "Users on small devices may find the text hard to read due to lack of responsive text sizing, leading to a poor reading experience.",
+              "recommended_fix": "Implement responsive typography that adjusts the font size based on the viewport size.",
+              "affected_component": "Body text",
+              "category": "accessibility",
+              "generated_by": "ai",
+              "step": "screenshot",
+              "timestamp": "2025-08-07T20:30:02.144248"
+            },
+            {
+              "title": "Poor contrast between background and text",
+              "severity": "low",
+              "user_impact": "Some users, especially those with visual impairments, might find it difficult to read the text due to insufficient contrast.",
+              "recommended_fix": "Increase the contrast between the text and background colors to meet WCAG AA standards.",
+              "affected_component": "Body text",
+              "category": "accessibility",
+              "generated_by": "ai",
+              "step": "screenshot",
+              "timestamp": "2025-08-07T20:30:02.144254"
+            }
+          ],
+          "performance_metrics": {
+            "navigationStart": 1754578702510.2,
+            "marks": {},
+            "timings": {},
+            "interactions": []
+          },
+          "screenshot": "screenshots/f417a40b_screenshot_2.png",
+          "end_time": 1754578802.180525
+        }
+      ]
+    }
+  ],
+  "module_results": {
+    "performance": {
+      "score": 85,
+      "threshold_met": true,
+      "analytics_enabled": false,
+      "findings": [],
+      "recommendations": [
+        "Test screenshot capture functionality"
+      ]
+    }
+  }
+}

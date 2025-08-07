@@ -1,0 +1,13 @@
+{
+  "analysis_id": "f2919561",
+  "error": "[Errno 2] No such file or directory: 'basic_navigation'",
+  "status": "failed",
+  "storage_metadata": {
+    "analysis_id": "3b407756",
+    "saved_timestamp": "2025-08-07T18:54:43.810788",
+    "file_path": "reports/analysis/analysis_3b407756_20250807_185443.json",
+    "filename": "analysis_3b407756_20250807_185443.json",
+    "version": "2.0",
+    "file_size_bytes": 417
+  }
+}
