@@ -23,6 +23,7 @@ import {
 import { useReportsSummary, useConnectionStatus } from '../hooks/useAPI';
 import { IssueTable } from '../components/IssueTable';
 import { IssueDetailPanel } from '../components/IssueDetailPanel';
+import { DashboardSummary } from '../components/DashboardSummary';
 
 const COLORS = {
   primary: '#3b82f6',
@@ -299,6 +300,9 @@ export function AdoDashboardPage() {
           <p className="mt-2">{error}</p>
         </div>
       )}
+
+      {/* Dashboard Summary Section */}
+      <DashboardSummary summary={summary} loading={loading} />
 
       {/* Top Summary Bar */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
