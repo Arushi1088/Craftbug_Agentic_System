@@ -917,11 +917,21 @@ async def analyze_url(
         analysis_id = str(uuid.uuid4())[:8]
         logger.info(f"Starting URL analysis: {analysis_id} for {url}")
         
-        # Create analysis request object
+        # Create analysis request object with proper modules format
+        modules_dict = {
+            "accessibility": True,
+            "performance": True,
+            "keyboard": True,
+            "ux_heuristics": True,
+            "best_practices": True,
+            "health_alerts": True,
+            "functional": False
+        }
+        
         request = AnalysisRequest(
             url=url,
             scenario_path=scenario_name if scenario_name else "scenarios/general_analysis.yaml",
-            modules=["accessibility", "performance", "navigation", "ai_analysis"]
+            modules=modules_dict
         )
         
         # Process analysis in background
@@ -971,11 +981,21 @@ async def analyze_scenario(
             content = await scenario_file.read()
             f.write(content)
         
-        # Execute scenario
+        # Execute scenario with proper modules format
+        modules_dict = {
+            "accessibility": True,
+            "performance": True,
+            "keyboard": True,
+            "ux_heuristics": True,
+            "best_practices": True,
+            "health_alerts": True,
+            "functional": False
+        }
+        
         request = AnalysisRequest(
             url=url,
             scenario_path=scenario_path,
-            modules=["accessibility", "performance", "navigation", "ai_analysis"]
+            modules=modules_dict
         )
         
         report_data = scenario_executor.execute_url_scenario(
