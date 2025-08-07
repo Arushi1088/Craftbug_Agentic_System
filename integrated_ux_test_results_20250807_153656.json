@@ -1,0 +1,154 @@
+{
+  "test_run_id": "integrated_ux_test_20250807_153656",
+  "timestamp": "2025-08-07T15:36:56.215320",
+  "applications": [
+    "word",
+    "excel",
+    "powerpoint"
+  ],
+  "enhanced_ai_enabled": true,
+  "total_scenarios": 9,
+  "total_issues": 27,
+  "app_results": {
+    "word": {
+      "app_type": "word",
+      "scenarios_tested": 6,
+      "total_issues": 18,
+      "scenarios": {
+        "0": {
+          "title": "Basic Document Navigation",
+          "task_goal": "Successfully navigate Word application and open basic functions",
+          "difficulty": "unknown",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Text formatting controls may not provide immediate visual feedback",
+            "Review panel might cover important document content",
+            "Track changes interface could be overwhelming for new users"
+          ],
+          "status": "completed"
+        },
+        "1": {
+          "title": "Comment Resolution Workflow",
+          "task_goal": "Review and resolve document comments efficiently",
+          "difficulty": "unknown",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Text formatting controls may not provide immediate visual feedback",
+            "Review panel might cover important document content",
+            "Track changes interface could be overwhelming for new users"
+          ],
+          "status": "completed"
+        },
+        "2": {
+          "title": "Document Editing and Formatting",
+          "task_goal": "Modify document text and apply formatting options",
+          "difficulty": "unknown",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Text formatting controls may not provide immediate visual feedback",
+            "Review panel might cover important document content",
+            "Track changes interface could be overwhelming for new users"
+          ],
+          "status": "completed"
+        },
+        "3": {
+          "title": "Resolve Tracked Changes from Review Tab",
+          "task_goal": "Accept or reject tracked changes using Review tab controls",
+          "difficulty": "unknown",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Text formatting controls may not provide immediate visual feedback",
+            "Review panel might cover important document content",
+            "Track changes interface could be overwhelming for new users"
+          ],
+          "status": "completed"
+        },
+        "4": {
+          "title": "Insert Image and Add Alt Text",
+          "task_goal": "Add image with proper accessibility attributes for screen readers",
+          "difficulty": "unknown",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Text formatting controls may not provide immediate visual feedback",
+            "Review panel might cover important document content",
+            "Track changes interface could be overwhelming for new users"
+          ],
+          "status": "completed"
+        },
+        "5": {
+          "title": "Share Document with Permission Settings",
+          "task_goal": "Share document securely with appropriate access controls",
+          "difficulty": "unknown",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Text formatting controls may not provide immediate visual feedback",
+            "Review panel might cover important document content",
+            "Track changes interface could be overwhelming for new users"
+          ],
+          "status": "completed"
+        }
+      }
+    },
+    "powerpoint": {
+      "app_type": "powerpoint",
+      "scenarios_tested": 3,
+      "total_issues": 9,
+      "scenarios": {
+        "slide_creation": {
+          "title": "Slide Creation and Layout",
+          "task_goal": "Test slide creation and layout selection experience",
+          "difficulty": "easy",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Animation controls may be complex for non-technical users",
+            "Presenter view setup might not be intuitive",
+            "Slide thumbnail panel could be difficult to navigate"
+          ],
+          "status": "completed"
+        },
+        "animation_controls": {
+          "title": "Animation and Transition Setup",
+          "task_goal": "Test animation and transition creation process",
+          "difficulty": "hard",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Animation controls may be complex for non-technical users",
+            "Presenter view setup might not be intuitive",
+            "Slide thumbnail panel could be difficult to navigate"
+          ],
+          "status": "completed"
+        },
+        "presenter_view": {
+          "title": "Presenter View and Delivery Setup",
+          "task_goal": "Test presenter view configuration and usage",
+          "difficulty": "medium",
+          "basic_issues": 3,
+          "enhanced_issues": 0,
+          "total_issues": 3,
+          "issues": [
+            "Animation controls may be complex for non-technical users",
+            "Presenter view setup might not be intuitive",
+            "Slide thumbnail panel could be difficult to navigate"
+          ],
+          "status": "completed"
+        }
+      }
+    }
+  }
+}

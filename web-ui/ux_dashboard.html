@@ -231,6 +231,8 @@
             <h1>🎯 UX Analytics Dashboard</h1>
             <p class="subtitle">Real-time monitoring and insights for Office application UX testing</p>
             <button class="refresh-btn" onclick="loadDashboardData()">🔄 Refresh Data</button>
+            <button class="refresh-btn" onclick="testEndToEndWorkflow()">🧪 Test E2E Workflow</button>
+            <button class="refresh-btn" onclick="loadAvailableReports()">📋 Load Reports</button>
         </div>
 
         <!-- Loading State -->
@@ -333,7 +335,19 @@
         }
 
         async function getMockDashboardData() {
-            // Simulate API delay
+            // Try to fetch real data from API first
+            try {
+                const response = await fetch('/api/dashboard/analytics?days=7');
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Loaded real dashboard data from API');
+                    return data;
+                }
+            } catch (error) {
+                console.log('⚠️ API not available, using mock data');
+            }
+
+            // Fallback to mock data if API is not available
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             return {
@@ -592,6 +606,128 @@
 
         function showError(message) {
             document.getElementById('loading').innerHTML = `❌ ${message}`;
+        }
+
+        async function testEndToEndWorkflow() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('loading').innerHTML = '🧪 Testing end-to-end workflow...';
+                
+                // First get available reports
+                const reportsResponse = await fetch('/api/reports');
+                const reports = await reportsResponse.json();
+                
+                if (reports.length === 0) {
+                    alert('No analysis reports found. Please run some UX analysis first.');
+                    return;
+                }
+                
+                // Use the latest report
+                const latestReport = reports[0];
+                
+                // Step 1: Process results for dashboard
+                document.getElementById('loading').innerHTML = '📊 Processing results for dashboard...';
+                const processResponse = await fetch('/api/dashboard/process-results', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `report_id=${latestReport.id}`
+                });
+                
+                if (!processResponse.ok) {
+                    throw new Error('Failed to process results');
+                }
+                
+                // Step 2: Create ADO tickets
+                document.getElementById('loading').innerHTML = '🎫 Creating Azure DevOps tickets...';
+                const adoResponse = await fetch('/api/dashboard/create-ado-tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `report_id=${latestReport.id}&demo_mode=true`
+                });
+                
+                const adoResult = await adoResponse.json();
+                
+                // Step 3: Refresh dashboard
+                document.getElementById('loading').innerHTML = '🔄 Refreshing dashboard...';
+                await loadDashboardData();
+                
+                alert(`✅ End-to-end workflow completed!\n\n📊 Dashboard updated\n🎫 ${adoResult.work_items_created} ADO tickets created\n🧪 Test Report: ${latestReport.id}`);
+                
+            } catch (error) {
+                console.error('E2E workflow error:', error);
+                alert(`❌ End-to-end test failed: ${error.message}`);
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function loadAvailableReports() {
+            try {
+                const response = await fetch('/api/reports');
+                const reports = await response.json();
+                
+                const reportsHtml = reports.map(report => `
+                    <div class="alert-item">
+                        <div class="alert-title">📄 ${report.id}</div>
+                        <div class="alert-message">
+                            App: ${report.app_type || 'Unknown'} | 
+                            Issues: ${report.total_issues || 0} | 
+                            Created: ${new Date(report.timestamp).toLocaleString()}
+                        </div>
+                        <button onclick="processReport('${report.id}')" style="margin-top: 8px; padding: 4px 8px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🔄 Process for Dashboard
+                        </button>
+                        <button onclick="createADOTickets('${report.id}')" style="margin: 8px 0 0 8px; padding: 4px 8px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🎫 Create ADO Tickets
+                        </button>
+                    </div>
+                `).join('');
+                
+                document.getElementById('alerts-container').innerHTML = 
+                    `<h4>📋 Available Analysis Reports (${reports.length})</h4>` + reportsHtml;
+                
+            } catch (error) {
+                console.error('Failed to load reports:', error);
+                alert('Failed to load reports');
+            }
+        }
+
+        async function processReport(reportId) {
+            try {
+                const response = await fetch('/api/dashboard/process-results', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `report_id=${reportId}`
+                });
+                
+                if (response.ok) {
+                    alert('✅ Report processed for dashboard');
+                    await loadDashboardData();
+                } else {
+                    throw new Error('Processing failed');
+                }
+            } catch (error) {
+                alert(`❌ Failed to process report: ${error.message}`);
+            }
+        }
+
+        async function createADOTickets(reportId) {
+            try {
+                const response = await fetch('/api/dashboard/create-ado-tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `report_id=${reportId}&demo_mode=true`
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`✅ Created ${result.work_items_created} ADO tickets\n(Demo mode: ${result.demo_mode})`);
+                } else {
+                    throw new Error(result.detail || 'Ticket creation failed');
+                }
+            } catch (error) {
+                alert(`❌ Failed to create ADO tickets: ${error.message}`);
+            }
         }
 
         // Load dashboard data on page load

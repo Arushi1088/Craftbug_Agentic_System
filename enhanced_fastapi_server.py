@@ -30,6 +30,15 @@ from enhanced_report_handler import (
     cleanup_old_reports
 )
 
+# Import dashboard components
+try:
+    from ux_analytics_dashboard import UXAnalyticsDashboard
+    from azure_devops_integration import AzureDevOpsClient, UXAnalysisToADOConverter
+    DASHBOARD_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Dashboard components not available: {e}")
+    DASHBOARD_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -766,6 +775,148 @@ async def download_report(report_id: str, format: str = "json"):
         return HTMLResponse(content=html_content)
     else:
         return JSONResponse(content=report)
+
+# Dashboard API Endpoints
+@app.get("/api/dashboard/analytics")
+async def get_dashboard_analytics(days: int = 7):
+    """Get analytics data for the dashboard"""
+    if not DASHBOARD_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Dashboard components not available")
+    
+    try:
+        dashboard = UXAnalyticsDashboard()
+        analytics = dashboard.generate_dashboard_report(days=days)
+        return JSONResponse(content=analytics)
+    except Exception as e:
+        logger.error(f"Dashboard analytics error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analytics generation failed: {str(e)}")
+
+@app.get("/api/dashboard/alerts")
+async def get_dashboard_alerts():
+    """Get active dashboard alerts"""
+    if not DASHBOARD_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Dashboard components not available")
+    
+    try:
+        dashboard = UXAnalyticsDashboard()
+        alerts = dashboard.db.get_active_alerts()
+        return JSONResponse(content=[{
+            "alert_id": alert.alert_id,
+            "title": alert.title,
+            "message": alert.message,
+            "severity": alert.severity,
+            "timestamp": alert.timestamp.isoformat(),
+            "app_type": alert.app_type,
+            "resolved": alert.resolved
+        } for alert in alerts])
+    except Exception as e:
+        logger.error(f"Dashboard alerts error: {e}")
+        raise HTTPException(status_code=500, detail=f"Alerts retrieval failed: {str(e)}")
+
+@app.post("/api/dashboard/process-results")
+async def process_analysis_results_endpoint(report_id: str):
+    """Process analysis results for dashboard integration"""
+    if not DASHBOARD_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Dashboard components not available")
+    
+    try:
+        # Load the analysis results
+        analysis_data = load_analysis_from_disk(report_id)
+        if not analysis_data:
+            raise HTTPException(status_code=404, detail="Analysis report not found")
+        
+        # Process through dashboard
+        dashboard = UXAnalyticsDashboard()
+        
+        # Convert to dashboard format if needed
+        dashboard_data = {
+            "test_run_id": analysis_data.get("analysis_id", report_id),
+            "timestamp": analysis_data.get("timestamp", datetime.now().isoformat()),
+            "app_type": analysis_data.get("app_type", "unknown"),
+            "scenarios_tested": 1,
+            "total_issues_found": len(analysis_data.get("issues", [])),
+            "ai_analysis_enabled": analysis_data.get("ai_analysis_enabled", False),
+            "scenarios": {
+                "main_scenario": {
+                    "title": analysis_data.get("scenario_name", "Analysis"),
+                    "issues": analysis_data.get("issues", [])
+                }
+            }
+        }
+        
+        # Save to temp file and process
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(dashboard_data, f, indent=2)
+            temp_file = f.name
+        
+        try:
+            dashboard.process_analysis_results(temp_file)
+        finally:
+            os.unlink(temp_file)
+        
+        return JSONResponse(content={"status": "success", "message": "Results processed for dashboard"})
+        
+    except Exception as e:
+        logger.error(f"Dashboard processing error: {e}")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+@app.post("/api/dashboard/create-ado-tickets")
+async def create_ado_tickets(report_id: str, demo_mode: bool = True):
+    """Create Azure DevOps tickets from analysis results"""
+    if not DASHBOARD_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Dashboard components not available")
+    
+    try:
+        # Load the analysis results
+        analysis_data = load_analysis_from_disk(report_id)
+        if not analysis_data:
+            raise HTTPException(status_code=404, detail="Analysis report not found")
+        
+        # Initialize ADO client
+        ado_client = AzureDevOpsClient(demo_mode=demo_mode)
+        
+        # Create work items for each issue
+        work_items = []
+        issues = analysis_data.get("issues", [])
+        
+        for i, issue in enumerate(issues):
+            ux_issue = {
+                "app_type": analysis_data.get("app_type", "unknown"),
+                "scenario_id": f"scenario_{i}",
+                "title": issue.get("title", f"UX Issue {i+1}"),
+                "description": issue.get("description", str(issue)),
+                "category": issue.get("category", "General"),
+                "severity": issue.get("severity", "medium")
+            }
+            
+            work_item = ado_client.create_ux_work_item(ux_issue)
+            if work_item:
+                work_items.append(work_item)
+        
+        return JSONResponse(content={
+            "status": "success", 
+            "work_items_created": len(work_items),
+            "work_items": work_items,
+            "demo_mode": demo_mode
+        })
+        
+    except Exception as e:
+        logger.error(f"ADO ticket creation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Ticket creation failed: {str(e)}")
+
+@app.get("/dashboard")
+async def serve_dashboard():
+    """Serve the analytics dashboard HTML"""
+    try:
+        dashboard_path = "web-ui/ux_dashboard.html"
+        with open(dashboard_path, 'r') as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Dashboard HTML not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dashboard serving failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

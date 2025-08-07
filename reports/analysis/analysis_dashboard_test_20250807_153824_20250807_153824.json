@@ -1,0 +1,66 @@
+{
+  "analysis_id": "dashboard_test_20250807_153824",
+  "timestamp": "2025-08-07T15:38:24.488769",
+  "app_type": "word",
+  "scenario_name": "Dashboard Test Scenario",
+  "total_issues": 5,
+  "ai_analysis_enabled": true,
+  "issues": [
+    {
+      "title": "Navigation Issue",
+      "description": "Review panel overlaps content",
+      "category": "Navigation",
+      "severity": "medium"
+    },
+    {
+      "title": "Accessibility Issue",
+      "description": "Poor keyboard navigation",
+      "category": "Accessibility",
+      "severity": "high"
+    },
+    {
+      "title": "Performance Issue",
+      "description": "Slow response to formatting changes",
+      "category": "Performance",
+      "severity": "low"
+    },
+    {
+      "title": "Visual Design Issue",
+      "description": "Inconsistent button styles",
+      "category": "Visual Design",
+      "severity": "medium"
+    },
+    {
+      "title": "User Flow Issue",
+      "description": "Complex document sharing workflow",
+      "category": "User Flow",
+      "severity": "high"
+    }
+  ],
+  "modules": {
+    "navigation": {
+      "score": 75,
+      "issues": 2
+    },
+    "accessibility": {
+      "score": 60,
+      "issues": 1
+    },
+    "performance": {
+      "score": 85,
+      "issues": 1
+    },
+    "visual_design": {
+      "score": 70,
+      "issues": 1
+    }
+  },
+  "storage_metadata": {
+    "analysis_id": "dashboard_test_20250807_153824",
+    "saved_timestamp": "2025-08-07T15:38:24.506254",
+    "file_path": "reports/analysis/analysis_dashboard_test_20250807_153824_20250807_153824.json",
+    "filename": "analysis_dashboard_test_20250807_153824_20250807_153824.json",
+    "version": "2.0",
+    "file_size_bytes": 1690
+  }
+}
