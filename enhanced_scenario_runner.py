@@ -467,8 +467,14 @@ class EnhancedScenarioRunner:
             "errors": [],
             "craft_bugs": [],
             "performance_metrics": {},
-            "screenshot_path": None
+            "screenshot": None  # Changed from screenshot_path to screenshot
         }
+        
+        # Generate analysis_id for screenshot filenames
+        analysis_id = getattr(self, 'analysis_id', None)
+        if not analysis_id:
+            analysis_id = str(uuid.uuid4())[:8] if not getattr(self, 'deterministic_mode', False) else "test12345"
+            self.analysis_id = analysis_id
         
         try:
             action = step.get("action", "")
@@ -514,12 +520,13 @@ class EnhancedScenarioRunner:
                 step_result["status"] = "success"
                 
             elif action == "screenshot":
+                # Manual screenshot action (existing functionality)
                 timestamp = int(time.time())
                 screenshot_dir = Path("reports/screenshots")
                 screenshot_dir.mkdir(parents=True, exist_ok=True)
                 screenshot_path = screenshot_dir / f"step_{step_index}_{timestamp}.png"
                 await self.page.screenshot(path=str(screenshot_path))
-                step_result["screenshot_path"] = str(screenshot_path)
+                step_result["screenshot"] = f"screenshots/{screenshot_path.name}"
                 step_result["status"] = "success"
                 
             elif action == "assert_element_visible":
@@ -558,6 +565,25 @@ class EnhancedScenarioRunner:
             else:
                 step_result["status"] = "skipped"
                 step_result["errors"].append(f"Unknown or unsupported action: {action}")
+            
+            # 📸 Automatic screenshot capture for each step (NEW FEATURE)
+            if self.page and step_result["status"] in ["success", "failed", "timeout"]:
+                try:
+                    screenshot_dir = Path("reports/screenshots")
+                    screenshot_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Generate filename: analysisId_actionName_stepIndex.png
+                    action_name = action.replace("_", "").replace(" ", "")
+                    screenshot_filename = f"{analysis_id}_{action_name}_{step_index}.png"
+                    screenshot_path = screenshot_dir / screenshot_filename
+                    
+                    await self.page.screenshot(path=str(screenshot_path))
+                    step_result["screenshot"] = f"screenshots/{screenshot_filename}"
+                    
+                    logger.info(f"📸 Screenshot captured: {screenshot_filename}")
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to capture screenshot for step {step_index}: {e}")
             
             # Detect craft bugs after each successful step
             if step_result["status"] in ["success"] and self.page:
@@ -660,6 +686,10 @@ class EnhancedScenarioRunner:
             
             scenario_result["craft_bugs_detected"] = total_craft_bugs
             scenario_result["status"] = "completed"
+            
+            # Check if any steps have screenshots
+            has_screenshots = any(step.get("screenshot") for step in scenario_result["steps"])
+            scenario_result["has_screenshots"] = has_screenshots
             
         except Exception as e:
             scenario_result["status"] = "failed"
