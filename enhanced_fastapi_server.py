@@ -1075,22 +1075,84 @@ async def fix_now(
 ):
     """Apply immediate fixes for UX issues"""
     try:
-        # Get the report containing the issue
-        report = MOCK_REPORTS.get(report_id)
-        if not report:
-            raise HTTPException(status_code=404, detail="Report not found")
+        # First try to load from real report files
+        import glob
+        file_pattern = f"reports/analysis/analysis_{report_id}_*.json"
+        matching_files = glob.glob(file_pattern)
         
-        # Find the specific issue
+        report_data = None
+        file_path = None
+        
+        if matching_files:
+            # Load from real report file
+            file_path = matching_files[0]
+            with open(file_path, "r") as f:
+                report_data = json.load(f)
+        else:
+            # Fallback to mock reports
+            report_data = MOCK_REPORTS.get(report_id)
+            if not report_data:
+                raise HTTPException(status_code=404, detail="Report not found")
+        
+        # Handle new format: module_results > fix_type > findings[]
+        module_results = report_data.get("module_results", {})
+        if fix_type in module_results:
+            findings = module_results[fix_type].get("findings", [])
+            try:
+                # Extract index from issue_id like 'accessibility-0'
+                finding_index = int(issue_id.split("-")[1])
+                if finding_index >= len(findings):
+                    raise HTTPException(status_code=404, detail="Issue index out of range")
+                
+                target_finding = findings[finding_index]
+                
+                # Apply fix - mark as fixed
+                target_finding["fixed"] = True
+                target_finding["fix_timestamp"] = datetime.now().isoformat()
+                
+                # Track fix history
+                fix_log = {
+                    "issue_id": issue_id,
+                    "fixed_by": "system",
+                    "timestamp": datetime.now().isoformat(),
+                    "finding_type": target_finding.get("type", "unknown"),
+                    "message": target_finding.get("message", "")
+                }
+                report_data.setdefault("fix_history", []).append(fix_log)
+                
+                # Save updated report back to file
+                if file_path:
+                    with open(file_path, "w") as f:
+                        json.dump(report_data, f, indent=2)
+                else:
+                    MOCK_REPORTS[report_id] = report_data
+                    save_analysis_to_disk(report_id, report_data)
+                
+                return JSONResponse(content={
+                    "status": "success",
+                    "message": f"Issue '{issue_id}' marked as fixed",
+                    "finding": {
+                        "type": target_finding.get("type"),
+                        "message": target_finding.get("message"),
+                        "fixed": True
+                    },
+                    "fix_timestamp": target_finding["fix_timestamp"]
+                })
+                
+            except (IndexError, ValueError) as e:
+                raise HTTPException(status_code=400, detail=f"Invalid issue_id format: {issue_id}")
+        
+        # Fallback to legacy ux_issues format
         issue = None
-        for issue_item in report.get("ux_issues", []):
+        for issue_item in report_data.get("ux_issues", []):
             if issue_item.get("issue_id") == issue_id:
                 issue = issue_item
                 break
         
         if not issue:
-            raise HTTPException(status_code=404, detail="Issue not found")
+            raise HTTPException(status_code=404, detail=f"Issue '{issue_id}' not found in report")
         
-        # Generate fix suggestions based on issue type
+        # Generate fix suggestions for legacy format
         fix_suggestions = []
         issue_type = issue.get("type", "general")
         
@@ -1123,15 +1185,19 @@ async def fix_now(
                 "Optimize user flow"
             ]
         
-        # Mark issue as being fixed
+        # Mark legacy issue as being fixed
         issue["status"] = "fixing"
         issue["fix_applied"] = True
         issue["fix_timestamp"] = datetime.now().isoformat()
         issue["fix_suggestions"] = fix_suggestions
         
         # Save updated report
-        MOCK_REPORTS[report_id] = report
-        save_analysis_to_disk(report_id, report)
+        if file_path:
+            with open(file_path, "w") as f:
+                json.dump(report_data, f, indent=2)
+        else:
+            MOCK_REPORTS[report_id] = report_data
+            save_analysis_to_disk(report_id, report_data)
         
         return JSONResponse(content={
             "status": "success",
