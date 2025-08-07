@@ -1,10 +1,10 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
 import { HomePage } from './pages/HomePage';
 import { AnalysisPage } from './pages/AnalysisPage';
-import { ReportPage } from './pages/ReportPage';
+import { EnhancedReportPage } from './pages/EnhancedReportPage';
 import { AnalysisLoadingPage } from './pages/AnalysisLoadingPage';
-import { DashboardPage } from './pages/DashboardPage';
 
 function App() {
   return (
@@ -16,8 +16,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/analyze" element={<AnalysisPage />} />
             <Route path="/analysis/:analysisId" element={<AnalysisLoadingPage />} />
-            <Route path="/report/:reportId" element={<ReportPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/report/:reportId" element={<EnhancedReportPage />} />
           </Routes>
         </main>
       </div>

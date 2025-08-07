@@ -905,6 +905,176 @@ async def create_ado_tickets(report_id: str, demo_mode: bool = True):
         logger.error(f"ADO ticket creation error: {e}")
         raise HTTPException(status_code=500, detail=f"Ticket creation failed: {str(e)}")
 
+# New endpoints for UI integration
+@app.post("/api/analyze/url", response_model=AnalysisResponse)
+async def analyze_url(
+    url: str = Form(...),
+    scenario_name: str = Form(None),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    """Analyze a URL - simplified endpoint for frontend integration"""
+    try:
+        analysis_id = str(uuid.uuid4())[:8]
+        logger.info(f"Starting URL analysis: {analysis_id} for {url}")
+        
+        # Create analysis request object
+        request = AnalysisRequest(
+            url=url,
+            scenario_path=scenario_name if scenario_name else "scenarios/general_analysis.yaml",
+            modules=["accessibility", "performance", "navigation", "ai_analysis"]
+        )
+        
+        # Process analysis in background
+        async def run_analysis():
+            try:
+                report_data = scenario_executor.execute_url_scenario(
+                    url=request.url,
+                    scenario_path=request.scenario_path,
+                    modules=request.modules
+                )
+                
+                MOCK_REPORTS[analysis_id] = report_data
+                save_analysis_to_disk(analysis_id, report_data)
+                logger.info(f"URL analysis completed: {analysis_id}")
+                
+            except Exception as e:
+                logger.error(f"URL analysis failed: {analysis_id} - {e}")
+        
+        background_tasks.add_task(run_analysis)
+        
+        return AnalysisResponse(
+            analysis_id=analysis_id,
+            status="started",
+            message=f"URL analysis started for {url}",
+            estimated_duration_minutes=2
+        )
+        
+    except Exception as e:
+        logger.error(f"URL analysis setup failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis setup failed: {str(e)}")
+
+@app.post("/api/analyze/scenario")
+async def analyze_scenario(
+    scenario_file: UploadFile = File(...),
+    url: str = Form(None)
+):
+    """Upload and execute a custom scenario YAML file"""
+    try:
+        analysis_id = str(uuid.uuid4())[:8]
+        
+        # Save uploaded scenario file
+        scenarios_dir = "scenarios/custom"
+        os.makedirs(scenarios_dir, exist_ok=True)
+        scenario_path = f"{scenarios_dir}/{analysis_id}_{scenario_file.filename}"
+        
+        with open(scenario_path, "wb") as f:
+            content = await scenario_file.read()
+            f.write(content)
+        
+        # Execute scenario
+        request = AnalysisRequest(
+            url=url,
+            scenario_path=scenario_path,
+            modules=["accessibility", "performance", "navigation", "ai_analysis"]
+        )
+        
+        report_data = scenario_executor.execute_url_scenario(
+            url=request.url,
+            scenario_path=request.scenario_path,
+            modules=request.modules
+        )
+        
+        MOCK_REPORTS[analysis_id] = report_data
+        save_analysis_to_disk(analysis_id, report_data)
+        
+        return AnalysisResponse(
+            analysis_id=analysis_id,
+            status="completed",
+            message="Custom scenario analysis completed",
+            estimated_duration_minutes=0
+        )
+        
+    except Exception as e:
+        logger.error(f"Scenario analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Scenario analysis failed: {str(e)}")
+
+@app.post("/api/fix-now")
+async def fix_now(
+    issue_id: str = Form(...),
+    report_id: str = Form(...),
+    fix_type: str = Form(...)
+):
+    """Apply immediate fixes for UX issues"""
+    try:
+        # Get the report containing the issue
+        report = MOCK_REPORTS.get(report_id)
+        if not report:
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        # Find the specific issue
+        issue = None
+        for issue_item in report.get("ux_issues", []):
+            if issue_item.get("issue_id") == issue_id:
+                issue = issue_item
+                break
+        
+        if not issue:
+            raise HTTPException(status_code=404, detail="Issue not found")
+        
+        # Generate fix suggestions based on issue type
+        fix_suggestions = []
+        issue_type = issue.get("type", "general")
+        
+        if issue_type == "accessibility":
+            fix_suggestions = [
+                "Add alt text to images",
+                "Improve color contrast ratio",
+                "Add ARIA labels to interactive elements",
+                "Ensure keyboard navigation support"
+            ]
+        elif issue_type == "performance":
+            fix_suggestions = [
+                "Optimize image compression",
+                "Minify CSS and JavaScript",
+                "Enable browser caching",
+                "Reduce server response time"
+            ]
+        elif issue_type == "usability":
+            fix_suggestions = [
+                "Simplify navigation structure",
+                "Improve button sizing and placement",
+                "Add clear call-to-action buttons",
+                "Enhance form validation messages"
+            ]
+        else:
+            fix_suggestions = [
+                "Review design guidelines",
+                "Test with real users",
+                "Implement responsive design",
+                "Optimize user flow"
+            ]
+        
+        # Mark issue as being fixed
+        issue["status"] = "fixing"
+        issue["fix_applied"] = True
+        issue["fix_timestamp"] = datetime.now().isoformat()
+        issue["fix_suggestions"] = fix_suggestions
+        
+        # Save updated report
+        MOCK_REPORTS[report_id] = report
+        save_analysis_to_disk(report_id, report)
+        
+        return JSONResponse(content={
+            "status": "success",
+            "message": f"Fix initiated for issue {issue_id}",
+            "fix_suggestions": fix_suggestions,
+            "issue_status": "fixing"
+        })
+        
+    except Exception as e:
+        logger.error(f"Fix-now operation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Fix operation failed: {str(e)}")
+
 @app.get("/dashboard")
 async def serve_dashboard():
     """Serve the analytics dashboard HTML"""

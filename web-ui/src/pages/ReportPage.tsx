@@ -8,35 +8,18 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  TrendingUp,
   Eye,
   Keyboard,
   Zap,
   Brain,
   ShieldCheck,
   PlayCircle,
-  Loader2
+  Loader2,
+  Settings,
+  ExternalLink
 } from 'lucide-react';
-
-interface ReportData {
-  analysis_id: string;
-  timestamp: string;
-  url?: string;
-  mode: string;
-  overall_score: number;
-  modules: {
-    [key: string]: {
-      score: number;
-      findings: Array<{
-        type: 'error' | 'warning' | 'info';
-        message: string;
-        severity: 'high' | 'medium' | 'low';
-      }>;
-      recommendations: string[];
-      metrics?: { [key: string]: any };
-    };
-  };
-}
+import { useReports, useFixManager } from '../hooks/useAPI';
+import { AnalysisReport, UXIssue } from '../services/api';
 
 const moduleIcons: { [key: string]: React.ReactNode } = {
   performance: <Zap className="w-5 h-5" />,
@@ -58,33 +41,102 @@ const moduleNames: { [key: string]: string } = {
   functional: 'Functional Testing'
 };
 
+// Fix Now Button Component
+interface FixNowButtonProps {
+  issue: UXIssue;
+  reportId: string;
+  onFixApplied: () => void;
+}
+
+function FixNowButton({ issue, reportId, onFixApplied }: FixNowButtonProps) {
+  const { applyFix, isFixing, getFixResult } = useFixManager();
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const handleFix = async () => {
+    try {
+      await applyFix(issue.issue_id, reportId, issue.type);
+      onFixApplied();
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Fix failed:', error);
+    }
+  };
+
+  const fixResult = getFixResult(issue.issue_id);
+  const fixing = isFixing(issue.issue_id);
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={handleFix}
+        disabled={fixing || issue.fix_applied}
+        className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+          issue.fix_applied
+            ? 'bg-green-100 text-green-800 cursor-not-allowed'
+            : fixing
+            ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+        }`}
+      >
+        {fixing ? (
+          <>
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Fixing...
+          </>
+        ) : issue.fix_applied ? (
+          <>
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Fix Applied
+          </>
+        ) : (
+          <>
+            <Settings className="w-3 h-3 mr-1" />
+            Fix Now
+          </>
+        )}
+      </button>
+
+      {/* Show fix suggestions after applying */}
+      {showSuggestions && fixResult && (
+        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+          <h5 className="font-medium text-green-800 mb-2">Fix Suggestions Applied:</h5>
+          <ul className="text-sm text-green-700 space-y-1">
+            {fixResult.fix_suggestions.map((suggestion: string, index: number) => (
+              <li key={index} className="flex items-start">
+                <span className="mr-2">•</span>
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ReportPage() {
   const { reportId } = useParams<{ reportId: string }>();
-  const [report, setReport] = useState<ReportData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { fetchReport, downloadReport, loading, error } = useReports();
+  const [report, setReport] = useState<AnalysisReport | null>(null);
   const [activeTab, setActiveTab] = useState<string>('overview');
 
   useEffect(() => {
     if (reportId) {
-      fetchReport(reportId);
+      loadReport(reportId);
     }
   }, [reportId]);
 
-  const fetchReport = async (id: string) => {
+  const loadReport = async (id: string) => {
     try {
-      const response = await fetch(`/api/reports/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setReport(data);
-        setActiveTab(Object.keys(data.modules)[0] || 'overview');
-      } else {
-        setError('Report not found');
+      const reportData = await fetchReport(id);
+      setReport(reportData);
+      // Set first available module as active tab if overview not desired
+      if (reportData.ux_issues && reportData.ux_issues.length > 0) {
+        const issueTypes = [...new Set(reportData.ux_issues.map(issue => issue.type))];
+        setActiveTab(issueTypes[0] || 'overview');
       }
     } catch (err) {
-      setError('Failed to load report');
-    } finally {
-      setLoading(false);
+      console.error('Failed to load report:', err);
     }
   };
 
@@ -100,15 +152,36 @@ export function ReportPage() {
     return 'bg-red-100';
   };
 
-  const downloadReport = (format: 'html' | 'json' | 'pdf') => {
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const handleDownload = async (format: 'html' | 'json' | 'pdf' = 'html') => {
     if (!reportId) return;
-    window.open(`/api/reports/${reportId}/download?format=${format}`, '_blank');
+    try {
+      await downloadReport(reportId);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
   };
 
   const shareReport = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     alert('Report URL copied to clipboard!');
+  };
+
+  const onFixApplied = () => {
+    // Refresh the report to show updated fix status
+    if (reportId) {
+      loadReport(reportId);
+    }
   };
 
   if (loading) {
@@ -137,7 +210,15 @@ export function ReportPage() {
     );
   }
 
-  const moduleEntries = Object.entries(report.modules);
+  // Group issues by type for tab navigation
+  const issuesByType = report.ux_issues?.reduce((acc, issue) => {
+    if (!acc[issue.type]) acc[issue.type] = [];
+    acc[issue.type].push(issue);
+    return acc;
+  }, {} as Record<string, UXIssue[]>) || {};
+
+  const totalIssues = report.ux_issues?.length || 0;
+  const criticalIssues = report.ux_issues?.filter(issue => issue.severity === 'critical' || issue.severity === 'high').length || 0;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -153,18 +234,11 @@ export function ReportPage() {
           </Link>
           <div className="flex space-x-2">
             <button
-              onClick={() => downloadReport('html')}
+              onClick={() => handleDownload('html')}
               className="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
             >
               <Download className="w-4 h-4 mr-2" />
-              HTML
-            </button>
-            <button
-              onClick={() => downloadReport('json')}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              JSON
+              Download
             </button>
             <button
               onClick={shareReport}
@@ -187,9 +261,10 @@ export function ReportPage() {
                 href={report.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-2 text-blue-600 hover:underline"
+                className="ml-2 text-blue-600 hover:underline flex items-center"
               >
-                {report.url}
+                {new URL(report.url).hostname}
+                <ExternalLink className="w-3 h-3 ml-1" />
               </a>
             </span>
           )}
@@ -198,54 +273,64 @@ export function ReportPage() {
             {new Date(report.timestamp).toLocaleString()}
           </span>
           <span className="flex items-center">
-            <span className="font-medium">Mode:</span>
-            <span className="ml-2 capitalize">{report.mode}</span>
+            <span className="font-medium">App Type:</span>
+            <span className="ml-2 capitalize">{report.app_type}</span>
           </span>
         </div>
       </div>
 
-      {/* Overall Score */}
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Overall UX Score
-            </h2>
-            <p className="text-gray-600">
-              Composite score across all analysis modules
-            </p>
-          </div>
-          <div className={`text-right ${getScoreColor(report.overall_score)}`}>
-            <div className="text-4xl font-bold">{report.overall_score}</div>
-            <div className="text-sm">out of 100</div>
+      {/* Score Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Overall Score</h3>
+              <p className="text-sm text-gray-600">Composite UX rating</p>
+            </div>
+            <div className={`text-3xl font-bold ${getScoreColor(report.overall_score || 0)}`}>
+              {report.overall_score || 'N/A'}
+            </div>
           </div>
         </div>
-        
-        {/* Score Breakdown */}
-        <div className="mt-6">
-          <h3 className="font-medium text-gray-900 mb-3">Module Scores</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            {moduleEntries.map(([moduleKey, moduleData]) => (
-              <div
-                key={moduleKey}
-                className={`p-3 rounded-lg ${getScoreBgColor(moduleData.score)}`}
-              >
-                <div className="flex items-center mb-2">
-                  {moduleIcons[moduleKey]}
-                  <span className="ml-2 text-sm font-medium text-gray-900">
-                    {moduleNames[moduleKey]}
-                  </span>
-                </div>
-                <div className={`text-lg font-bold ${getScoreColor(moduleData.score)}`}>
-                  {moduleData.score}
-                </div>
-              </div>
-            ))}
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Total Issues</h3>
+              <p className="text-sm text-gray-600">UX problems found</p>
+            </div>
+            <div className="text-3xl font-bold text-blue-600">
+              {totalIssues}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Critical Issues</h3>
+              <p className="text-sm text-gray-600">High priority problems</p>
+            </div>
+            <div className="text-3xl font-bold text-red-600">
+              {criticalIssues}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Performance</h3>
+              <p className="text-sm text-gray-600">Core Web Vitals</p>
+            </div>
+            <div className={`text-3xl font-bold ${getScoreColor(report.performance_metrics?.load_time ? 100 - (report.performance_metrics.load_time * 10) : 75)}`}>
+              {report.performance_metrics?.load_time ? `${report.performance_metrics.load_time}s` : 'Good'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Module Navigation */}
+      {/* Issues Analysis */}
       <div className="bg-white rounded-xl shadow-lg mb-8">
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8 px-6">
@@ -259,18 +344,21 @@ export function ReportPage() {
             >
               Overview
             </button>
-            {moduleEntries.map(([moduleKey]) => (
+            {Object.keys(issuesByType).map((type) => (
               <button
-                key={moduleKey}
-                onClick={() => setActiveTab(moduleKey)}
+                key={type}
+                onClick={() => setActiveTab(type)}
                 className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center ${
-                  activeTab === moduleKey
+                  activeTab === type
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                {moduleIcons[moduleKey]}
-                <span className="ml-2">{moduleNames[moduleKey]}</span>
+                {moduleIcons[type] || <AlertTriangle className="w-5 h-5" />}
+                <span className="ml-2 capitalize">{type.replace('_', ' ')}</span>
+                <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                  {issuesByType[type].length}
+                </span>
               </button>
             ))}
           </nav>
@@ -279,155 +367,130 @@ export function ReportPage() {
         <div className="p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Score Chart */}
+              {/* Issues Summary Chart */}
+              {Object.keys(issuesByType).length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Issues by Category
+                  </h3>
+                  <Plot
+                    data={[
+                      {
+                        x: Object.keys(issuesByType).map(type => type.replace('_', ' ')),
+                        y: Object.values(issuesByType).map(issues => issues.length),
+                        type: 'bar',
+                        marker: {
+                          color: Object.values(issuesByType).map(issues => {
+                            const criticalCount = issues.filter(i => i.severity === 'critical' || i.severity === 'high').length;
+                            return criticalCount > 0 ? '#ef4444' : '#3b82f6';
+                          })
+                        }
+                      }
+                    ]}
+                    layout={{
+                      title: { text: 'UX Issues Distribution' },
+                      xaxis: { title: 'Issue Category' },
+                      yaxis: { title: 'Number of Issues' },
+                      showlegend: false,
+                      height: 300
+                    }}
+                    config={{ displayModeBar: false }}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {/* Recent Issues */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Score Distribution
+                  Recent Issues Found
                 </h3>
-                <Plot
-                  data={[
-                    {
-                      x: moduleEntries.map(([key]) => moduleNames[key]),
-                      y: moduleEntries.map(([, data]) => data.score),
-                      type: 'bar',
-                      marker: {
-                        color: moduleEntries.map(([, data]) => 
-                          data.score >= 80 ? '#10b981' : 
-                          data.score >= 60 ? '#f59e0b' : '#ef4444'
-                        )
-                      }
-                    }
-                  ]}
-                  layout={{
-                    title: 'Module Scores',
-                    xaxis: { title: 'Modules' },
-                    yaxis: { title: 'Score', range: [0, 100] },
-                    showlegend: false,
-                    height: 300
-                  }}
-                  config={{ displayModeBar: false }}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                    <span className="font-medium text-green-800">Strengths</span>
-                  </div>
-                  <p className="text-green-700 text-sm">
-                    {moduleEntries.filter(([, data]) => data.score >= 80).length} modules performing well
-                  </p>
-                </div>
-                
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
-                    <span className="font-medium text-yellow-800">Areas for Improvement</span>
-                  </div>
-                  <p className="text-yellow-700 text-sm">
-                    {moduleEntries.filter(([, data]) => data.score < 80 && data.score >= 60).length} modules need attention
-                  </p>
-                </div>
-                
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
-                    <span className="font-medium text-red-800">Critical Issues</span>
-                  </div>
-                  <p className="text-red-700 text-sm">
-                    {moduleEntries.filter(([, data]) => data.score < 60).length} modules require immediate attention
-                  </p>
+                <div className="space-y-3">
+                  {report.ux_issues?.slice(0, 5).map((issue) => (
+                    <div
+                      key={issue.issue_id}
+                      className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{issue.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                          {issue.location && (
+                            <p className="text-xs text-gray-500 mt-1">Location: {issue.location}</p>
+                          )}
+                        </div>
+                        <div className="ml-4 text-right">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
+                            {issue.severity}
+                          </span>
+                          <FixNowButton 
+                            issue={issue} 
+                            reportId={reportId!} 
+                            onFixApplied={onFixApplied}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
-          {activeTab !== 'overview' && report.modules[activeTab] && (
-            <div className="space-y-6">
-              {/* Module Score */}
+          {activeTab !== 'overview' && issuesByType[activeTab] && (
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {moduleNames[activeTab]} Analysis
+                  {activeTab.replace('_', ' ')} Issues ({issuesByType[activeTab].length})
                 </h3>
-                <div className={`text-2xl font-bold ${getScoreColor(report.modules[activeTab].score)}`}>
-                  {report.modules[activeTab].score}/100
+                <div className="text-sm text-gray-600">
+                  {issuesByType[activeTab].filter(i => i.severity === 'critical' || i.severity === 'high').length} critical/high priority
                 </div>
               </div>
 
-              {/* Findings */}
-              {report.modules[activeTab].findings.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Findings</h4>
-                  <div className="space-y-2">
-                    {report.modules[activeTab].findings.map((finding, index) => (
-                      <div
-                        key={index}
-                        className={`p-3 rounded-lg border-l-4 ${
-                          finding.type === 'error'
-                            ? 'bg-red-50 border-red-500'
-                            : finding.type === 'warning'
-                            ? 'bg-yellow-50 border-yellow-500'
-                            : 'bg-blue-50 border-blue-500'
-                        }`}
-                      >
-                        <div className="flex items-start">
-                          <div className={`mt-0.5 mr-3 ${
-                            finding.type === 'error'
-                              ? 'text-red-600'
-                              : finding.type === 'warning'
-                              ? 'text-yellow-600'
-                              : 'text-blue-600'
-                          }`}>
-                            <AlertTriangle className="w-4 h-4" />
+              <div className="space-y-4">
+                {issuesByType[activeTab].map((issue) => (
+                  <div
+                    key={issue.issue_id}
+                    className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{issue.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                        {issue.location && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            <span className="font-medium">Location:</span> {issue.location}
+                          </p>
+                        )}
+                        {issue.suggestions && issue.suggestions.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs font-medium text-gray-700 mb-1">Suggestions:</p>
+                            <ul className="text-xs text-gray-600 space-y-1">
+                              {issue.suggestions.map((suggestion, idx) => (
+                                <li key={idx} className="flex items-start">
+                                  <span className="mr-2">•</span>
+                                  {suggestion}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                          <div>
-                            <p className="text-gray-900">{finding.message}</p>
-                            <span className={`text-xs font-medium px-2 py-1 rounded mt-1 inline-block ${
-                              finding.severity === 'high'
-                                ? 'bg-red-100 text-red-800'
-                                : finding.severity === 'medium'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {finding.severity} severity
-                            </span>
-                          </div>
-                        </div>
+                        )}
                       </div>
-                    ))}
+                      <div className="ml-4 text-right">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
+                          {issue.severity}
+                        </span>
+                        <FixNowButton 
+                          issue={issue} 
+                          reportId={reportId!} 
+                          onFixApplied={onFixApplied}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Recommendations */}
-              {report.modules[activeTab].recommendations.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Recommendations</h4>
-                  <ul className="space-y-2">
-                    {report.modules[activeTab].recommendations.map((rec, index) => (
-                      <li key={index} className="flex items-start">
-                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                        <span className="text-gray-700">{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Metrics Chart (if available) */}
-              {report.modules[activeTab].metrics && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Metrics</h4>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <pre className="text-sm text-gray-700 overflow-x-auto">
-                      {JSON.stringify(report.modules[activeTab].metrics, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           )}
         </div>

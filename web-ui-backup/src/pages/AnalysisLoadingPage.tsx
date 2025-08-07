@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { useReports } from '../hooks/useAPI';
 
 interface AnalysisStatus {
   analysis_id: string;
@@ -14,7 +13,6 @@ interface AnalysisStatus {
 export function AnalysisLoadingPage() {
   const { analysisId } = useParams<{ analysisId: string }>();
   const navigate = useNavigate();
-  const { fetchReport, loading, error: reportError } = useReports();
   const [status, setStatus] = useState<AnalysisStatus | null>(null);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -42,10 +40,11 @@ export function AnalysisLoadingPage() {
       // Small delay to show the loading state
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Try to fetch the completed report immediately
+      // Try to fetch the completed report immediately for mock data
       try {
-        const report = await fetchReport(analysisId!);
-        if (report) {
+        const reportResponse = await fetch(`/api/reports/${analysisId}`);
+        
+        if (reportResponse.ok) {
           // Report is ready!
           setProgress(100);
           setStatus({
@@ -68,8 +67,9 @@ export function AnalysisLoadingPage() {
       // If initial fetch fails, start polling
       const pollInterval = setInterval(async () => {
         try {
-          const report = await fetchReport(analysisId!);
-          if (report) {
+          const reportResponse = await fetch(`/api/reports/${analysisId}`);
+          
+          if (reportResponse.ok) {
             // Report is ready!
             clearInterval(pollInterval);
             setProgress(100);
@@ -86,22 +86,23 @@ export function AnalysisLoadingPage() {
             }, 1000);
             return;
           }
+          
+          // If report not found, continue polling with visual progress
+          setProgress(prev => Math.min(prev + 10, 90));
+          setStatus(prev => ({
+            analysis_id: analysisId!,
+            status: 'processing',
+            message: 'Analyzing your content... Please wait.',
+            progress: Math.min((prev?.progress || 0) + 10, 90)
+          }));
+          
         } catch (err) {
           console.error('Polling error:', err);
-          // Continue polling on certain errors
+          // Continue polling on network errors
         }
-        
-        // Update visual progress
-        setProgress(prev => Math.min(prev + 10, 90));
-        setStatus(prev => ({
-          analysis_id: analysisId!,
-          status: 'processing',
-          message: 'Analyzing your content... Please wait.',
-          progress: Math.min((prev?.progress || 0) + 10, 90)
-        }));
       }, 3000);
 
-      // Timeout after 60 seconds
+      // Timeout after 30 seconds for mock data
       setTimeout(() => {
         clearInterval(pollInterval);
         if (status?.status === 'processing') {
@@ -112,7 +113,7 @@ export function AnalysisLoadingPage() {
             message: 'Analysis timeout',
           });
         }
-      }, 60000);
+      }, 30000);
 
     } catch (err) {
       setError('Failed to start analysis polling');
@@ -121,7 +122,7 @@ export function AnalysisLoadingPage() {
   };
 
   const getStatusIcon = () => {
-    if (error || reportError || status?.status === 'failed') {
+    if (error || status?.status === 'failed') {
       return <AlertCircle className="w-8 h-8 text-red-500" />;
     }
     if (status?.status === 'completed') {
@@ -131,12 +132,10 @@ export function AnalysisLoadingPage() {
   };
 
   const getProgressColor = () => {
-    if (error || reportError || status?.status === 'failed') return 'bg-red-500';
+    if (error || status?.status === 'failed') return 'bg-red-500';
     if (status?.status === 'completed') return 'bg-green-500';
     return 'bg-blue-500';
   };
-
-  const displayError = error || reportError;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -146,16 +145,16 @@ export function AnalysisLoadingPage() {
         </div>
         
         <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          {displayError ? 'Analysis Failed' : 
+          {error ? 'Analysis Failed' : 
            status?.status === 'completed' ? 'Analysis Complete!' :
            'Analyzing Your Content'}
         </h1>
         
         <p className="text-gray-600 mb-6">
-          {displayError || status?.message || 'Preparing your UX analysis...'}
+          {error || status?.message || 'Preparing your UX analysis...'}
         </p>
         
-        {!displayError && !loading && (
+        {!error && (
           <div className="mb-6">
             <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
               <div 
@@ -172,7 +171,7 @@ export function AnalysisLoadingPage() {
           <span>Analysis ID: {analysisId}</span>
         </div>
         
-        {displayError && (
+        {error && (
           <div className="space-y-3">
             <button
               onClick={() => window.location.reload()}
@@ -181,7 +180,7 @@ export function AnalysisLoadingPage() {
               Try Again
             </button>
             <button
-              onClick={() => navigate('/analyze')}
+              onClick={() => navigate('/')}
               className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition duration-200"
             >
               Start New Analysis
@@ -189,7 +188,7 @@ export function AnalysisLoadingPage() {
           </div>
         )}
         
-        {status?.status === 'processing' && !displayError && (
+        {status?.status === 'processing' && (
           <div className="text-xs text-gray-400 mt-4">
             <p>Your analysis is being processed...</p>
             <p>This page will automatically redirect when complete.</p>

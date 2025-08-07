@@ -8,12 +8,8 @@ import {
   ArrowRight,
   Loader2,
   FileText,
-  Zap,
-  CheckCircle,
-  AlertCircle
+  Zap
 } from 'lucide-react';
-import { useAnalysis, useConnectionStatus } from '../hooks/useAPI';
-import apiClient from '../services/api';
 
 type AnalysisMode = 'url' | 'screenshot' | 'url-scenario' | 'mock-scenario';
 
@@ -43,18 +39,7 @@ interface Scenario {
 
 export function AnalysisPage() {
   const navigate = useNavigate();
-  const { 
-    isAnalyzing, 
-    currentAnalysis, 
-    error, 
-    progress,
-    startUrlAnalysis, 
-    startScreenshotAnalysis, 
-    startScenarioAnalysis,
-    resetAnalysis 
-  } = useAnalysis();
-  const { isConnected } = useConnectionStatus();
-  
+  const [isLoading, setIsLoading] = useState(false);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [config, setConfig] = useState<AnalysisConfig>({
     mode: 'url',
@@ -78,6 +63,7 @@ export function AnalysisPage() {
 
   // Load available scenarios on component mount
   useEffect(() => {
+    // Load scenarios directly (fallback if API fails)
     const defaultScenarios = [
       { name: 'Basic Navigation', filename: 'basic_navigation.yaml', path: 'scenarios/basic_navigation.yaml', description: 'Test basic page navigation and menu interactions' },
       { name: 'Login Flow', filename: 'login_flow.yaml', path: 'scenarios/login_flow.yaml', description: 'Test user authentication and login process' },
@@ -86,13 +72,14 @@ export function AnalysisPage() {
 
     const loadScenarios = async () => {
       try {
-        const scenarioList = await apiClient.getScenarios();
-        setScenarios(scenarioList.map((name: string) => ({
-          name: name.replace(/\.yaml$/, '').replace(/_/g, ' '),
-          filename: name,
-          path: `scenarios/${name}`,
-          description: `Test scenario: ${name.replace(/\.yaml$/, '').replace(/_/g, ' ')}`
-        })));
+        const response = await fetch('/api/scenarios');
+        if (response.ok) {
+          const data = await response.json();
+          setScenarios(data.scenarios || defaultScenarios);
+        } else {
+          // Use default scenarios if API fails
+          setScenarios(defaultScenarios);
+        }
       } catch (error) {
         console.error('Failed to load scenarios, using defaults:', error);
         setScenarios(defaultScenarios);
@@ -101,16 +88,6 @@ export function AnalysisPage() {
 
     loadScenarios();
   }, []);
-
-  // Handle analysis completion
-  useEffect(() => {
-    if (currentAnalysis && currentAnalysis.status === 'completed') {
-      // Navigate to results page after a short delay
-      setTimeout(() => {
-        navigate(`/analysis/${currentAnalysis.analysis_id}`);
-      }, 2000);
-    }
-  }, [currentAnalysis, navigate]);
 
   const analysisTypes = [
     {
@@ -155,41 +132,64 @@ export function AnalysisPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setIsLoading(true);
+
     try {
-      resetAnalysis();
-      
+      let endpoint = '/api/analyze';
+      let body: any = {
+        modules: {
+          performance: config.enablePerformance,
+          accessibility: config.enableAccessibility,
+          keyboard: config.enableKeyboard,
+          ux_heuristics: config.enableUxHeuristics,
+          best_practices: config.enableBestPractices,
+          health_alerts: config.enableHealthAlerts,
+          functional: config.enableFunctional
+        },
+        output_format: config.outputFormat
+      };
+
       if (config.mode === 'url' && config.url) {
-        await startUrlAnalysis(config.url, config.scenarioFile);
+        body.url = config.url;
       } else if (config.mode === 'screenshot' && config.screenshot) {
-        const screenshotConfig = {
-          modules: {
-            performance: config.enablePerformance,
-            accessibility: config.enableAccessibility,
-            keyboard: config.enableKeyboard,
-            ux_heuristics: config.enableUxHeuristics,
-            best_practices: config.enableBestPractices,
-            health_alerts: config.enableHealthAlerts,
-            functional: config.enableFunctional
-          },
-          output_format: config.outputFormat
-        };
-        await startScreenshotAnalysis(config.screenshot, screenshotConfig);
+        const formData = new FormData();
+        formData.append('screenshot', config.screenshot);
+        formData.append('config', JSON.stringify(body));
+        endpoint = '/api/analyze/screenshot';
+        body = formData; // Use FormData for file upload
       } else if (config.mode === 'url-scenario' && config.url && config.scenarioFile) {
-        // Create scenario file from selected path
-        const scenarioBlob = new Blob([`# Auto-generated scenario for ${config.url}`], { type: 'text/yaml' });
-        const scenarioFile = new File([scenarioBlob], 'auto-scenario.yaml', { type: 'text/yaml' });
-        await startScenarioAnalysis(scenarioFile, config.url);
+        endpoint = '/api/analyze/url-scenario';
+        body.url = config.url;
+        body.scenario_path = config.scenarioFile;
       } else if (config.mode === 'mock-scenario' && config.mockAppPath && config.scenarioFile) {
-        // For mock scenarios, create a simple scenario file
-        const scenarioBlob = new Blob([`# Mock app scenario for ${config.mockAppPath}`], { type: 'text/yaml' });
-        const scenarioFile = new File([scenarioBlob], 'mock-scenario.yaml', { type: 'text/yaml' });
-        await startScenarioAnalysis(scenarioFile, config.mockAppPath);
+        endpoint = '/api/analyze/mock-scenario';
+        body.app_path = config.mockAppPath;
+        body.scenario_path = config.scenarioFile;
       } else {
         throw new Error('Please fill in all required fields');
       }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: config.mode !== 'screenshot' ? {
+          'Content-Type': 'application/json',
+        } : undefined,
+        body: config.mode === 'screenshot' ? body : JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        navigate(`/analysis/${result.analysis_id}`);
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        const errorMessage = errorData.detail || errorData.error || 'Analysis failed';
+        throw new Error(errorMessage);
+      }
     } catch (error) {
       console.error('Analysis error:', error);
+      alert(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -200,76 +200,16 @@ export function AnalysisPage() {
     }
   };
 
-  // Connection status indicator
-  const ConnectionStatus = () => (
-    <div className={`flex items-center space-x-2 text-sm ${
-      isConnected ? 'text-green-600' : 'text-red-600'
-    }`}>
-      {isConnected ? (
-        <CheckCircle className="w-4 h-4" />
-      ) : (
-        <AlertCircle className="w-4 h-4" />
-      )}
-      <span>{isConnected ? 'Connected to API' : 'API Connection Lost'}</span>
-    </div>
-  );
-
-  // Progress indicator
-  const ProgressIndicator = () => {
-    if (!isAnalyzing) return null;
-    
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Analysis in Progress</h3>
-          <span className="text-blue-600 font-medium">{progress}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-          <div 
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>
-            {currentAnalysis ? currentAnalysis.message : 'Preparing analysis...'}
-          </span>
-        </div>
-        {currentAnalysis?.estimated_duration_minutes && (
-          <p className="text-xs text-gray-500 mt-2">
-            Estimated time: {currentAnalysis.estimated_duration_minutes} minutes
-          </p>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Start UX Analysis
         </h1>
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-600">
           Configure your analysis settings and choose what to evaluate
         </p>
-        <ConnectionStatus />
       </div>
-
-      {/* Show progress if analysis is running */}
-      <ProgressIndicator />
-
-      {/* Show error if any */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="w-5 h-5" />
-            <span className="font-medium">Analysis Error:</span>
-          </div>
-          <p className="mt-2">{error}</p>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Analysis Type Selection */}
@@ -295,7 +235,6 @@ export function AnalysisPage() {
                   checked={config.mode === type.id}
                   onChange={(e) => setConfig(prev => ({ ...prev, mode: e.target.value as AnalysisMode }))}
                   className="sr-only"
-                  disabled={isAnalyzing}
                 />
                 <div className="flex items-start space-x-3">
                   <div className={`p-2 rounded-lg ${
@@ -327,7 +266,6 @@ export function AnalysisPage() {
               placeholder="https://example.com"
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
-              disabled={isAnalyzing}
             />
           )}
 
@@ -341,7 +279,6 @@ export function AnalysisPage() {
                 onChange={handleFileUpload}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 required
-                disabled={isAnalyzing}
               />
               {config.screenshot && (
                 <p className="text-sm text-green-600 mt-2">
@@ -361,7 +298,6 @@ export function AnalysisPage() {
                   placeholder="https://example.com"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
-                  disabled={isAnalyzing}
                 />
               )}
               
@@ -375,7 +311,6 @@ export function AnalysisPage() {
                     onChange={(e) => setConfig(prev => ({ ...prev, mockAppPath: e.target.value }))}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
-                    disabled={isAnalyzing}
                   >
                     <option value="">Choose a mock app...</option>
                     {mockApps.map((app) => (
@@ -396,7 +331,6 @@ export function AnalysisPage() {
                   onChange={(e) => setConfig(prev => ({ ...prev, scenarioFile: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
-                  disabled={isAnalyzing}
                 >
                   <option value="">Choose a scenario...</option>
                   {scenarios.map((scenario) => (
@@ -434,7 +368,6 @@ export function AnalysisPage() {
                     [module.key]: e.target.checked 
                   }))}
                   className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  disabled={isAnalyzing}
                 />
                 <div>
                   <h3 className="font-medium text-gray-900">{module.label}</h3>
@@ -463,7 +396,6 @@ export function AnalysisPage() {
                     outputFormat: e.target.value as 'html' | 'json' | 'text'
                   }))}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isAnalyzing}
                 />
                 <span className="text-gray-700 capitalize">{format}</span>
               </label>
@@ -475,10 +407,10 @@ export function AnalysisPage() {
         <div className="text-center">
           <button
             type="submit"
-            disabled={isAnalyzing || !isConnected}
+            disabled={isLoading}
             className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isAnalyzing ? (
+            {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 Running Analysis...
@@ -490,11 +422,6 @@ export function AnalysisPage() {
               </>
             )}
           </button>
-          {!isConnected && (
-            <p className="text-sm text-red-600 mt-2">
-              Cannot start analysis: API connection lost
-            </p>
-          )}
         </div>
       </form>
     </div>
