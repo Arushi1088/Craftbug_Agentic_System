@@ -132,7 +132,7 @@ interface ModuleFixNowButtonProps {
   onFixApplied: () => void;
 }
 
-function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixApplied }: ModuleFixNowButtonProps) {
+function ModuleFixNowButton({ moduleKey, findingIndex, reportId, onFixApplied }: ModuleFixNowButtonProps) {
   const { applyFix, isFixing, getFixResult } = useFixManager();
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -200,6 +200,7 @@ export function ReportPage() {
   const { fetchReport, downloadReport, loading, error } = useReports();
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [hideFixed, setHideFixed] = useState(false);
 
   useEffect(() => {
     if (reportId) {
@@ -235,12 +236,6 @@ export function ReportPage() {
     return 'text-red-600';
   };
 
-  const getScoreBgColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100';
-    if (score >= 60) return 'bg-yellow-100';
-    return 'bg-red-100';
-  };
-
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
@@ -251,7 +246,7 @@ export function ReportPage() {
     }
   };
 
-  const handleDownload = async (format: 'html' | 'json' | 'pdf' = 'html') => {
+  const handleDownload = async () => {
     if (!reportId) return;
     try {
       await downloadReport(reportId);
@@ -327,10 +322,6 @@ export function ReportPage() {
       ? Math.round(Object.values(moduleResults).reduce((sum, m) => sum + m.score, 0) / Object.keys(moduleResults).length)
       : 75);
 
-  // Get scenarios that passed/failed
-  const scenariosPassed = scenarioResults.filter(s => s.status === 'completed' || s.status === 'passed').length;
-  const totalScenarios = scenarioResults.length;
-
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
@@ -345,7 +336,7 @@ export function ReportPage() {
           </Link>
           <div className="flex space-x-2">
             <button
-              onClick={() => handleDownload('html')}
+              onClick={() => handleDownload()}
               className="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
             >
               <Download className="w-4 h-4 mr-2" />
@@ -498,6 +489,20 @@ export function ReportPage() {
         <div className="p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              {/* Toggle for hiding/showing fixed issues in overview */}
+              {(Object.values(moduleResults).some(module => 
+                module.findings?.some((f: any) => f.fixed)
+              ) || report.ux_issues?.some(issue => issue.fix_applied)) && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setHideFixed(!hideFixed)}
+                    className="text-sm px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                  >
+                    {hideFixed ? "Show All Issues" : "Hide Fixed Issues"}
+                  </button>
+                </div>
+              )}
+              
               {/* Issues Summary Chart */}
               {(Object.keys(moduleResults).length > 0 || Object.keys(issuesByType).length > 0) && (
                 <div>
@@ -529,8 +534,8 @@ export function ReportPage() {
                     ]}
                     layout={{
                       title: { text: 'UX Issues Distribution' },
-                      xaxis: { title: 'Issue Category' },
-                      yaxis: { title: 'Number of Issues' },
+                      xaxis: { title: { text: 'Issue Category' } },
+                      yaxis: { title: { text: 'Number of Issues' } },
                       showlegend: false,
                       height: 300
                     }}
@@ -590,65 +595,103 @@ export function ReportPage() {
                   {/* Show issues from module results if available */}
                   {Object.keys(moduleResults).length > 0 ? (
                     Object.entries(moduleResults).slice(0, 5).flatMap(([moduleKey, module]) => 
-                      module.findings?.slice(0, 2).map((finding, index) => (
-                        <div
-                          key={`${moduleKey}-${index}`}
-                          className={`p-4 rounded-lg border ${getSeverityColor(finding.severity)}`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900">
-                                [{moduleNames[moduleKey] || moduleKey}] {finding.type}
-                              </h4>
-                              <p className="text-sm text-gray-600 mt-1">{finding.message}</p>
-                              {finding.element && (
-                                <p className="text-xs text-gray-500 mt-1">Element: {finding.element}</p>
-                              )}
-                            </div>
-                            <div className="ml-4 text-right">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
-                                {finding.severity}
-                              </span>
-                              <ModuleFixNowButton 
-                                finding={finding}
-                                moduleKey={moduleKey}
-                                findingIndex={index}
-                                reportId={reportId!}
-                                onFixApplied={onFixApplied}
-                              />
+                      module.findings?.slice(0, 2).map((finding, index) => {
+                        // Filter out fixed issues if toggle is enabled
+                        if (hideFixed && (finding as any).fixed) return null;
+                        
+                        return (
+                          <div
+                            key={`${moduleKey}-${index}`}
+                            className={`p-4 rounded-lg border ${getSeverityColor(finding.severity)} ${
+                              (finding as any).fixed ? 'opacity-50 border-gray-300' : ''
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-medium text-gray-900">
+                                    [{moduleNames[moduleKey] || moduleKey}] {finding.type}
+                                  </h4>
+                                  {(finding as any).fixed && (
+                                    <span className="text-green-600 text-sm font-semibold ml-2">✅ Fixed</span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">{finding.message}</p>
+                                {finding.element && (
+                                  <p className="text-xs text-gray-500 mt-1">Element: {finding.element}</p>
+                                )}
+                                {(finding as any).fixed && (finding as any).fix_timestamp && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Fixed on: {new Date((finding as any).fix_timestamp).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="ml-4 text-right">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
+                                  {finding.severity}
+                                </span>
+                                {!(finding as any).fixed && (
+                                  <ModuleFixNowButton 
+                                    finding={finding}
+                                    moduleKey={moduleKey}
+                                    findingIndex={index}
+                                    reportId={reportId!}
+                                    onFixApplied={onFixApplied}
+                                  />
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )) || []
+                        );
+                      }).filter(Boolean) || []
                     )
                   ) : (
                     /* Fallback to legacy format */
-                    report.ux_issues?.slice(0, 5).map((issue) => (
-                      <div
-                        key={issue.issue_id}
-                        className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{issue.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
-                            {issue.location && (
-                              <p className="text-xs text-gray-500 mt-1">Location: {issue.location}</p>
-                            )}
-                          </div>
-                          <div className="ml-4 text-right">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
-                              {issue.severity}
-                            </span>
-                            <FixNowButton 
-                              issue={issue} 
-                              reportId={reportId!} 
-                              onFixApplied={onFixApplied}
-                            />
+                    report.ux_issues?.slice(0, 5).map((issue) => {
+                      // Filter out fixed issues if toggle is enabled
+                      if (hideFixed && issue.fix_applied) return null;
+                      
+                      return (
+                        <div
+                          key={issue.issue_id}
+                          className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)} ${
+                            issue.fix_applied ? 'opacity-50 border-gray-300' : ''
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium text-gray-900">{issue.title}</h4>
+                                {issue.fix_applied && (
+                                  <span className="text-green-600 text-sm font-semibold ml-2">✅ Fixed</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                              {issue.location && (
+                                <p className="text-xs text-gray-500 mt-1">Location: {issue.location}</p>
+                              )}
+                              {issue.fix_applied && issue.fix_timestamp && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Fixed on: {new Date(issue.fix_timestamp).toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                            <div className="ml-4 text-right">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
+                                {issue.severity}
+                              </span>
+                              {!issue.fix_applied && (
+                                <FixNowButton 
+                                  issue={issue} 
+                                  reportId={reportId!} 
+                                  onFixApplied={onFixApplied}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )) || []
+                      );
+                    }).filter(Boolean) || []
                   )}
                 </div>
               </div>
@@ -686,40 +729,71 @@ export function ReportPage() {
 
               {/* Module Findings */}
               <div className="space-y-4">
-                {moduleResults[activeTab].findings?.map((finding, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-lg border ${getSeverityColor(finding.severity)}`}
+                {/* Toggle for hiding/showing fixed issues */}
+                {moduleResults[activeTab].findings && moduleResults[activeTab].findings.some((f: any) => f.fixed) && (
+                  <button
+                    onClick={() => setHideFixed(!hideFixed)}
+                    className="text-sm px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 mb-4 transition-colors"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{finding.type}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{finding.message}</p>
-                        {finding.element && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            <span className="font-medium">Element:</span> {finding.element}
-                          </p>
-                        )}
-                        <div className="mt-2">
-                          <p className="text-xs font-medium text-gray-700 mb-1">Recommendation:</p>
-                          <p className="text-xs text-gray-600">{finding.recommendation}</p>
+                    {hideFixed ? "Show All Issues" : "Hide Fixed Issues"}
+                  </button>
+                )}
+                
+                {moduleResults[activeTab].findings?.map((finding, index) => {
+                  // Filter out fixed issues if toggle is enabled
+                  if (hideFixed && (finding as any).fixed) return null;
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`p-4 rounded-lg border ${getSeverityColor(finding.severity)} ${
+                        (finding as any).fixed ? 'opacity-50 border-gray-300' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-gray-900">{finding.type}</h4>
+                            {(finding as any).fixed && (
+                              <span className="text-green-600 text-sm font-semibold ml-2">✅ Fixed</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">{finding.message}</p>
+                          {finding.element && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              <span className="font-medium">Element:</span> {finding.element}
+                            </p>
+                          )}
+                          <div className="mt-2">
+                            <p className="text-xs font-medium text-gray-700 mb-1">Recommendation:</p>
+                            <p className="text-xs text-gray-600">{finding.recommendation}</p>
+                          </div>
+                          {/* Show fix timestamp if available */}
+                          {(finding as any).fixed && (finding as any).fix_timestamp && (
+                            <div className="text-xs text-gray-500 mt-2">
+                              Fixed on: {new Date((finding as any).fix_timestamp).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4 text-right">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
+                            {finding.severity}
+                          </span>
+                          {/* Only show Fix Now button if not already fixed */}
+                          {!(finding as any).fixed && (
+                            <ModuleFixNowButton 
+                              finding={finding}
+                              moduleKey={activeTab}
+                              findingIndex={index}
+                              reportId={reportId!}
+                              onFixApplied={onFixApplied}
+                            />
+                          )}
                         </div>
                       </div>
-                      <div className="ml-4 text-right">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
-                          {finding.severity}
-                        </span>
-                        <ModuleFixNowButton 
-                          finding={finding}
-                          moduleKey={activeTab}
-                          findingIndex={index}
-                          reportId={reportId!}
-                          onFixApplied={onFixApplied}
-                        />
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Module Recommendations */}
@@ -751,48 +825,77 @@ export function ReportPage() {
                 </div>
               </div>
 
+              {/* Toggle for hiding/showing fixed issues */}
+              {issuesByType[activeTab].some(issue => issue.fix_applied) && (
+                <button
+                  onClick={() => setHideFixed(!hideFixed)}
+                  className="text-sm px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 mb-4 transition-colors"
+                >
+                  {hideFixed ? "Show All Issues" : "Hide Fixed Issues"}
+                </button>
+              )}
+
               <div className="space-y-4">
-                {issuesByType[activeTab].map((issue) => (
-                  <div
-                    key={issue.issue_id}
-                    className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)}`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{issue.title}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
-                        {issue.location && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            <span className="font-medium">Location:</span> {issue.location}
-                          </p>
-                        )}
-                        {issue.suggestions && issue.suggestions.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-xs font-medium text-gray-700 mb-1">Suggestions:</p>
-                            <ul className="text-xs text-gray-600 space-y-1">
-                              {issue.suggestions.map((suggestion, idx) => (
-                                <li key={idx} className="flex items-start">
-                                  <span className="mr-2">•</span>
-                                  {suggestion}
-                                </li>
-                              ))}
-                            </ul>
+                {issuesByType[activeTab].map((issue) => {
+                  // Filter out fixed issues if toggle is enabled
+                  if (hideFixed && issue.fix_applied) return null;
+                  
+                  return (
+                    <div
+                      key={issue.issue_id}
+                      className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)} ${
+                        issue.fix_applied ? 'opacity-50 border-gray-300' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-gray-900">{issue.title}</h4>
+                            {issue.fix_applied && (
+                              <span className="text-green-600 text-sm font-semibold ml-2">✅ Fixed</span>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div className="ml-4 text-right">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
-                          {issue.severity}
-                        </span>
-                        <FixNowButton 
-                          issue={issue} 
-                          reportId={reportId!} 
-                          onFixApplied={onFixApplied}
-                        />
+                          <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                          {issue.location && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              <span className="font-medium">Location:</span> {issue.location}
+                            </p>
+                          )}
+                          {issue.suggestions && issue.suggestions.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs font-medium text-gray-700 mb-1">Suggestions:</p>
+                              <ul className="text-xs text-gray-600 space-y-1">
+                                {issue.suggestions.map((suggestion, idx) => (
+                                  <li key={idx} className="flex items-start">
+                                    <span className="mr-2">•</span>
+                                    {suggestion}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {issue.fix_applied && issue.fix_timestamp && (
+                            <div className="text-xs text-gray-500 mt-2">
+                              Fixed on: {new Date(issue.fix_timestamp).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4 text-right">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
+                            {issue.severity}
+                          </span>
+                          {!issue.fix_applied && (
+                            <FixNowButton 
+                              issue={issue} 
+                              reportId={reportId!} 
+                              onFixApplied={onFixApplied}
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                }).filter(Boolean)}
               </div>
             </div>
           )}
