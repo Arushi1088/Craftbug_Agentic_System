@@ -5,6 +5,7 @@ import { AnalysisPage } from './pages/AnalysisPage';
 import { ReportPage } from './pages/ReportPage';
 import { AnalysisLoadingPage } from './pages/AnalysisLoadingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { EnhancedDashboardPage } from './pages/EnhancedDashboardPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/analysis/:analysisId" element={<AnalysisLoadingPage />} />
             <Route path="/report/:reportId" element={<ReportPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/enhanced" element={<EnhancedDashboardPage />} />
           </Routes>
         </main>
       </div>
