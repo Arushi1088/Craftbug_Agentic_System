@@ -15,6 +15,53 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Mock URLs for deterministic testing
+MOCK_URLS = {
+    "word": "http://localhost:3001/mocks/word/basic-doc.html",
+    "excel": "http://localhost:3001/mocks/excel/open-format.html", 
+    "powerpoint": "http://localhost:3001/mocks/powerpoint/basic-deck.html",
+}
+
+def substitute_mock_urls(scenario_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Substitute {mock_url} placeholders with actual mock URLs based on app_type
+    """
+    import copy
+    
+    # Create a deep copy to avoid modifying original
+    scenario = copy.deepcopy(scenario_data)
+    
+    # Get app_type from scenario
+    app_type = scenario.get('app_type', '').lower()
+    
+    # If no app_type, try to infer from scenario name/id
+    if not app_type:
+        scenario_name = scenario.get('name', '').lower()
+        scenario_id = scenario.get('id', '').lower()
+        
+        if 'word' in scenario_name or 'word' in scenario_id:
+            app_type = 'word'
+        elif 'excel' in scenario_name or 'excel' in scenario_id:
+            app_type = 'excel'
+        elif 'powerpoint' in scenario_name or 'powerpoint' in scenario_id or 'ppt' in scenario_name:
+            app_type = 'powerpoint'
+    
+    # Get the mock URL for this app type
+    mock_url = MOCK_URLS.get(app_type)
+    if not mock_url:
+        logger.warning(f"No mock URL found for app_type: {app_type}")
+        return scenario
+    
+    # Convert to string, replace, then parse back
+    scenario_str = json.dumps(scenario)
+    scenario_str = scenario_str.replace('{mock_url}', mock_url)
+    
+    try:
+        return json.loads(scenario_str)
+    except json.JSONDecodeError:
+        logger.error(f"Failed to parse scenario after URL substitution")
+        return scenario
+
 # Import enhanced actions for robust scenario execution
 try:
     from runner.extra_actions import (
@@ -55,6 +102,9 @@ class ScenarioExecutor:
         try:
             scenario_data = self.load_scenario(scenario_path)
             
+            # Apply mock URL substitution for deterministic testing
+            scenario_data = substitute_mock_urls(scenario_data)
+            
             # Check if scenario data is valid
             if not scenario_data or 'tests' not in scenario_data:
                 logger.warning(f"Scenario file {scenario_path} is empty or malformed, using fallback")
@@ -92,6 +142,9 @@ class ScenarioExecutor:
         
         try:
             scenario_data = self.load_scenario(scenario_path)
+            
+            # Apply mock URL substitution for deterministic testing
+            scenario_data = substitute_mock_urls(scenario_data)
             
             # Check if scenario data is valid
             if not scenario_data or 'tests' not in scenario_data:
