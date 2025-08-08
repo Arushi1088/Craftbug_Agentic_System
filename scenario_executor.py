@@ -601,12 +601,19 @@ def get_available_scenarios() -> List[Dict[str, str]]:
                         name = scenario.get('name', scenario_id)
                         if 'word' in file_stem.lower() or 'word' in name.lower():
                             category = 'Word'
+                            inferred_app_type = 'word'
                         elif 'excel' in file_stem.lower() or 'excel' in name.lower():
                             category = 'Excel'
+                            inferred_app_type = 'excel'
                         elif 'powerpoint' in file_stem.lower() or 'powerpoint' in name.lower():
                             category = 'PowerPoint'
+                            inferred_app_type = 'powerpoint'
                         else:
                             category = scenario.get('category', 'General')
+                            inferred_app_type = 'web'
+                        
+                        # Use explicit app_type if provided, otherwise use inferred
+                        app_type = scenario.get('app_type', inferred_app_type)
                         
                         scenarios.append({
                             "id": scenario_id,
@@ -615,7 +622,7 @@ def get_available_scenarios() -> List[Dict[str, str]]:
                             "name": name,
                             "description": scenario.get('description', f"{category} scenario"),
                             "format": "scenarios",
-                            "app_type": scenario.get('app_type', 'web'),
+                            "app_type": app_type,
                             "category": category,
                             "source": file_path
                         })

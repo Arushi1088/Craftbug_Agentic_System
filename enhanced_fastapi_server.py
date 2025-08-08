@@ -4,7 +4,7 @@ Enhanced FastAPI Server for UX Analyzer
 Provides API endpoints with real browser automation and craft bug detection
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -50,7 +50,6 @@ else:
 
 # Import enhanced components
 from scenario_executor import ScenarioExecutor, get_available_scenarios
-# from utils.scenario_loader import load_all as load_all_scenarios, filter_scenarios
 from enhanced_scenario_runner import execute_realistic_scenario, EnhancedScenarioRunner
 from enhanced_report_handler import (
     save_analysis_to_disk, 
@@ -194,7 +193,7 @@ app.add_middleware(
         "http://localhost:3002", 
         "http://localhost:3003", 
         "http://localhost:3004",
-        "http://localhost:3005",  # Frontend dev server
+        "http://localhost:5173",  # Vite dev server
         "https://dev.azure.com",
         "https://*.trycloudflare.com",
         "https://leasing-gba-om-prior.trycloudflare.com"
@@ -874,90 +873,27 @@ SCENARIOS_CACHE = []
 
 def load_all_scenarios():
     """Load all scenarios and cache them"""
-    from utils.scenario_loader import load_all
     global SCENARIOS_CACHE
-    SCENARIOS_CACHE = load_all()
+    SCENARIOS_CACHE = get_available_scenarios()
     return SCENARIOS_CACHE
 
-def _infer_app_type(meta: dict) -> str:
-    """
-    Infer app_type from any of: explicit app_type, category, id, name, filename, source.
-    Returns one of: 'word' | 'excel' | 'powerpoint' | 'web'
-    """
-    fields = [
-        str(meta.get("app_type", "")),
-        str(meta.get("category", "")),
-        str(meta.get("id", "")),
-        str(meta.get("name", "")),
-        str(meta.get("filename", "")),
-        str(meta.get("source", "")),
-        str(meta.get("path", "")),
-    ]
-    blob = " ".join(f.lower() for f in fields if f)
-
-    # order matters: avoid ppt→powerpoint misses
-    if "powerpoint" in blob or "ppt" in blob or "pptx" in blob:
-        return "powerpoint"
-    if "excel" in blob or "xls" in blob or "xlsx" in blob:
-        return "excel"
-    if "word" in blob or "doc" in blob or "docx" in blob:
-        return "word"
-    return "web"
-
 @app.get("/api/scenarios")
-async def get_scenarios(app: Optional[str] = Query(default=None), include_custom: bool = Query(default=True)):
-    """Get available scenarios with strong app inference and optional filtering"""
+async def get_scenarios():
+    """Get available scenarios"""
     try:
-        all_scenarios = get_available_scenarios()  # keep your current source
-
-        normalized_list = []
-        for raw in all_scenarios:
-            app_type = _infer_app_type(raw)
-
-            # choose a mock URL when the app is an Office mock
-            mock_url = None
-            if app_type in ("word", "excel", "powerpoint"):
-                mock_url = MOCK_URLS.get(app_type)
-
-            normalized = {
-                "id": raw.get("id") or raw.get("filename") or raw.get("name") or "unknown",
-                "name": raw.get("name") or (raw.get("filename", "") or "Unknown Scenario").replace(".yaml", "").replace("_", " ").strip(),
-                "description": raw.get("description", ""),
-                "category": raw.get("category") or app_type.capitalize(),
-                "app_type": app_type,
-                "source": raw.get("source", ""),
-                "filename": raw.get("filename"),
-                "path": raw.get("path") or raw.get("filename"),
-                # prefer explicit mock_url if present in file, else inferred
-                "mock_url": raw.get("mock_url") or mock_url,
-            }
-
-            # Optional: swap {mock_url} placeholders inside normalized if a future consumer needs it
-            # (we do not mutate the file here to keep this endpoint pure)
-
-            if app:
-                if normalized["app_type"] != app.lower():
-                    continue
-
-            if not include_custom and str(normalized["id"]).startswith("custom_"):
-                continue
-
-            normalized_list.append(normalized)
-
-        return {"scenarios": normalized_list, "total": len(normalized_list)}
+        scenarios = get_available_scenarios()
+        return {"scenarios": scenarios}
     except Exception as e:
         logger.error(f"Error loading scenarios: {e}")
-        return {"scenarios": [], "total": 0, "error": str(e)}
+        return {"scenarios": []}
 
 @app.post("/api/scenarios/reload")
 async def reload_scenarios():
     """Reload scenarios cache"""
     try:
-        # Clear any caches and reload scenarios
-        global SCENARIOS_CACHE
-        SCENARIOS_CACHE = get_available_scenarios()
-        logger.info(f"Reloaded {len(SCENARIOS_CACHE)} scenarios")
-        return {"count": len(SCENARIOS_CACHE), "message": "Scenarios reloaded successfully"}
+        scenarios = load_all_scenarios()
+        logger.info(f"Reloaded {len(scenarios)} scenarios")
+        return {"count": len(scenarios), "message": "Scenarios reloaded successfully"}
     except Exception as e:
         logger.error(f"Error reloading scenarios: {e}")
         return {"count": 0, "error": str(e)}

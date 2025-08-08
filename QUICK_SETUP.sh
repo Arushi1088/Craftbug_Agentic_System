@@ -1,46 +1,37 @@
 #!/bin/bash
-# 🚀 UX Analyzer - Quick Setup Script for Developers
 
-echo "🎯 UX Analyzer - Quick Setup Script"
-echo "===================================="
-echo ""
+# One-command startup - just run this!
+echo "🚀 Starting UX Analyzer System..."
 
-# Check if Python is installed
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 is required but not installed."
-    exit 1
-fi
+cd /Users/arushitandon/Desktop/analyzer
 
-# Check if Node.js is installed
-if ! command -v node &> /dev/null; then
-    echo "❌ Node.js is required but not installed."
-    exit 1
-fi
+# Kill any existing processes
+echo "🧹 Cleaning up..."
+lsof -ti:5173,8000,3001 | xargs kill -9 2>/dev/null || true
+sleep 2
 
-echo "✅ Python 3 and Node.js are installed"
-echo ""
+# Start backend
+echo "🔧 Starting Backend..."
+python -m uvicorn enhanced_fastapi_server:app --host 0.0.0.0 --port 8000 &
+sleep 3
 
-# Backend setup
-echo "🔧 Setting up Backend (Python/FastAPI)..."
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-echo "✅ Backend dependencies installed"
-echo ""
-
-# Frontend setup
-echo "🔧 Setting up Frontend (React/Vite)..."
+# Start frontend  
+echo "🎨 Starting Frontend..."
 cd web-ui
-npm install
-echo "✅ Frontend dependencies installed"
-cd ..
-echo ""
+npx vite --port 5173 &
+sleep 3
 
-echo "🎉 Setup Complete!"
+# Start mocks
+echo "� Starting Mock Apps..."
+cd ../demos  
+python -m http.server 3001 &
+sleep 3
+
 echo ""
-echo "🚀 To start the application:"
-echo "1. Backend:  python3 production_server.py"
-echo "2. Frontend: cd web-ui && npm run dev"
-echo "3. Open:     http://localhost:3000"
+echo "✅ All servers started!"
+echo "🌐 Open: http://localhost:5173"
 echo ""
-echo "📚 See DEVELOPER_HANDOFF.md for detailed documentation"
+echo "Wait 10 seconds then open the URL above!"
+
+# Keep running
+wait

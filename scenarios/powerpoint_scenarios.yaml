@@ -1,63 +1,37 @@
-powerpoint_scenarios:
-  description: "Comprehensive PowerPoint UX testing scenarios"
-  app_type: "powerpoint"
-  scenarios:
-    slide_creation:
-      title: "Slide Creation and Layout"
-      task_goal: "Test slide creation and layout selection experience"
-      difficulty: "easy"
-      screen_context: "PowerPoint with new presentation"
-      steps:
-        - action: "Click New Slide button"
-          expected: "Slide layout options appear"
-        - action: "Select layout template"
-          expected: "New slide is added with selected layout"
-        - action: "Add text to placeholder"
-          expected: "Text entry is smooth and responsive"
-        - action: "Insert image or media"
-          expected: "Media insertion is straightforward"
-      validation_criteria:
-        - "Layout options are clearly presented"
-        - "Slide creation is quick and intuitive"
-        - "Content placeholders guide user effectively"
-        - "Media insertion workflow is smooth"
+# PowerPoint Scenarios in Standard Format
+description: "Comprehensive PowerPoint UX testing scenarios"
+app_type: "powerpoint"
 
-    animation_controls:
-      title: "Animation and Transition Setup"
-      task_goal: "Test animation and transition creation process"
-      difficulty: "hard"
-      screen_context: "PowerPoint slide with objects to animate"
-      steps:
-        - action: "Select object to animate"
-          expected: "Object is highlighted for animation"
-        - action: "Open animations panel"
-          expected: "Animation options are displayed clearly"
-        - action: "Apply entrance animation"
-          expected: "Animation is applied and preview shows"
-        - action: "Adjust timing and effects"
-          expected: "Timeline controls are intuitive"
-      validation_criteria:
-        - "Animation selection is straightforward"
-        - "Animation preview is helpful"
-        - "Timing controls are precise and clear"
-        - "Complex animations are manageable"
+scenarios:
+  - id: "slide_creation"
+    name: "Slide Creation and Layout"
+    description: "Test slide creation and layout selection experience"
+    app_type: "powerpoint"
+    task_goal: "Test slide creation and layout selection experience"
+    steps:
+      - action: "click"
+        target: "#new-slide-button"
+        description: "Click New Slide button"
+        expected_outcome: "New slide layout options appear"
+      - action: "wait"
+        duration: 1000
+        description: "Allow layout panel to load"
+      - action: "click" 
+        target: "#layout-title-content"
+        description: "Select Title and Content layout"
+        expected_outcome: "New slide created with selected layout"
 
-    presenter_view:
-      title: "Presenter View and Delivery Setup"
-      task_goal: "Test presenter view configuration and usage"
-      difficulty: "medium"
-      screen_context: "PowerPoint in presentation mode"
-      steps:
-        - action: "Start slideshow presentation"
-          expected: "Presentation starts in full screen"
-        - action: "Access presenter view"
-          expected: "Presenter tools and notes are visible"
-        - action: "Navigate between slides"
-          expected: "Slide navigation is smooth"
-        - action: "Use presenter tools (pen, laser)"
-          expected: "Tools work effectively during presentation"
-      validation_criteria:
-        - "Presenter view is informative but not cluttered"
-        - "Navigation controls are accessible"
-        - "Notes are readable and helpful"
-        - "Presenter tools enhance delivery experience"
+  - id: "animation_controls"
+    name: "Animation and Transition Setup"
+    description: "Test animation and transition creation process"
+    app_type: "powerpoint"
+    task_goal: "Test animation and transition creation process"
+    steps:
+      - action: "click"
+        target: "#animations-tab"
+        description: "Open animations panel"
+        expected_outcome: "Animation options are displayed clearly"
+      - action: "click"
+        target: "#entrance-animation"
+        description: "Apply entrance animation"
+        expected_outcome: "Animation is applied and preview shows"
