@@ -97,7 +97,7 @@ tests:
     - name: PowerPoint Integration with Analytics
       steps:
       - action: navigate_to_url
-        url: '{server_url}/powerpoint.html'
+        url: '{mock_url}'
         analytics:
         - performance
         - accessibility

@@ -9,7 +9,7 @@ scenarios:
     task_goal: "Successfully navigate Word application and open basic functions"
     steps:
       - action: "navigate"
-        target: "http://localhost:3000/public/mock-word.html"
+        target: "{mock_url}"
         description: "Open Word application"
         expected_outcome: "Word interface loads completely"
       - action: "wait"
@@ -29,7 +29,7 @@ scenarios:
     task_goal: "Review and resolve document comments efficiently"
     steps:
       - action: "navigate"
-        target: "http://localhost:3000/public/mock-word.html"
+        target: "{mock_url}"
         description: "Open Word document with comments"
         screen_context: "Document editor with multiple comments visible"
       - action: "click"
@@ -61,7 +61,7 @@ scenarios:
     task_goal: "Modify document text and apply formatting options"
     steps:
       - action: "navigate"
-        target: "http://localhost:3000/public/mock-word.html"
+        target: "{mock_url}"
         description: "Open Word application"
       - action: "click"
         target: "#editor-content"
@@ -83,7 +83,7 @@ scenarios:
     task_goal: "Accept or reject tracked changes using Review tab controls"
     steps:
       - action: "navigate"
-        target: "http://localhost:3000/public/mock-word.html"
+        target: "{mock_url}"
         description: "Open Word document with tracked changes"
         screen_context: "Document with visible tracked changes and Review tab available"
         html_snapshot: "<div class='review-tab'><button>Accept</button><button>Reject</button></div>"
@@ -125,7 +125,7 @@ scenarios:
     task_goal: "Add image with proper accessibility attributes for screen readers"
     steps:
       - action: "navigate"
-        target: "http://localhost:3000/public/mock-word.html"
+        target: "{mock_url}"
         description: "Open Word document for image insertion"
         screen_context: "Clean document ready for content insertion"
       - action: "click"
@@ -187,7 +187,7 @@ scenarios:
     task_goal: "Share document securely with appropriate access controls"
     steps:
       - action: "navigate"
-        target: "http://localhost:3000/public/mock-word.html"
+        target: "{mock_url}"
         description: "Open Word document to share"
         screen_context: "Document ready for sharing with content visible"
       - action: "click"
