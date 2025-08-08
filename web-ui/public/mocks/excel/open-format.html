@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8" />
+<title>Excel Mock - Open & Format</title>
+<style>
+  #sheet { display:grid; grid-template-columns:repeat(6,100px); gap:2px; }
+  .cell { border:1px solid #ddd; padding:6px; min-height:28px; }
+  #toolbar { margin:12px 0; }
+</style>
+<div id="toolbar">
+  <button id="bold-btn">Bold</button>
+  <button id="format-currency">Currency</button>
+</div>
+<div id="sheet">
+  <div id="cell-A1" class="cell" contenteditable="true"></div>
+  <div id="cell-B1" class="cell" contenteditable="true"></div>
+  <div id="cell-C1" class="cell" contenteditable="true"></div>
+  <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+</div>
+<script>
+document.getElementById('format-currency').onclick = () => {
+  document.getElementById('cell-B1').textContent = '$1,000';
+};
+</script>

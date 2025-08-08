@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8" />
+<title>PowerPoint Mock - Deck</title>
+<div id="deck">
+  <section class="slide" id="s1"><h2>Title Slide</h2></section>
+  <section class="slide" id="s2"><h2>Agenda</h2></section>
+</div>
+<button id="next">Next</button>
+<script>
+  let idx=1; document.getElementById('next').onclick=()=>{ idx=idx===1?2:1; location.hash='#s'+idx; };
+</script>

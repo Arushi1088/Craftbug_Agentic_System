@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8" />
+<title>Word Mock - Basic Document</title>
+<style>
+  #toolbar { padding:12px; background:#f3f4f6; }
+  #doc { padding:16px; font: 16px/1.5 system-ui; }
+  .btn { padding:6px 10px; border:1px solid #ddd; background:#fff; cursor:pointer; margin-right:8px }
+</style>
+<div id="toolbar">
+  <button id="bold-btn" class="btn">Bold</button>
+  <button id="comment-btn" class="btn">Add Comment</button>
+  <button id="share-btn" class="btn">Share</button>
+</div>
+<div id="doc" contenteditable="true">
+  <h1 id="title">Quarterly Summary</h1>
+  <p id="p1">This is a mock Word doc.</p>
+  <img id="img1" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="/>
+</div>
+<script>
+  document.getElementById('bold-btn').onclick = () => document.execCommand('bold');
+  document.getElementById('comment-btn').onclick = () => {
+    const node = document.createElement('span');
+    node.id = 'comment-marker';
+    node.textContent = '[comment]';
+    document.getElementById('p1').append(node);
+  };
+</script>
