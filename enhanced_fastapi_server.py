@@ -22,7 +22,13 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 
 # Schema normalization imports
-from schema_normalizer import normalize_report_schema, migrate_reports_on_startup, iterate_all_report_files
+try:
+    from schema_normalizer import normalize_report_schema, migrate_reports_on_startup, iterate_all_report_files
+except ImportError:
+    # Fallback functions if schema_normalizer is not available
+    def normalize_report_schema(data): return data
+    def migrate_reports_on_startup(): pass
+    def iterate_all_report_files(): return []
 
 # Load environment variables and validate API key
 try:
@@ -55,7 +61,10 @@ from enhanced_report_handler import (
 )
 
 # Import utilities
-from utils.scenario_resolver import resolve_scenario
+try:
+    from utils.scenario_resolver import resolve_scenario
+except ImportError:
+    def resolve_scenario(scenario): return scenario
 
 # Import dashboard components
 try:
