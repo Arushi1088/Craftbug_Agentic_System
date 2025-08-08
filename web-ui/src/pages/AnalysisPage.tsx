@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Globe, 
@@ -22,7 +22,7 @@ interface AnalysisConfig {
   app: 'word' | 'excel' | 'powerpoint' | 'web';
   url?: string;
   screenshot?: File;
-  scenarioId?: string;
+  scenario?: string;
   scenarioFile?: string;
   mockAppPath?: string;
   enablePerformance: boolean;
@@ -38,13 +38,13 @@ interface AnalysisConfig {
 interface Scenario {
   id: string;
   name: string;
+  filename: string;
+  path: string;
   description: string;
   category?: string;
   app_type?: 'word' | 'excel' | 'powerpoint' | 'web';
   source?: string;
   mock_url?: string;
-  filename?: string;
-  path: string;
 }
 
 interface AnalysisModule {
@@ -94,7 +94,6 @@ export function AnalysisPage() {
   const { isConnected } = useConnectionStatus();
   
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [allScenarios, setAllScenarios] = useState<Scenario[]>([]);
   const [modules, setModules] = useState<AnalysisModule[]>([]);
   const [config, setConfig] = useState<AnalysisConfig>({
     mode: 'url',
@@ -110,16 +109,18 @@ export function AnalysisPage() {
     outputFormat: 'html'
   });
 
-  // Currently-selected scenario (if any)
-  const selectedScenario = useMemo(
-    () => scenarios.find(s => s.path === config.scenarioFile),
-    [scenarios, config.scenarioFile]
-  );
+  // Filter scenarios based on selected app type for mock-scenario mode
+  const filteredScenarios = config.mode === 'mock-scenario' 
+    ? scenarios.filter(scenario => scenario.app_type === config.app)
+    : scenarios;
 
-  // Whether URL should be auto-set/locked for Office mock scenarios
+  // Check if current scenario is a built-in Office scenario with locked URL
   const isBuiltInScenarioSelected = () => {
+    if (!config.scenarioFile || scenarios.length === 0) return false;
+    const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
     if (!selectedScenario) return false;
-    return Boolean(selectedScenario.mock_url ?? getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name));
+    // Check if scenario has mock_url or can be inferred as built-in
+    return Boolean(selectedScenario.mock_url || getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name));
   };
 
   // Mock app options
@@ -130,12 +131,12 @@ export function AnalysisPage() {
     { id: 'integration', name: 'Integration Hub (Mock)', path: 'mocks/integration.html' }
   ];
 
-  // Load scenarios and modules from backend with optional app filtering
-  const loadScenariosAndModules = useCallback(async (app?: 'word' | 'excel' | 'powerpoint' | 'web') => {
+  // Load available scenarios and modules on component mount
+  useEffect(() => {
     const defaultScenarios = [
-      { name: 'Basic Navigation', filename: 'basic_navigation.yaml', path: 'scenarios/basic_navigation.yaml', description: 'Test basic page navigation and menu interactions' },
-      { name: 'Login Flow', filename: 'login_flow.yaml', path: 'scenarios/login_flow.yaml', description: 'Test user authentication and login process' },
-      { name: 'Office Tests', filename: 'office_tests.yaml', path: 'scenarios/office_tests.yaml', description: 'Comprehensive Office application testing scenarios' }
+      { id: 'basic_navigation', name: 'Basic Navigation', filename: 'basic_navigation.yaml', path: 'scenarios/basic_navigation.yaml', description: 'Test basic page navigation and menu interactions', app_type: 'web' as const },
+      { id: 'login_flow', name: 'Login Flow', filename: 'login_flow.yaml', path: 'scenarios/login_flow.yaml', description: 'Test user authentication and login process', app_type: 'web' as const },
+      { id: 'office_tests', name: 'Office Tests', filename: 'office_tests.yaml', path: 'scenarios/office_tests.yaml', description: 'Comprehensive Office application testing scenarios', app_type: 'web' as const }
     ];
 
     const defaultModules = [
@@ -148,66 +149,59 @@ export function AnalysisPage() {
       { key: 'functional', name: 'Functional Testing', description: 'User journey validation', enabled: false }
     ];
 
-    try {
-      // Load scenarios with server-side app filtering for performance
-      const currentApp = app || config.app;
-      const appFilter = currentApp === 'web' ? undefined : currentApp as 'word' | 'excel' | 'powerpoint';
-      const scenarioList = await apiClient.getScenarios(appFilter);
-      
-      const normalized = scenarioList.map((s: any) => ({
-        id: s.id ?? s.filename ?? s.path,
-        name: s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' '),
-        filename: s.filename,
-        path: s.path,
-        description: s.description || `Test scenario: ${s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' ')}`,
-        category: s.category,
-        app_type: (s.app_type ?? s.category ?? 'web').toLowerCase(),
-        source: s.source,
-        mock_url: s.mock_url
-      })) as Scenario[];
-      
-      // With server-side filtering, we can set scenarios directly
-      setScenarios(normalized);
-      setAllScenarios(normalized);
+    const loadScenariosAndModules = async () => {
+      try {
+        // Load all scenarios first (we'll filter client-side for better UX)
+        const scenarioList = await apiClient.getScenarios();
+        
+        const normalizedScenarios = scenarioList.map((s: any) => ({
+          id: s.id ?? s.filename ?? s.path,
+          name: s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' '),
+          filename: s.filename,
+          path: s.path,
+          description: s.description || `Test scenario: ${s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' ')}`,
+          category: s.category,
+          app_type: (s.app_type ?? s.category ?? 'web').toLowerCase(),
+          source: s.source,
+          mock_url: s.mock_url
+        })) as Scenario[];
+        
+        setScenarios(normalizedScenarios);
 
-      // Load modules
-      const moduleList = await apiClient.getModules();
-      setModules(moduleList);
-      
-      // Initialize config with default module states
-      const initialModuleConfig = moduleList.reduce((acc, module) => ({
-        ...acc,
-        [`enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}`]: module.enabled
-      }), {});
-      
-      setConfig(prev => ({ ...prev, ...initialModuleConfig }));
+        // Load modules
+        const moduleList = await apiClient.getModules();
+        setModules(moduleList);
+        
+        // Initialize config with default module states
+        const initialModuleConfig = moduleList.reduce((acc, module) => ({
+          ...acc,
+          [`enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}`]: module.enabled
+        }), {});
+        
+        setConfig(prev => ({ ...prev, ...initialModuleConfig }));
 
-    } catch (error) {
-      console.error('Failed to load scenarios and modules, using defaults:', error);
-      setAllScenarios(defaultScenarios as any);
-      setModules(defaultModules);
-    }
-  }, []);
+      } catch (error) {
+        console.error('Failed to load scenarios and modules, using defaults:', error);
+        setScenarios(defaultScenarios);
+        setModules(defaultModules);
+      }
+    };
 
-  // Load available scenarios and modules on component mount
-  useEffect(() => {
     loadScenariosAndModules();
-  }, [loadScenariosAndModules]);
-
-  // Reload scenarios when app changes for server-side filtering
-  useEffect(() => {
-    loadScenariosAndModules(config.app);
-    // clear scenario if switching apps
-    if (config.scenarioFile) {
-      setConfig(prev => ({ ...prev, scenarioFile: '' }));
-    }
-  }, [config.app, loadScenariosAndModules]); 
+  }, []);
 
   // Auto-fill mock URL for built-in scenarios
   useEffect(() => {
-    if (!selectedScenario) return;
-    const inferred = selectedScenario.mock_url ?? getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name);
-    if (inferred) setConfig(prev => ({ ...prev, url: inferred }));
+    if (config.scenarioFile && scenarios.length > 0) {
+      const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
+      if (selectedScenario) {
+        // Use mock_url from scenario if available, otherwise try to infer from built-in logic
+        const mockUrl = selectedScenario.mock_url || getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name);
+        if (mockUrl) {
+          setConfig(prev => ({ ...prev, url: mockUrl }));
+        }
+      }
+    }
   }, [config.scenarioFile, scenarios]);
 
   // Handle analysis completion
@@ -251,17 +245,6 @@ export function AnalysisPage() {
     }
   ];
 
-  // Simple validity for the selected mode
-  const canSubmit = useMemo(() => {
-    if (!isConnected) return false;
-    if (isAnalyzing) return false;
-    if (config.mode === 'url') return Boolean(config.url);
-    if (config.mode === 'screenshot') return Boolean(config.screenshot);
-    if (config.mode === 'url-scenario') return Boolean(config.scenarioFile) && Boolean(config.url);
-    if (config.mode === 'mock-scenario') return Boolean(config.scenarioFile) && Boolean(config.app !== 'web');
-    return false;
-  }, [config, isConnected, isAnalyzing]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -291,12 +274,11 @@ export function AnalysisPage() {
         const scenarioBlob = new Blob([`# Auto-generated scenario for ${config.url}`], { type: 'text/yaml' });
         const scenarioFile = new File([scenarioBlob], 'auto-scenario.yaml', { type: 'text/yaml' });
         await startScenarioAnalysis(scenarioFile, config.url);
-      } else if (config.mode === 'mock-scenario' && config.scenarioFile) {
+      } else if (config.mode === 'mock-scenario' && config.mockAppPath && config.scenarioFile) {
         // For mock scenarios, create a simple scenario file
-        const scenarioBlob = new Blob([`# Mock app scenario for ${config.app}`], { type: 'text/yaml' });
+        const scenarioBlob = new Blob([`# Mock app scenario for ${config.mockAppPath}`], { type: 'text/yaml' });
         const scenarioFile = new File([scenarioBlob], 'mock-scenario.yaml', { type: 'text/yaml' });
-        const mockUrl = selectedScenario?.mock_url ?? getBuiltInScenarioMockUrl(selectedScenario?.path ?? '', selectedScenario?.name ?? '') ?? '';
-        await startScenarioAnalysis(scenarioFile, mockUrl);
+        await startScenarioAnalysis(scenarioFile, config.mockAppPath);
       } else {
         throw new Error('Please fill in all required fields');
       }
@@ -384,34 +366,6 @@ export function AnalysisPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* App selector (app-first) */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Target App
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {(['web','word','excel','powerpoint'] as const).map(app => (
-              <label key={app} className={`cursor-pointer border-2 rounded-lg p-3 text-center capitalize ${config.app===app ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                <input
-                  type="radio"
-                  name="app"
-                  className="sr-only"
-                  value={app}
-                  checked={config.app === app}
-                  onChange={(e) => setConfig(prev => ({ ...prev, app: e.target.value as any }))}
-                  disabled={isAnalyzing}
-                />
-                {app}
-              </label>
-            ))}
-          </div>
-          {config.app !== 'web' && (
-            <p className="text-sm text-gray-500 mt-2">
-              Selecting {config.app} will auto-prefill a local mock URL for supported scenarios.
-            </p>
-          )}
-        </div>
-
         {/* Analysis Type Selection */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -510,60 +464,90 @@ export function AnalysisPage() {
               )}
               
               {config.mode === 'mock-scenario' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Mock App
-                  </label>
-                  <select
-                    value={config.mockAppPath || ''}
-                    onChange={(e) => setConfig(prev => ({ ...prev, mockAppPath: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                    disabled={isAnalyzing}
-                  >
-                    <option value="">Choose a mock app...</option>
-                    {mockApps.map((app) => (
-                      <option key={app.id} value={app.path}>
-                        {app.name}
-                      </option>
-                    ))}
-                  </select>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Target App
+                    </label>
+                    <div className="grid grid-cols-4 gap-3">
+                      {[
+                        { id: 'web', name: 'Web' },
+                        { id: 'word', name: 'Word' },
+                        { id: 'excel', name: 'Excel' },
+                        { id: 'powerpoint', name: 'PowerPoint' }
+                      ].map((app) => (
+                        <label
+                          key={app.id}
+                          className={`cursor-pointer border-2 rounded-lg p-3 text-center transition-colors ${
+                            config.app === app.id
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="app"
+                            value={app.id}
+                            checked={config.app === app.id}
+                            onChange={(e) => setConfig(prev => ({ 
+                              ...prev, 
+                              app: e.target.value as 'word' | 'excel' | 'powerpoint' | 'web',
+                              scenarioFile: '' // Reset scenario when app changes
+                            }))}
+                            className="sr-only"
+                            disabled={isAnalyzing}
+                          />
+                          <span className="font-medium">{app.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {config.app === 'web' 
+                        ? 'General web application scenarios'
+                        : `Selecting ${config.app} will auto-prefill a local mock URL for supported scenarios.`}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Scenario ({filteredScenarios.length} available for {config.app})
+                    </label>
+                    <select
+                      value={config.scenarioFile || ''}
+                      onChange={(e) => setConfig(prev => ({ ...prev, scenarioFile: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                      disabled={isAnalyzing}
+                      title={filteredScenarios.find(s => s.path === config.scenarioFile)?.description || 'Select a scenario to see description'}
+                    >
+                      <option value="">Choose a scenario...</option>
+                      {filteredScenarios.map((scenario) => (
+                        <option key={scenario.id} value={scenario.path} title={scenario.description}>
+                          {scenario.name} - {scenario.description}
+                        </option>
+                      ))}
+                    </select>
+                    {filteredScenarios.length === 0 && scenarios.length > 0 && (
+                      <p className="text-sm text-orange-600 mt-2 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        No scenarios available for {config.app}. Try selecting a different app.
+                      </p>
+                    )}
+                    {scenarios.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-2 flex items-center">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Loading scenarios from backend...
+                      </p>
+                    )}
+                    {filteredScenarios.length > 0 && (
+                      <p className="text-sm text-green-600 mt-2 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        {filteredScenarios.length} {config.app} scenarios loaded
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Scenario
-                </label>
-                <select
-                  value={config.scenarioFile || ''}
-                  onChange={(e) => setConfig(prev => ({ ...prev, scenarioFile: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                  disabled={isAnalyzing}
-                  title={scenarios.find(s => s.path === config.scenarioFile)?.description || 'Select a scenario to see description'}
-                >
-                  <option value="">Choose a scenario...</option>
-                  {scenarios.map((scenario) => (
-                    <option key={scenario.path} value={scenario.path} title={scenario.description}>
-                      {scenario.name}
-                      {scenario.mock_url ? ' • mock' : ''}
-                    </option>
-                  ))}
-                </select>
-                {scenarios.length === 0 && (
-                  <p className="text-sm text-gray-500 mt-2 flex items-center">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Loading scenarios from backend...
-                  </p>
-                )}
-                {scenarios.length > 0 && (
-                  <p className="text-sm text-green-600 mt-2 flex items-center">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    {scenarios.length} {config.app} scenarios available
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>
@@ -636,7 +620,7 @@ export function AnalysisPage() {
         <div className="text-center">
           <button
             type="submit"
-            disabled={!canSubmit}
+            disabled={isAnalyzing || !isConnected}
             className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isAnalyzing ? (

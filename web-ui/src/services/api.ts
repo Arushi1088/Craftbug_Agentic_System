@@ -1,7 +1,9 @@
 // API Service Layer for UX Analyzer Frontend
 // Handles all communication with FastAPI backend
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// import { normalizeListItem, normalizeReportDetail, normalizeReportsResponse } from './normalize';
+
+const API_BASE_URL = 'http://localhost:8000';
 
 // Types for API responses
 export interface AnalysisResponse {
@@ -141,6 +143,7 @@ class APIClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    console.log('🌐 API Request:', url, options);
     
     const response = await fetch(url, {
       headers: {
@@ -150,12 +153,17 @@ class APIClient {
       ...options,
     });
 
+    console.log('📡 API Response:', response.status, response.statusText);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+      console.error('❌ API Error:', errorData);
       throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('✅ API Success:', data);
+    return data;
   }
 
   private async requestFormData<T>(
@@ -212,17 +220,39 @@ class APIClient {
     return this.requestFormData<AnalysisResponse>('/api/analyze/scenario', formData);
   }
 
+  // Enhanced scenario-based analysis
+  async analyzeScenario(scenarioId: string, url?: string): Promise<AnalysisResponse> {
+    const body = { scenario_id: scenarioId };
+    if (url) (body as any).url = url;
+    
+    return this.request<AnalysisResponse>('/api/analyze/url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  }
+
   async getAnalysisStatus(analysisId: string): Promise<{ status: string; message?: string }> {
     return this.request<{ status: string; message?: string }>(`/api/analysis/${analysisId}/status`);
   }
 
   // Reports API Methods
   async getReport(reportId: string): Promise<AnalysisReport> {
-    return this.request<AnalysisReport>(`/api/reports/${reportId}`);
+    try {
+      const report = await this.request<AnalysisReport>(`/api/reports/${reportId}`);
+      console.log('✅ Report loaded successfully:', reportId, report);
+      // Previously normalized; return as-is for now
+      return report;
+    } catch (error) {
+      console.error('❌ Failed to load report:', reportId, error);
+      throw error;
+    }
   }
 
-  async getAllReports(): Promise<AnalysisReport[]> {
-    return this.request<AnalysisReport[]>('/api/reports');
+  async getAllReports(includeFailed: boolean = false): Promise<AnalysisReport[]> {
+    const response = await this.request<{reports: AnalysisReport[]}>(`/api/reports?include_failed=${includeFailed}`);
+    // Return raw list for now
+    return response.reports;
   }
 
   async getReportStatistics(): Promise<{
@@ -306,22 +336,50 @@ class APIClient {
     return this.requestFormData('/api/dashboard/create-ado-tickets', formData);
   }
 
-  // Utility Methods
-  async getScenarios(): Promise<Array<{
+  // Enhanced scenarios with app filtering
+  async getScenarios(app?: 'word' | 'excel' | 'powerpoint', includeCustom: boolean = true): Promise<Array<{
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    app_type: string;
+    source: string;
+    mock_url?: string;
+  }>> {
+    const params = new URLSearchParams();
+    if (app) params.append('app', app);
+    if (!includeCustom) params.append('include_custom', 'false');
+    
+    const url = `/api/scenarios${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await this.request<{
+      scenarios: Array<{
+        id: string;
+        name: string;
+        description: string;
+        category: string;
+        app_type: string;
+        source: string;
+        mock_url?: string;
+      }>;
+      total: number;
+    }>(url);
+    return response.scenarios;
+  }
+
+  // Legacy getScenarios for backwards compatibility
+  async getScenariosLegacy(): Promise<Array<{
     filename: string;
     path: string;
     name: string;
     description: string;
   }>> {
-    const response = await this.request<{
-      scenarios: Array<{
-        filename: string;
-        path: string;
-        name: string;
-        description: string;
-      }>
-    }>('/api/scenarios');
-    return response.scenarios;
+    const scenarios = await this.getScenarios();
+    return scenarios.map(s => ({
+      filename: s.source.split('/').pop() || '',
+      path: s.source,
+      name: s.name,
+      description: s.description
+    }));
   }
 
   async getModules(): Promise<Array<{
