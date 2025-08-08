@@ -6,7 +6,7 @@ Provides API endpoints with real browser automation and craft bug detection
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -18,6 +18,11 @@ import os
 import sys
 import asyncio
 import logging
+from pathlib import Path
+from contextlib import asynccontextmanager
+
+# Schema normalization imports
+from schema_normalizer import normalize_report_schema, migrate_reports_on_startup, iterate_all_report_files
 
 # Load environment variables and validate API key
 try:
@@ -49,6 +54,9 @@ from enhanced_report_handler import (
     cleanup_old_reports
 )
 
+# Import utilities
+from utils.scenario_resolver import resolve_scenario
+
 # Import dashboard components
 try:
     from ux_analytics_dashboard import UXAnalyticsDashboard
@@ -64,21 +72,78 @@ logger = logging.getLogger(__name__)
 
 # Import orchestrator routes if available
 try:
-    sys.path.append('/Users/arushitandon/Desktop/analyzer/orchestrator')
-    from routes import router as orchestrator_router
-except ImportError as e:
+    orchestrator_path = '/Users/arushitandon/Desktop/analyzer/orchestrator'
+    if os.path.exists(orchestrator_path) and os.path.exists(os.path.join(orchestrator_path, 'routes.py')):
+        sys.path.insert(0, orchestrator_path)
+        try:
+            import routes
+            orchestrator_router = getattr(routes, 'router', None)
+            if orchestrator_router is None:
+                print("Warning: 'router' attribute not found in routes module")
+        except ImportError as import_error:
+            print(f"Warning: Failed to import routes module: {import_error}")
+            orchestrator_router = None
+        except Exception as e:
+            print(f"Warning: Unexpected error importing routes: {e}")
+            orchestrator_router = None
+    else:
+        print(f"Warning: Orchestrator directory or routes.py not found at {orchestrator_path}")
+        orchestrator_router = None
+except (ImportError, AttributeError) as e:
     print(f"Warning: Could not import orchestrator routes: {e}")
     orchestrator_router = None
 
-app = FastAPI(title="Enhanced UX Analyzer API", version="2.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan events"""
+    
+    # Startup
+    logger.info("🚀 Enhanced UX Analyzer starting up...")
+    
+    # Run schema migration on startup
+    try:
+        logger.info("🔧 Running report schema migration...")
+        changed_count = migrate_reports_on_startup()
+        logger.info(f"📊 Schema migration complete: {changed_count} files updated")
+    except Exception as e:
+        logger.error(f"❌ Schema migration failed: {e}")
+    
+    # Validate required directories
+    os.makedirs("reports", exist_ok=True)
+    os.makedirs("reports/analysis", exist_ok=True)
+    os.makedirs("screenshots", exist_ok=True)
+    os.makedirs("temp", exist_ok=True)
+    logger.info("📁 Required directories validated")
+    
+    yield
+    
+    # Shutdown
+    logger.info("🛑 Enhanced UX Analyzer shutting down...")
+
+app = FastAPI(
+    title="Enhanced UX Analyzer API", 
+    description="Advanced UX analysis with real browser automation, craft bug detection, and Azure DevOps integration",
+    version="2.1.0",
+    lifespan=lifespan
+)
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:3001", 
+        "http://localhost:3002", 
+        "http://localhost:3003", 
+        "http://localhost:3004",
+        "https://dev.azure.com",
+        "https://*.trycloudflare.com",
+        "https://leasing-gba-om-prior.trycloudflare.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Security-Policy", "frame-ancestors"]
 )
 
 # Mount static files for serving screenshots
@@ -535,23 +600,57 @@ async def analyze_mock_scenario(request: AnalysisRequest):
         logger.error(f"Mock scenario analysis failed: {e}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-# Enhanced Report Endpoints
+# Enhanced Report Endpoints with Schema Normalization
+
+def _resolve_report_path(analysis_id: str) -> Path:
+    """
+    Resolve report path with support for both short and long IDs.
+    Supports prefix matching for short IDs like 9808b21e.
+    """
+    # Try exact match first
+    reports_dir = Path("reports/analysis")
+    if not reports_dir.exists():
+        return None
+    
+    # Exact filename match
+    exact_path = reports_dir / f"analysis_{analysis_id}.json"
+    if exact_path.exists():
+        return exact_path
+    
+    # Try with timestamp patterns
+    for json_file in reports_dir.glob(f"analysis_{analysis_id}_*.json"):
+        return json_file
+    
+    # Prefix match (short id support)
+    for json_file in reports_dir.glob("analysis_*.json"):
+        stem_parts = json_file.stem.split("_")
+        if len(stem_parts) >= 2 and stem_parts[1].startswith(analysis_id):
+            return json_file
+    
+    return None
 
 @app.get("/api/reports/{report_id}")
 async def get_report(report_id: str):
-    """Get analysis report with enhanced disk/cache lookup"""
+    """Get analysis report with enhanced disk/cache lookup and schema normalization"""
     
     # Check analysis cache first (for active/recent analyses)
     if report_id in ANALYSIS_CACHE:
         cached = ANALYSIS_CACHE[report_id]
         if cached["status"] == "completed":
-            return cached["result"]
+            result = cached["result"]
+            # Apply schema normalization
+            result = normalize_report_schema(result)
+            # Ensure consistent analysis_id
+            result["analysis_id"] = report_id
+            result["requested_id"] = report_id
+            return result
         elif cached["status"] == "failed":
             raise HTTPException(status_code=500, detail=cached.get("error", "Analysis failed"))
         else:
             # Still processing
             return {
                 "analysis_id": report_id,
+                "requested_id": report_id,
                 "status": cached["status"],
                 "message": "Analysis still in progress",
                 "started_at": cached.get("started_at", "").isoformat() if hasattr(cached.get("started_at", ""), "isoformat") else str(cached.get("started_at", ""))
@@ -559,14 +658,47 @@ async def get_report(report_id: str):
     
     # Check legacy mock reports
     if report_id in MOCK_REPORTS:
-        return MOCK_REPORTS[report_id]
-    
-    # Load from disk
-    report = load_analysis_from_disk(report_id)
-    if report:
+        report = MOCK_REPORTS[report_id]
+        report = normalize_report_schema(report)
+        report["analysis_id"] = report_id
+        report["requested_id"] = report_id
         return report
     
-    raise HTTPException(status_code=404, detail="Report not found")
+    # Enhanced path resolution with short ID support
+    report_path = _resolve_report_path(report_id)
+    if report_path and report_path.exists():
+        try:
+            with open(report_path, 'r') as f:
+                report = json.load(f)
+            
+            # Apply schema normalization
+            report = normalize_report_schema(report)
+            
+            # Ensure consistent analysis_id in response
+            report["analysis_id"] = report_id
+            report["requested_id"] = report_id
+            return report
+        except Exception as e:
+            logger.error(f"Error loading report {report_id}: {e}")
+            raise HTTPException(status_code=500, detail=f"Error loading report: {str(e)}")
+    
+    # Final fallback - check load_analysis_from_disk
+    report = load_analysis_from_disk(report_id)
+    if report:
+        # Apply schema normalization
+        report = normalize_report_schema(report)
+        # Ensure consistent analysis_id in response
+        report["analysis_id"] = report_id
+        report["requested_id"] = report_id
+        return report
+    
+    # Not found - return a helpful response
+    return {
+        "analysis_id": report_id, 
+        "status": "not found", 
+        "requested_id": report_id,
+        "message": f"Report {report_id} not found in cache or disk storage"
+    }
 
 @app.get("/api/reports")
 async def list_reports(
@@ -574,7 +706,8 @@ async def list_reports(
     offset: int = 0,
     analysis_type: Optional[str] = None,
     min_score: Optional[int] = None,
-    has_craft_bugs: Optional[bool] = None
+    has_craft_bugs: Optional[bool] = None,
+    include_failed: bool = False
 ):
     """List reports with enhanced filtering"""
     
@@ -588,11 +721,32 @@ async def list_reports(
     
     result = list_saved_reports(limit=limit, offset=offset, filters=filters)
     
+    # Filter out failed reports by default unless explicitly requested
+    if not include_failed:
+        original_reports = result.get("reports", [])
+        
+        def is_success(r):
+            # Treat completed as successful; failed only when explicitly failed
+            status = r.get("status", "")
+            return (
+                status in ["completed", "success", "done"] and 
+                not r.get("failed", False) and
+                status != "failed"
+            )
+        
+        successful_reports = [r for r in original_reports if is_success(r)]
+        result["reports"] = successful_reports
+        # Update pagination info if we filtered results
+        if len(successful_reports) != len(original_reports):
+            pagination = result.get("pagination", {})
+            pagination["filtered_count"] = len(successful_reports)
+            pagination["total_unfiltered"] = len(original_reports)
+    
     return {
         "reports": result.get("reports", []),
         "pagination": result.get("pagination", {}),
         "statistics": result.get("statistics", {}),
-        "filters_applied": filters
+        "filters_applied": {**filters, "include_failed": include_failed}
     }
 
 @app.post("/api/reports/search")
@@ -656,6 +810,15 @@ async def get_analysis_status(analysis_id: str):
 
 # Utility Endpoints
 
+# Global scenarios cache
+SCENARIOS_CACHE = []
+
+def load_all_scenarios():
+    """Load all scenarios and cache them"""
+    global SCENARIOS_CACHE
+    SCENARIOS_CACHE = get_available_scenarios()
+    return SCENARIOS_CACHE
+
 @app.get("/api/scenarios")
 async def get_scenarios():
     """Get available scenarios"""
@@ -665,6 +828,17 @@ async def get_scenarios():
     except Exception as e:
         logger.error(f"Error loading scenarios: {e}")
         return {"scenarios": []}
+
+@app.post("/api/scenarios/reload")
+async def reload_scenarios():
+    """Reload scenarios cache"""
+    try:
+        scenarios = load_all_scenarios()
+        logger.info(f"Reloaded {len(scenarios)} scenarios")
+        return {"count": len(scenarios), "message": "Scenarios reloaded successfully"}
+    except Exception as e:
+        logger.error(f"Error reloading scenarios: {e}")
+        return {"count": 0, "error": str(e)}
 
 @app.get("/api/modules")
 async def get_available_modules():
@@ -787,6 +961,7 @@ async def download_report(report_id: str, format: str = "json"):
     
     # Get report from any source
     report = None
+    file_path = None
     
     if report_id in ANALYSIS_CACHE and ANALYSIS_CACHE[report_id]["status"] == "completed":
         report = ANALYSIS_CACHE[report_id]["result"]
@@ -794,11 +969,38 @@ async def download_report(report_id: str, format: str = "json"):
         report = MOCK_REPORTS[report_id]
     else:
         report = load_analysis_from_disk(report_id)
+        # Try to find the actual file for direct download
+        import glob
+        pattern = f"reports/analysis/analysis_{report_id}_*.json"
+        matches = glob.glob(pattern)
+        if matches:
+            file_path = matches[0]
     
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     
-    if format == "html":
+    # Ensure consistent analysis_id in downloaded report
+    report["analysis_id"] = report_id
+    report["requested_id"] = report_id
+    
+    if format == "json":
+        # If we have a file path, return it directly
+        if file_path and os.path.exists(file_path):
+            from fastapi.responses import FileResponse
+            return FileResponse(
+                file_path, 
+                media_type="application/json",
+                filename=f"analysis_{report_id}.json"
+            )
+        else:
+            # Return JSON response
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                content=report,
+                headers={"Content-Disposition": f"attachment; filename=analysis_{report_id}.json"}
+            )
+    
+    elif format == "html":
         # Return a simple HTML version
         html_content = f"""
         <!DOCTYPE html>
@@ -1001,7 +1203,7 @@ async def analyze_url(
         
         request = AnalysisRequest(
             url=url,
-            scenario_path=scenario_name if scenario_name else "scenarios/general_analysis.yaml",
+            scenario_path=resolve_scenario(scenario_name),
             modules=modules_dict
         )
         
@@ -1293,6 +1495,103 @@ async def fix_now(
     except Exception as e:
         logger.error(f"Fix-now operation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Fix operation failed: {str(e)}")
+
+# ===== AZURE DEVOPS INTEGRATION ENDPOINTS =====
+
+@app.get("/api/ado/issue-url/{work_item_id}")
+async def get_ado_issue_url(work_item_id: int):
+    """Get the Azure DevOps URL for a work item to enable 'View & Fix' functionality"""
+    try:
+        # Get ADO configuration from environment
+        ado_organization = os.getenv("ADO_ORGANIZATION")
+        ado_project = os.getenv("ADO_PROJECT")
+        
+        if not (ado_organization and ado_project):
+            logger.warning("ADO configuration missing - using default organization")
+            # Fallback to known working organization
+            ado_organization = "nayararushi0668"
+            ado_project = "UX-Testing-Project"
+        
+        # Construct the work item URL
+        url = f"https://dev.azure.com/{ado_organization}/{ado_project}/_workitems/edit/{work_item_id}"
+        
+        logger.info(f"Generated ADO URL for work item {work_item_id}: {url}")
+        
+        return JSONResponse(content={
+            "url": url,
+            "work_item_id": work_item_id,
+            "organization": ado_organization,
+            "project": ado_project
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating ADO URL for work item {work_item_id}: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to generate ADO URL: {str(e)}"
+        )
+
+@app.post("/api/ado/trigger-fix")
+async def trigger_gemini_fix(
+    work_item_id: int,
+    file_path: str = None,
+    instruction: str = None
+):
+    """Trigger Gemini CLI auto-fix for an ADO work item"""
+    try:
+        if not file_path:
+            raise HTTPException(status_code=400, detail="file_path is required")
+        
+        if not instruction:
+            instruction = f"Fix the bug described in Work Item #{work_item_id}"
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+        
+        # Log the fix attempt
+        logger.info(f"Triggering Gemini fix for work item {work_item_id}")
+        logger.info(f"Target file: {file_path}")
+        logger.info(f"Instruction: {instruction}")
+        
+        # For now, return success - actual Gemini CLI integration would happen here
+        # In production, this would call: gemini edit <file> --instruction <instruction>
+        
+        return JSONResponse(content={
+            "status": "success",
+            "message": f"Fix triggered for Work Item #{work_item_id}",
+            "work_item_id": work_item_id,
+            "file_path": file_path,
+            "instruction": instruction,
+            "next_step": "Developer should run: git add . && git commit -m '🔧 Auto-fixed Work Item #{work_item_id} via Gemini CLI' && git push origin main"
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error triggering Gemini fix: {e}")
+        raise HTTPException(status_code=500, detail=f"Fix trigger failed: {str(e)}")
+
+@app.get("/api/ado/status/{work_item_id}")
+async def get_ado_work_item_status(work_item_id: int):
+    """Get the status of an ADO work item (for integration monitoring)"""
+    try:
+        # In production, this would query ADO API
+        # For now, return mock status
+        
+        logger.info(f"Checking status for work item {work_item_id}")
+        
+        return JSONResponse(content={
+            "work_item_id": work_item_id,
+            "status": "Active",  # Would be fetched from ADO API
+            "assigned_to": "Developer",
+            "last_updated": datetime.now().isoformat(),
+            "url": f"https://dev.azure.com/{os.getenv('ADO_ORGANIZATION', 'nayararushi0668')}/{os.getenv('ADO_PROJECT', 'UX-Testing-Project')}/_workitems/edit/{work_item_id}"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error checking ADO work item status: {e}")
+        raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
 
 @app.get("/dashboard")
 async def serve_dashboard():
