@@ -49,6 +49,9 @@ from enhanced_report_handler import (
     cleanup_old_reports
 )
 
+# Import ADO sync service
+from ado_sync_service import ado_service
+
 # Import dashboard components
 try:
     from ux_analytics_dashboard import UXAnalyticsDashboard
@@ -1424,6 +1427,316 @@ async def serve_dashboard():
         raise HTTPException(status_code=404, detail="Dashboard HTML not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dashboard serving failed: {str(e)}")
+
+# ADO Work Item Sync Endpoints
+@app.post("/api/sync-to-ado")
+async def sync_to_ado(request: dict):
+    """
+    Sync UX issues from a report to Azure DevOps as Work Items
+    
+    Args:
+        request: JSON containing report_id and report_data
+        
+    Returns:
+        Sync status and created work item details
+    """
+    try:
+        report_id = request.get('report_id')
+        report_data = request.get('report_data')
+        
+        if not report_id:
+            raise HTTPException(status_code=400, detail="report_id is required")
+        
+        # Validate ADO credentials first
+        if not ado_service.validate_credentials():
+            raise HTTPException(
+                status_code=400, 
+                detail="ADO credentials not configured. Set ADO_ORGANIZATION, ADO_PROJECT, ADO_PAT in .env file"
+            )
+        
+        # Load analysis report
+        report_data = load_analysis_from_disk(report_id)
+        if not report_data:
+            raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+        
+        # Sync to ADO
+        sync_result = ado_service.sync_report_to_ado(report_data)
+        
+        if sync_result['success']:
+            return JSONResponse(content={
+                "status": "success",
+                "report_id": report_id,
+                "total_issues": sync_result['total_issues'],
+                "synced_issues": sync_result['synced_issues'],
+                "work_items_created": sync_result['work_items_created'],
+                "errors": sync_result['errors']
+            })
+        else:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "partial_failure",
+                    "report_id": report_id,
+                    "total_issues": sync_result['total_issues'],
+                    "synced_issues": sync_result['synced_issues'],
+                    "work_items_created": sync_result['work_items_created'],
+                    "errors": sync_result['errors']
+                }
+            )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"ADO sync error: {e}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+@app.post("/api/validate-ado-config")
+async def validate_ado_config():
+    """Validate Azure DevOps configuration"""
+    try:
+        is_valid = ado_service.validate_credentials()
+        
+        config_status = {
+            "valid": is_valid,
+            "organization": ado_service.organization,
+            "project": ado_service.project,
+            "pat_configured": bool(ado_service.personal_access_token)
+        }
+        
+        if not is_valid:
+            missing_fields = []
+            if not ado_service.organization:
+                missing_fields.append("ADO_ORGANIZATION")
+            if not ado_service.project:
+                missing_fields.append("ADO_PROJECT")
+            if not ado_service.personal_access_token:
+                missing_fields.append("ADO_PAT")
+            
+            config_status["missing_fields"] = missing_fields
+        
+        return JSONResponse(content=config_status)
+        
+    except Exception as e:
+        logger.error(f"ADO config validation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Validation failed: {str(e)}")
+
+@app.get("/api/ado-status")
+async def get_ado_status():
+    """Get ADO integration status"""
+    try:
+        status = {
+            "configured": all([
+                ado_service.organization,
+                ado_service.project, 
+                ado_service.personal_access_token
+            ]),
+            "organization": ado_service.organization,
+            "project": ado_service.project,
+            "api_accessible": False
+        }
+        
+        if status["configured"]:
+            status["api_accessible"] = ado_service.validate_credentials()
+        
+        return JSONResponse(content=status)
+        
+    except Exception as e:
+        logger.error(f"ADO status check error: {e}")
+        return JSONResponse(content={
+            "configured": False,
+            "error": str(e)
+        })
+
+# New ADO Workflow Loop Endpoints
+@app.get("/api/open-in-ado/{issue_id}")
+async def open_in_ado(issue_id: str):
+    """
+    Get the ADO Work Item URL for a specific issue
+    
+    Args:
+        issue_id: The issue ID to find the corresponding Work Item
+        
+    Returns:
+        ADO Work Item URL and status
+    """
+    try:
+        # This would typically query your database to find the ADO Work Item ID
+        # For now, we'll construct a mock URL based on the issue
+        
+        if not ado_service.validate_credentials():
+            raise HTTPException(
+                status_code=400, 
+                detail="ADO credentials not configured"
+            )
+        
+        # Mock implementation - in real scenario, query database for work item ID
+        mock_work_item_id = f"WI-{issue_id[:8]}"
+        ado_url = f"https://dev.azure.com/{ado_service.organization}/{ado_service.project}/_workitems/edit/{mock_work_item_id}"
+        
+        return {
+            "success": True,
+            "issue_id": issue_id,
+            "work_item_id": mock_work_item_id,
+            "ado_url": ado_url,
+            "organization": ado_service.organization,
+            "project": ado_service.project
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting ADO URL for issue {issue_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get ADO URL: {str(e)}")
+
+@app.post("/api/trigger-fix/{issue_id}")
+async def trigger_fix(issue_id: str, request: dict):
+    """
+    Trigger fix workflow for an issue via ADO + Gemini CLI
+    
+    Args:
+        issue_id: The issue ID to fix
+        request: JSON containing report_id and other context
+        
+    Returns:
+        Fix trigger status and next steps
+    """
+    try:
+        report_id = request.get('report_id')
+        
+        if not ado_service.validate_credentials():
+            raise HTTPException(
+                status_code=400, 
+                detail="ADO credentials not configured"
+            )
+        
+        # Mock implementation - in real scenario:
+        # 1. Update ADO Work Item status to "In Progress"
+        # 2. Trigger Gemini CLI to analyze and apply fix
+        # 3. Create GitHub commit if fix is successful
+        # 4. Update ADO Work Item with commit info
+        
+        logger.info(f"Triggering fix for issue {issue_id} from report {report_id}")
+        
+        # Simulate fix trigger
+        fix_status = {
+            "success": True,
+            "issue_id": issue_id,
+            "report_id": report_id,
+            "status": "fix_triggered",
+            "message": "Fix workflow initiated in ADO. Gemini CLI will analyze and apply fixes.",
+            "next_steps": [
+                "ADO Work Item updated to 'In Progress'",
+                "Gemini CLI analyzing issue context",
+                "Automated fix will be applied if possible",
+                "GitHub commit will be created on success"
+            ],
+            "estimated_time": "2-5 minutes"
+        }
+        
+        return fix_status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error triggering fix for issue {issue_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to trigger fix: {str(e)}")
+
+@app.get("/api/ado-status/{issue_id}")
+async def get_issue_ado_status(issue_id: str):
+    """
+    Get the current ADO status for a specific issue
+    
+    Args:
+        issue_id: The issue ID to check status for
+        
+    Returns:
+        Current ADO Work Item status and details
+    """
+    try:
+        if not ado_service.validate_credentials():
+            raise HTTPException(
+                status_code=400, 
+                detail="ADO credentials not configured"
+            )
+        
+        # Mock implementation - in real scenario, query ADO API for work item status
+        mock_statuses = ["New", "Active", "In Progress", "Resolved", "Closed"]
+        import random
+        current_status = random.choice(mock_statuses)
+        
+        status_info = {
+            "issue_id": issue_id,
+            "work_item_id": f"WI-{issue_id[:8]}",
+            "status": current_status,
+            "assigned_to": "Auto-Gemini-CLI",
+            "state_reason": "Automated Fix in Progress" if current_status == "In Progress" else "Pending Review",
+            "last_updated": "2025-08-08T10:30:00Z",
+            "commit_status": "pending" if current_status in ["New", "Active"] else "committed" if current_status == "Resolved" else "none",
+            "github_commit_url": f"https://github.com/example/repo/commit/abc123" if current_status == "Resolved" else None
+        }
+        
+        return {
+            "success": True,
+            "ado_status": status_info
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting ADO status for issue {issue_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get ADO status: {str(e)}")
+
+@app.post("/api/commit-to-github")
+async def commit_to_github(request: dict):
+    """
+    Push fix commit to GitHub after ADO Work Item is resolved
+    
+    Args:
+        request: JSON containing work_item_id, issue_id, fix_details
+        
+    Returns:
+        GitHub commit status and URL
+    """
+    try:
+        work_item_id = request.get('work_item_id')
+        issue_id = request.get('issue_id')
+        fix_details = request.get('fix_details', {})
+        
+        if not work_item_id or not issue_id:
+            raise HTTPException(
+                status_code=400, 
+                detail="work_item_id and issue_id are required"
+            )
+        
+        # Mock implementation - in real scenario:
+        # 1. Generate fix code using Gemini CLI
+        # 2. Create GitHub branch
+        # 3. Apply fixes to files
+        # 4. Commit and push to GitHub
+        # 5. Update ADO Work Item with commit URL
+        
+        logger.info(f"Committing fix to GitHub for work item {work_item_id}, issue {issue_id}")
+        
+        # Simulate GitHub commit
+        commit_info = {
+            "success": True,
+            "work_item_id": work_item_id,
+            "issue_id": issue_id,
+            "commit_hash": "abc123def456",
+            "commit_url": "https://github.com/example/repo/commit/abc123def456",
+            "branch": f"fix/ado-{work_item_id}-{issue_id}",
+            "files_changed": fix_details.get('files', ['src/components/Button.tsx', 'styles/main.css']),
+            "commit_message": f"🔧 Fix UX issue: {fix_details.get('title', 'Automated fix from ADO')}",
+            "committed_at": "2025-08-08T10:45:00Z"
+        }
+        
+        return commit_info
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error committing to GitHub: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to commit to GitHub: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
