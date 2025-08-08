@@ -36,13 +36,24 @@ jobs:
 
       - name: Create Pull Request
         run: |
-          curl -X POST \
+          PR_RESPONSE=$(curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            -d '{
-              "title": "🔧 Automated Fix for ADO WI #${{ github.event.client_payload.work_item_id }}",
-              "body": "## Automated Fix Pipeline\n\nThis PR was automatically created from Azure DevOps work item resolution.\n\n### Work Item Details\n- **ID:** #${{ github.event.client_payload.work_item_id }}\n- **Title:** ${{ github.event.client_payload.title }}\n- **Changed by:** ${{ github.event.client_payload.changed_by }}\n- **Status:** Resolved\n\n### Changes Made\n- Added fix log entry to `docs/fix-log.md`\n- Applied automated remediation\n\n**🤖 This PR was created automatically by the ADO→GitHub automation loop**",
-              "head": "${{ steps.vars.outputs.BRANCH }}",
-              "base": "main"
-            }' \
-            "https://api.github.com/repos/${{ github.repository }}/pulls"
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"title\": \"🔧 Automated Fix for ADO WI #${{ github.event.client_payload.work_item_id }}\",
+              \"body\": \"## Automated Fix Pipeline\\n\\nThis PR was automatically created from Azure DevOps work item resolution.\\n\\n### Work Item Details\\n- **ID:** #${{ github.event.client_payload.work_item_id }}\\n- **Title:** ${{ github.event.client_payload.title }}\\n- **Changed by:** ${{ github.event.client_payload.changed_by }}\\n- **Status:** Resolved\\n\\n### Changes Made\\n- Added fix log entry to \`docs/fix-log.md\`\\n- Applied automated remediation\\n\\n**🤖 This PR was created automatically by the ADO→GitHub automation loop**\",
+              \"head\": \"${{ steps.vars.outputs.BRANCH }}\",
+              \"base\": \"main\"
+            }" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls")
+          
+          echo "PR Response: $PR_RESPONSE"
+          
+          if echo "$PR_RESPONSE" | grep -q '"number"'; then
+            PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number":[0-9]*' | cut -d':' -f2)
+            echo "✅ Pull Request #$PR_NUMBER created successfully"
+          else
+            echo "❌ Failed to create PR. Response: $PR_RESPONSE"
+            exit 1
+          fi
