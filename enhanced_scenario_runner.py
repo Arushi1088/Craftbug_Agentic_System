@@ -31,6 +31,22 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def infer_app_type(url: str = None, scenario_name: str = None, default: str = "Unknown") -> str:
+    """Infer application type from URL and scenario name"""
+    s = (scenario_name or "") + " " + (url or "")
+    if "excel" in s.lower():
+        return "excel"
+    elif "word" in s.lower():
+        return "word"
+    elif "powerpoint" in s.lower() or "ppt" in s.lower():
+        return "powerpoint"
+    elif "outlook" in s.lower() or "email" in s.lower():
+        return "outlook"
+    elif "teams" in s.lower():
+        return "teams"
+    else:
+        return default
+
 class CraftBugDetector:
     """Enhanced craft bug detector with AI-powered dynamic analysis"""
     
@@ -619,6 +635,11 @@ class EnhancedScenarioRunner:
         scenario_result = {
             "analysis_id": analysis_id,
             "scenario_name": scenario_config.get("name", "Enhanced Scenario"),
+            "app_type": infer_app_type(
+                url=scenario_config.get("steps", [{}])[0].get("url") if scenario_config.get("steps") else None,
+                scenario_name=scenario_config.get("name", ""),
+                default="web"
+            ),
             "start_time": start_time,
             "status": "running",
             "steps": [],
