@@ -194,6 +194,7 @@ app.add_middleware(
         "http://localhost:3002", 
         "http://localhost:3003", 
         "http://localhost:3004",
+        "http://localhost:3005",  # Frontend dev server
         "https://dev.azure.com",
         "https://*.trycloudflare.com",
         "https://leasing-gba-om-prior.trycloudflare.com"
