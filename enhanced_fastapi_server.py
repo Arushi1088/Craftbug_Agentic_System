@@ -4,7 +4,7 @@ Enhanced FastAPI Server for UX Analyzer
 Provides API endpoints with real browser automation and craft bug detection
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -50,6 +50,7 @@ else:
 
 # Import enhanced components
 from scenario_executor import ScenarioExecutor, get_available_scenarios
+# from utils.scenario_loader import load_all as load_all_scenarios, filter_scenarios
 from enhanced_scenario_runner import execute_realistic_scenario, EnhancedScenarioRunner
 from enhanced_report_handler import (
     save_analysis_to_disk, 
@@ -872,27 +873,77 @@ SCENARIOS_CACHE = []
 
 def load_all_scenarios():
     """Load all scenarios and cache them"""
+    from utils.scenario_loader import load_all
     global SCENARIOS_CACHE
-    SCENARIOS_CACHE = get_available_scenarios()
+    SCENARIOS_CACHE = load_all()
     return SCENARIOS_CACHE
 
 @app.get("/api/scenarios")
-async def get_scenarios():
-    """Get available scenarios"""
+async def get_scenarios(app: Optional[str] = Query(default=None), include_custom: bool = Query(default=True)):
+    """Get available scenarios with optional app filtering"""
     try:
-        scenarios = get_available_scenarios()
-        return {"scenarios": scenarios}
+        # Load scenarios using existing loader
+        all_scenarios = get_available_scenarios()
+        
+        # Convert to normalized format and filter
+        scenarios = []
+        for scenario in all_scenarios:
+            # Infer app_type from source path if not set
+            source_path = scenario.get("source", "").lower()
+            filename = scenario.get("filename", "").lower()
+            inferred_app_type = "web"
+            
+            if "word" in source_path or "word" in filename:
+                inferred_app_type = "word"
+            elif "excel" in source_path or "excel" in filename:
+                inferred_app_type = "excel"
+            elif "powerpoint" in source_path or "powerpoint" in filename or "ppt" in source_path:
+                inferred_app_type = "powerpoint"
+            
+            # Debug logging
+            if "word" in source_path:
+                logger.info(f"Word scenario found: {scenario.get('name')} -> {inferred_app_type}")
+            
+            # Normalize scenario format
+            normalized = {
+                "id": scenario.get("id") or scenario.get("filename", scenario.get("name", "unknown")),
+                "name": scenario.get("name", scenario.get("filename", "Unknown Scenario")),
+                "description": scenario.get("description", ""),
+                "category": scenario.get("category", "General"),
+                "app_type": scenario.get("app_type") or inferred_app_type,
+                "source": scenario.get("source", ""),
+                "mock_url": scenario.get("mock_url"),
+                "filename": scenario.get("filename"),
+                "path": scenario.get("path")
+            }
+            
+            # Apply app filtering
+            if app:
+                scenario_app_type = normalized["app_type"].lower()
+                if scenario_app_type != app:
+                    continue
+            
+            # Apply custom filtering
+            if not include_custom and normalized["id"].startswith("custom_"):
+                continue
+                
+            scenarios.append(normalized)
+        
+        logger.info(f"Returning {len(scenarios)} scenarios (app={app}, include_custom={include_custom})")
+        return {"scenarios": scenarios, "total": len(all_scenarios)}
     except Exception as e:
         logger.error(f"Error loading scenarios: {e}")
-        return {"scenarios": []}
+        return {"scenarios": [], "total": 0, "error": str(e)}
 
 @app.post("/api/scenarios/reload")
 async def reload_scenarios():
     """Reload scenarios cache"""
     try:
-        scenarios = load_all_scenarios()
-        logger.info(f"Reloaded {len(scenarios)} scenarios")
-        return {"count": len(scenarios), "message": "Scenarios reloaded successfully"}
+        # Clear any caches and reload scenarios
+        global SCENARIOS_CACHE
+        SCENARIOS_CACHE = get_available_scenarios()
+        logger.info(f"Reloaded {len(SCENARIOS_CACHE)} scenarios")
+        return {"count": len(SCENARIOS_CACHE), "message": "Scenarios reloaded successfully"}
     except Exception as e:
         logger.error(f"Error reloading scenarios: {e}")
         return {"count": 0, "error": str(e)}
