@@ -1,0 +1,38 @@
+name: ADO Fix Flow
+on:
+  repository_dispatch:
+    types: [ado-workitem-resolved]
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive branch name
+        id: vars
+        run: |
+          echo "BRANCH=fix/wi-${{ github.event.client_payload.work_item_id }}" >> $GITHUB_OUTPUT
+
+      - name: Create branch & apply placeholder fix
+        run: |
+          git checkout -b "${{ steps.vars.outputs.BRANCH }}"
+          mkdir -p docs
+          echo "<!-- resolved via ADO WI #${{ github.event.client_payload.work_item_id }} -->" >> docs/fix-log.md
+          git -c user.name="bot" -c user.email="bot@users.noreply.github.com" add -A
+          git -c user.name="bot" -c user.email="bot@users.noreply.github.com" commit -m "Automated fix for ADO WI #${{ github.event.client_payload.work_item_id }}"
+          git push origin "${{ steps.vars.outputs.BRANCH }}"
+
+      - name: Open Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ steps.vars.outputs.BRANCH }}
+          title: "Fix for ADO WI #${{ github.event.client_payload.work_item_id }}"
+          body: |
+            Automated fix pipeline triggered from ADO.
+            - WI: #${{ github.event.client_payload.work_item_id }}
+            - Title: ${{ github.event.client_payload.title }}
+            - Changed by: ${{ github.event.client_payload.changed_by }}
