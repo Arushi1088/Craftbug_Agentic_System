@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Globe, 
@@ -130,8 +130,8 @@ export function AnalysisPage() {
     { id: 'integration', name: 'Integration Hub (Mock)', path: 'mocks/integration.html' }
   ];
 
-  // Load available scenarios and modules on component mount
-  useEffect(() => {
+  // Load scenarios and modules from backend with optional app filtering
+  const loadScenariosAndModules = useCallback(async (app?: 'word' | 'excel' | 'powerpoint' | 'web') => {
     const defaultScenarios = [
       { name: 'Basic Navigation', filename: 'basic_navigation.yaml', path: 'scenarios/basic_navigation.yaml', description: 'Test basic page navigation and menu interactions' },
       { name: 'Login Flow', filename: 'login_flow.yaml', path: 'scenarios/login_flow.yaml', description: 'Test user authentication and login process' },
@@ -148,59 +148,60 @@ export function AnalysisPage() {
       { key: 'functional', name: 'Functional Testing', description: 'User journey validation', enabled: false }
     ];
 
-    const loadScenariosAndModules = async () => {
-      try {
-        // Load scenarios
-        const scenarioList = await apiClient.getScenarios();
-        const normalized = scenarioList.map((s: any) => ({
-          id: s.id ?? s.filename ?? s.path,
-          name: s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' '),
-          filename: s.filename,
-          path: s.path,
-          description: s.description || `Test scenario: ${s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' ')}`,
-          category: s.category,
-          app_type: (s.app_type ?? s.category ?? 'web').toLowerCase(),
-          source: s.source,
-          mock_url: s.mock_url
-        })) as Scenario[];
-        setAllScenarios(normalized);
+    try {
+      // Load scenarios with server-side app filtering for performance
+      const currentApp = app || config.app;
+      const appFilter = currentApp === 'web' ? undefined : currentApp as 'word' | 'excel' | 'powerpoint';
+      const scenarioList = await apiClient.getScenarios(appFilter);
+      
+      const normalized = scenarioList.map((s: any) => ({
+        id: s.id ?? s.filename ?? s.path,
+        name: s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' '),
+        filename: s.filename,
+        path: s.path,
+        description: s.description || `Test scenario: ${s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' ')}`,
+        category: s.category,
+        app_type: (s.app_type ?? s.category ?? 'web').toLowerCase(),
+        source: s.source,
+        mock_url: s.mock_url
+      })) as Scenario[];
+      
+      // With server-side filtering, we can set scenarios directly
+      setScenarios(normalized);
+      setAllScenarios(normalized);
 
-        // Load modules
-        const moduleList = await apiClient.getModules();
-        setModules(moduleList);
-        
-        // Initialize config with default module states
-        const initialModuleConfig = moduleList.reduce((acc, module) => ({
-          ...acc,
-          [`enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}`]: module.enabled
-        }), {});
-        
-        setConfig(prev => ({ ...prev, ...initialModuleConfig }));
+      // Load modules
+      const moduleList = await apiClient.getModules();
+      setModules(moduleList);
+      
+      // Initialize config with default module states
+      const initialModuleConfig = moduleList.reduce((acc, module) => ({
+        ...acc,
+        [`enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}`]: module.enabled
+      }), {});
+      
+      setConfig(prev => ({ ...prev, ...initialModuleConfig }));
 
-      } catch (error) {
-        console.error('Failed to load scenarios and modules, using defaults:', error);
-        setAllScenarios(defaultScenarios as any);
-        setModules(defaultModules);
-      }
-    };
-
-    loadScenariosAndModules();
+    } catch (error) {
+      console.error('Failed to load scenarios and modules, using defaults:', error);
+      setAllScenarios(defaultScenarios as any);
+      setModules(defaultModules);
+    }
   }, []);
 
-  // Recompute visible scenarios whenever app changes
+  // Load available scenarios and modules on component mount
   useEffect(() => {
-    if (allScenarios.length === 0) return;
-    const app = config.app;
-    const filtered = allScenarios.filter(s => {
-      if (app === 'web') return (s.app_type ?? 'web') === 'web' || !s.app_type;
-      return (s.app_type ?? '').toLowerCase() === app;
-    });
-    setScenarios(filtered);
-    // clear scenario if it doesn't belong to the new app
-    if (config.scenarioFile && !filtered.some(s => s.path === config.scenarioFile)) {
+    loadScenariosAndModules();
+  }, [loadScenariosAndModules]);
+
+  // Reload scenarios when app changes for server-side filtering
+  useEffect(() => {
+    loadScenariosAndModules(config.app);
+    // clear scenario if switching apps
+    if (config.scenarioFile) {
       setConfig(prev => ({ ...prev, scenarioFile: '' }));
     }
-  }, [config.app, allScenarios]); 
+  }, [config.app, loadScenariosAndModules]); 
 
   // Auto-fill mock URL for built-in scenarios
   useEffect(() => {
