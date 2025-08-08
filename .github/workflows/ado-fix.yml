@@ -15,7 +15,16 @@ jobs:
       - name: Derive branch name
         id: vars
         run: |
-          echo "BRANCH=fix/wi-${{ github.event.client_payload.work_item_id }}" >> $GITHUB_OUTPUT
+          # Handle both manual dispatch format and ADO webhook format
+          WORK_ITEM_ID="${{ github.event.client_payload.workItemId }}"
+          if [ -z "$WORK_ITEM_ID" ]; then
+            WORK_ITEM_ID="${{ github.event.client_payload.work_item_id }}"
+          fi
+          if [ -z "$WORK_ITEM_ID" ]; then
+            WORK_ITEM_ID="${{ github.event.client_payload.resource.id }}"
+          fi
+          echo "WORK_ITEM_ID=$WORK_ITEM_ID" >> $GITHUB_OUTPUT
+          echo "BRANCH=fix/wi-$WORK_ITEM_ID" >> $GITHUB_OUTPUT
 
       - name: Create branch & apply placeholder fix
         run: |
@@ -23,26 +32,47 @@ jobs:
           git config --global user.email "ado-bot@example.com"
           git checkout -b "${{ steps.vars.outputs.BRANCH }}"
           mkdir -p docs
-          echo "<!-- Automated fix for ADO Work Item #${{ github.event.client_payload.work_item_id }} -->" >> docs/fix-log.md
-          echo "## Fix Applied for ADO Work Item #${{ github.event.client_payload.work_item_id }}" >> docs/fix-log.md
+          
+          # Handle different payload formats
+          WORK_ITEM_ID="${{ steps.vars.outputs.WORK_ITEM_ID }}"
+          WORK_ITEM_TITLE="${{ github.event.client_payload.workItemTitle }}"
+          if [ -z "$WORK_ITEM_TITLE" ]; then
+            WORK_ITEM_TITLE="${{ github.event.client_payload.title }}"
+          fi
+          if [ -z "$WORK_ITEM_TITLE" ]; then
+            WORK_ITEM_TITLE="${{ github.event.client_payload.resource.fields.System.Title }}"
+          fi
+          
+          echo "<!-- Automated fix for ADO Work Item #$WORK_ITEM_ID -->" >> docs/fix-log.md
+          echo "## Fix Applied for ADO Work Item #$WORK_ITEM_ID" >> docs/fix-log.md
           echo "" >> docs/fix-log.md
-          echo "**Title:** ${{ github.event.client_payload.title }}" >> docs/fix-log.md
+          echo "**Title:** $WORK_ITEM_TITLE" >> docs/fix-log.md
           echo "**Changed by:** ${{ github.event.client_payload.changed_by }}" >> docs/fix-log.md
           echo "**Date:** $(date)" >> docs/fix-log.md
           echo "" >> docs/fix-log.md
           git add -A
-          git commit -m "Automated fix for ADO WI #${{ github.event.client_payload.work_item_id }}: ${{ github.event.client_payload.title }}"
+          git commit -m "Automated fix for ADO WI #$WORK_ITEM_ID: $WORK_ITEM_TITLE"
           git push origin "${{ steps.vars.outputs.BRANCH }}"
 
       - name: Create Pull Request
         run: |
+          # Handle different payload formats for title
+          WORK_ITEM_ID="${{ steps.vars.outputs.WORK_ITEM_ID }}"
+          WORK_ITEM_TITLE="${{ github.event.client_payload.workItemTitle }}"
+          if [ -z "$WORK_ITEM_TITLE" ]; then
+            WORK_ITEM_TITLE="${{ github.event.client_payload.title }}"
+          fi
+          if [ -z "$WORK_ITEM_TITLE" ]; then
+            WORK_ITEM_TITLE="${{ github.event.client_payload.resource.fields.System.Title }}"
+          fi
+          
           PR_RESPONSE=$(curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Content-Type: application/json" \
             -d "{
-              \"title\": \"🔧 Automated Fix for ADO WI #${{ github.event.client_payload.work_item_id }}\",
-              \"body\": \"## Automated Fix Pipeline\\n\\nThis PR was automatically created from Azure DevOps work item resolution.\\n\\n### Work Item Details\\n- **ID:** #${{ github.event.client_payload.work_item_id }}\\n- **Title:** ${{ github.event.client_payload.title }}\\n- **Changed by:** ${{ github.event.client_payload.changed_by }}\\n- **Status:** Resolved\\n\\n### Changes Made\\n- Added fix log entry to \`docs/fix-log.md\`\\n- Applied automated remediation\\n\\n**🤖 This PR was created automatically by the ADO→GitHub automation loop**\",
+              \"title\": \"🔧 Automated Fix for ADO WI #$WORK_ITEM_ID\",
+              \"body\": \"## Automated Fix Pipeline\\n\\nThis PR was automatically created from Azure DevOps work item resolution.\\n\\n### Work Item Details\\n- **ID:** #$WORK_ITEM_ID\\n- **Title:** $WORK_ITEM_TITLE\\n- **Changed by:** ${{ github.event.client_payload.changed_by }}\\n- **Status:** Resolved\\n\\n### Changes Made\\n- Added fix log entry to \`docs/fix-log.md\`\\n- Applied automated remediation\\n\\n**🤖 This PR was created automatically by the ADO→GitHub automation loop**\",
               \"head\": \"${{ steps.vars.outputs.BRANCH }}\",
               \"base\": \"main\"
             }" \
