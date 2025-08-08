@@ -1,5 +1,5 @@
 {
-  "analysis_id": "dashboard_test_20250807_153824",
+  "analysis_id": "analysis_dashboard_test_20250807_153824_20250807_153824",
   "timestamp": "2025-08-07T15:38:24.488769",
   "app_type": "word",
   "scenario_name": "Dashboard Test Scenario",
@@ -62,5 +62,14 @@
     "filename": "analysis_dashboard_test_20250807_153824_20250807_153824.json",
     "version": "2.0",
     "file_size_bytes": 1690
-  }
+  },
+  "overall_score": 0,
+  "scenario_results": [],
+  "module_results": {
+    "ux_heuristics": {
+      "score": 0,
+      "findings": []
+    }
+  },
+  "status": "completed"
 }

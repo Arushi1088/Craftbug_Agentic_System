@@ -1,5 +1,5 @@
 // Dashboard component with ADO integration and analytics
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Plot from 'react-plotly.js';
 import {
@@ -18,6 +18,13 @@ import {
   Settings
 } from 'lucide-react';
 import { useDashboard, useReports, useConnectionStatus } from '../hooks/useAPI';
+
+// ADO SDK types (if needed in iframe context)
+declare global {
+  interface Window {
+    AzureDevOpsSDK?: any;
+  }
+}
 
 // ADO Work Item Card Component
 interface WorkItemCardProps {
@@ -104,10 +111,81 @@ export function DashboardPage() {
   const { reports, fetchReports } = useReports();
   const { isConnected } = useConnectionStatus();
   
+  // Guarded ADO SDK loading - only load when running inside Azure DevOps iframe
+  useEffect(() => {
+    const inAdoIframe = window.self !== window.top; // simple heuristic to detect iframe
+    if (!inAdoIframe) {
+      console.log('Running in standalone mode - Azure DevOps SDK not loaded');
+      return;
+    }
+
+    (async () => {
+      try {
+        // Dynamically import only when embedded in ADO iframe
+        console.log('Loading Azure DevOps SDK...');
+        const SDK = await import('azure-devops-extension-sdk');
+        await SDK.init();
+        await SDK.ready();
+        console.log('Azure DevOps SDK initialized successfully');
+        // Store SDK reference globally if needed by other components
+        window.AzureDevOpsSDK = SDK;
+      } catch (error) {
+        console.warn('Failed to initialize Azure DevOps SDK:', error);
+        // Don't show error to user as this is expected in standalone mode
+      }
+    })();
+  }, []);
+  
+  // Helper function to safely create absolute URLs
+  const toAbsoluteUrl = (u?: string) => {
+    if (!u) return undefined;
+    try { 
+      return new URL(u, window.location.origin).toString(); 
+    } catch (e) {
+      console.warn('Bad URL in report:', u, e);
+      return undefined;
+    }
+  };
+
+  // Helper function to safely get hostname from URL
+  const getHostname = (url?: string) => {
+    const absoluteUrl = toAbsoluteUrl(url);
+    if (absoluteUrl) {
+      try {
+        return new URL(absoluteUrl).hostname;
+      } catch {
+        return url || 'Unknown';
+      }
+    }
+    return url || 'Unknown';
+  };
+  
   const [selectedReport, setSelectedReport] = useState<string>('');
   const [creatingTickets, setCreatingTickets] = useState(false);
   const [demoMode, setDemoMode] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'critical' | 'recent'>('all');
+
+  // Fetch reports on component mount
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
+
+  // Also refresh reports when component becomes visible again (e.g., user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchReports();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchReports);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchReports);
+    };
+  }, [fetchReports]);
 
   const handleCreateADOTickets = async () => {
     if (!selectedReport) {
@@ -137,6 +215,14 @@ export function DashboardPage() {
       default:
         return true;
     }
+  });
+
+  // Debug logging
+  console.log('📊 Dashboard Debug:', {
+    totalReports: reports.length,
+    filteredReports: filteredReports.length,
+    activeFilter,
+    reports: reports.slice(0, 3) // Show first 3 for debugging
   });
 
   const filteredAlerts = alerts.filter(alert => !alert.acknowledged);
@@ -186,6 +272,16 @@ export function DashboardPage() {
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
+          </button>
+          <button
+            onClick={() => {
+              fetchReports();
+              fetchDashboardData();
+            }}
+            className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh All
           </button>
         </div>
       </div>
@@ -247,7 +343,7 @@ export function DashboardPage() {
               <BarChart3 className="w-8 h-8 text-blue-500" />
             </div>
             <p className="text-sm text-gray-600 mt-2">
-              +{analytics.recent_analyses.length} this week
+              +{analytics.recent_analyses?.length || 0} this week
             </p>
           </div>
 
@@ -260,7 +356,7 @@ export function DashboardPage() {
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
             <p className="text-sm text-gray-600 mt-2">
-              Avg {analytics.avg_issues_per_analysis.toFixed(1)} per analysis
+              Avg {analytics.avg_issues_per_analysis?.toFixed(1) || '0.0'} per analysis
             </p>
           </div>
 
@@ -269,7 +365,7 @@ export function DashboardPage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Most Common</h3>
                 <p className="text-xl font-bold text-yellow-600 capitalize">
-                  {analytics.most_common_issue_type.replace('_', ' ')}
+                  {analytics.most_common_issue_type?.replace('_', ' ') || 'N/A'}
                 </p>
               </div>
               <Eye className="w-8 h-8 text-yellow-500" />
@@ -299,8 +395,8 @@ export function DashboardPage() {
             <Plot
               data={[
                 {
-                  values: Object.values(analytics.issue_severity_distribution),
-                  labels: Object.keys(analytics.issue_severity_distribution),
+                  values: Object.values(analytics.issue_severity_distribution || {}),
+                  labels: Object.keys(analytics.issue_severity_distribution || {}),
                   type: 'pie',
                   marker: {
                     colors: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981']
@@ -323,16 +419,16 @@ export function DashboardPage() {
             <Plot
               data={[
                 {
-                  x: Object.keys(analytics.issue_type_distribution).map(type => type.replace('_', ' ')),
-                  y: Object.values(analytics.issue_type_distribution),
+                  x: Object.keys(analytics.issue_type_distribution || {}).map(type => type.replace('_', ' ')),
+                  y: Object.values(analytics.issue_type_distribution || {}),
                   type: 'bar',
                   marker: { color: '#3b82f6' }
                 }
               ]}
               layout={{
                 height: 300,
-                xaxis: { title: 'Issue Type' },
-                yaxis: { title: 'Count' }
+                xaxis: { title: { text: 'Issue Type' } },
+                yaxis: { title: { text: 'Count' } }
               }}
               config={{ displayModeBar: false }}
               className="w-full"
@@ -374,7 +470,7 @@ export function DashboardPage() {
                 <option value="">Select a report...</option>
                 {filteredReports.map((report) => (
                   <option key={report.analysis_id} value={report.analysis_id}>
-                    {report.url ? new URL(report.url).hostname : 'Unknown'} - {report.total_issues} issues - {new Date(report.timestamp).toLocaleDateString()}
+                    {getHostname(report.url)} - {report.total_issues} issues - {new Date(report.timestamp).toLocaleDateString()}
                   </option>
                 ))}
               </select>
@@ -445,7 +541,9 @@ export function DashboardPage() {
       {/* Reports Filter & List */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Reports</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Recent Reports ({filteredReports.length} total)
+          </h2>
           <div className="flex items-center space-x-2">
             <Filter className="w-4 h-4 text-gray-500" />
             <select
@@ -469,11 +567,11 @@ export function DashboardPage() {
             >
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-gray-900 truncate">
-                  {report.url ? new URL(report.url).hostname : 'Unknown Source'}
+                  {getHostname(report.url)}
                 </h4>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  report.total_issues > 10 ? 'bg-red-100 text-red-800' :
-                  report.total_issues > 5 ? 'bg-yellow-100 text-yellow-800' :
+                  (report.total_issues || 0) > 10 ? 'bg-red-100 text-red-800' :
+                  (report.total_issues || 0) > 5 ? 'bg-yellow-100 text-yellow-800' :
                   'bg-green-100 text-green-800'
                 }`}>
                   {report.total_issues} issues

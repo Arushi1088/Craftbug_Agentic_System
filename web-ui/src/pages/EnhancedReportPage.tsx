@@ -373,8 +373,8 @@ export function EnhancedReportPage() {
                   data={[scenarioChartData]}
                   layout={{
                     title: { text: 'Scenario Scores' },
-                    xaxis: { title: 'Scenarios' },
-                    yaxis: { title: 'Score (0-100)', range: [0, 100] },
+                    xaxis: { title: { text: 'Scenarios' } },
+                    yaxis: { title: { text: 'Score (0-100)' }, range: [0, 100] },
                     height: 400,
                   }}
                   style={{ width: '100%' }}

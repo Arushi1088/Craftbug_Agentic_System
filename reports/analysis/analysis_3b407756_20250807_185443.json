@@ -1,5 +1,5 @@
 {
-  "analysis_id": "f2919561",
+  "analysis_id": "analysis_3b407756_20250807_185443",
   "error": "[Errno 2] No such file or directory: 'basic_navigation'",
   "status": "failed",
   "storage_metadata": {
@@ -9,5 +9,15 @@
     "filename": "analysis_3b407756_20250807_185443.json",
     "version": "2.0",
     "file_size_bytes": 417
-  }
+  },
+  "timestamp": "2025-08-08T14:12:46.247614",
+  "overall_score": 0,
+  "scenario_results": [],
+  "module_results": {
+    "ux_heuristics": {
+      "score": 0,
+      "findings": []
+    }
+  },
+  "total_issues": 0
 }

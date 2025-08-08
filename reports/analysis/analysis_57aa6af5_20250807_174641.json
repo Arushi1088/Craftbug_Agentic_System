@@ -1,5 +1,5 @@
 {
-  "analysis_id": "212f403d",
+  "analysis_id": "analysis_57aa6af5_20250807_174641",
   "error": "'NoneType' object has no attribute 'get'",
   "status": "failed",
   "storage_metadata": {
@@ -9,5 +9,15 @@
     "filename": "analysis_57aa6af5_20250807_174641.json",
     "version": "2.0",
     "file_size_bytes": 402
-  }
+  },
+  "timestamp": "2025-08-08T14:12:46.131427",
+  "overall_score": 0,
+  "scenario_results": [],
+  "module_results": {
+    "ux_heuristics": {
+      "score": 0,
+      "findings": []
+    }
+  },
+  "total_issues": 0
 }

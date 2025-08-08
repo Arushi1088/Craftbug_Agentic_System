@@ -169,11 +169,15 @@ export function useReports() {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔍 Fetching report:', reportId);
       const report = await apiClient.getReport(reportId);
+      console.log('✅ Report fetched successfully:', report);
       setCurrentReport(report);
       return report;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch report');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch report';
+      console.error('❌ Error fetching report:', reportId, errorMessage, err);
+      setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
@@ -295,7 +299,7 @@ export function useDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const intervalRef = useRef<number>();
+  const intervalRef = useRef<NodeJS.Timeout>();
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -373,7 +377,7 @@ export function useDashboard() {
 export function useConnectionStatus() {
   const [isConnected, setIsConnected] = useState(true);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
-  const intervalRef = useRef<number>();
+  const intervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const checkConnection = async () => {

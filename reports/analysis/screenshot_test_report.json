@@ -1,5 +1,5 @@
 {
-  "analysis_id": "5c261fe9",
+  "analysis_id": "screenshot_test_report",
   "timestamp": "2025-08-07T20:30:02.718039",
   "type": "url_scenario",
   "url": "https://example.com",
@@ -143,5 +143,7 @@
         "Test screenshot capture functionality"
       ]
     }
-  }
+  },
+  "status": "completed",
+  "total_issues": 0
 }

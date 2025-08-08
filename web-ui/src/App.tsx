@@ -16,7 +16,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/analyze" element={<AnalysisPage />} />
             <Route path="/analysis/:analysisId" element={<AnalysisLoadingPage />} />
-            <Route path="/report/:reportId" element={<ReportPage />} />
+            <Route path="/reports" element={<DashboardPage />} />
+            <Route path="/reports/:reportId" element={<ReportPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
           </Routes>
         </main>

@@ -1,5 +1,5 @@
 {
-  "analysis_id": "902dac04",
+  "analysis_id": "analysis_770e915e_20250807_164859",
   "timestamp": "2025-08-07T16:48:59.486043",
   "type": "url_scenario",
   "url": "https://example.com",
@@ -230,5 +230,7 @@
       "finding_type": "warning",
       "message": "Low color contrast ratio detected (3.2:1)"
     }
-  ]
+  ],
+  "status": "completed",
+  "total_issues": 4
 }

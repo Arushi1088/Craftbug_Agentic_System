@@ -55,10 +55,10 @@ export function AnalysisLoadingPage() {
             progress: 100
           });
           
-          // Redirect to report page after showing success
-          setTimeout(() => {
-            navigate(`/report/${analysisId}`);
-          }, 1000);
+                      // Redirect to report page after showing success
+            setTimeout(() => {
+              navigate(`/reports/${analysisId}`);
+            }, 1000);
           return;
         }
       } catch (err) {
@@ -82,7 +82,7 @@ export function AnalysisLoadingPage() {
             
             // Redirect to report page after a brief success message
             setTimeout(() => {
-              navigate(`/report/${analysisId}`);
+              navigate(`/reports/${analysisId}`);
             }, 1000);
             return;
           }
