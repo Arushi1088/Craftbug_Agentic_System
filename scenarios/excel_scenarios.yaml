@@ -1,0 +1,18 @@
+version: 1
+scenarios:
+  - id: excel_basic_nav
+    name: "Excel: Open and format sheet"
+    app_type: "excel"
+    steps:
+      - action: navigate_to_url
+        url: "http://localhost:3000/mock-excel.html"
+      - action: wait_for_selector
+        selector: "#sheet"
+        timeout_ms: 10000
+      - action: type
+        selector: "#cell-A1"
+        text: "Quarterly Revenue"
+      - action: click
+        selector: "#bold-btn"
+      - action: screenshot
+        label: "excel_formatting"
