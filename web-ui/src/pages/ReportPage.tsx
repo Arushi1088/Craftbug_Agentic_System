@@ -16,7 +16,10 @@ import {
   PlayCircle,
   Loader2,
   Settings,
-  ExternalLink
+  ExternalLink,
+  Upload,
+  Wrench,
+  GitBranch
 } from 'lucide-react';
 import { useReports, useFixManager } from '../hooks/useAPI';
 import { AnalysisReport, UXIssue } from '../services/api';
@@ -74,46 +77,85 @@ const ADOStatus: React.FC<{
   ado_status?: string;
   ado_url?: string;
   ado_created_date?: string;
-}> = ({ ado_work_item_id, ado_status, ado_url, ado_created_date }) => {
+}> = ({ ado_work_item_id, ado_status, ado_url }) => {
   if (!ado_work_item_id) return null;
 
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case 'resolved':
       case 'closed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'active':
       case 'new':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'in progress':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
+  const getStatusIcon = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case 'resolved':
+      case 'closed':
+        return <CheckCircle className="w-3 h-3" />;
+      case 'in progress':
+        return <Clock className="w-3 h-3" />;
+      case 'active':
+      case 'new':
+        return <PlayCircle className="w-3 h-3" />;
+      default:
+        return <ExternalLink className="w-3 h-3" />;
+    }
+  };
+
+  const getGitHubStatus = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case 'resolved':
+        return { text: '🟩 Pushed to GitHub', color: 'text-green-600' };
+      case 'in progress':
+        return { text: '🟨 Awaiting Commit', color: 'text-yellow-600' };
+      case 'closed':
+        return { text: '✅ Fixed in ADO', color: 'text-green-600' };
+      default:
+        return { text: '⏳ Pending Fix', color: 'text-gray-600' };
+    }
+  };
+
+  const githubStatus = getGitHubStatus(ado_status);
+
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <div className="flex items-center gap-1">
-        <ExternalLink className="w-3 h-3 text-blue-600" />
-        {ado_url ? (
-          <a 
-            href={ado_url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ADO #{ado_work_item_id}
-          </a>
-        ) : (
-          <span className="text-gray-600 font-medium">ADO #{ado_work_item_id}</span>
+    <div className="space-y-1 text-xs">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <ExternalLink className="w-3 h-3 text-blue-600" />
+          {ado_url ? (
+            <a 
+              href={ado_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              ADO #{ado_work_item_id}
+            </a>
+          ) : (
+            <span className="text-gray-600 font-medium">ADO #{ado_work_item_id}</span>
+          )}
+        </div>
+        {ado_status && (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium ${getStatusColor(ado_status)}`}>
+            {getStatusIcon(ado_status)}
+            {ado_status}
+          </span>
         )}
       </div>
-      {ado_status && (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ado_status)}`}>
-          {ado_status}
+      <div className="flex items-center gap-1">
+        <GitBranch className="w-3 h-3 text-gray-500" />
+        <span className={`text-xs font-medium ${githubStatus.color}`}>
+          {githubStatus.text}
         </span>
-      )}
+      </div>
     </div>
   );
 };
@@ -269,6 +311,11 @@ export function ReportPage() {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [hideFixed, setHideFixed] = useState(false);
+  const [isAdoSyncing, setIsAdoSyncing] = useState(false);
+  const [adoSyncStatus, setAdoSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [adoSyncMessage, setAdoSyncMessage] = useState('');
+  const [fixingIssues, setFixingIssues] = useState<Set<string>>(new Set());
+  const [viewingInAdo, setViewingInAdo] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (reportId) {
@@ -295,6 +342,120 @@ export function ReportPage() {
       }
     } catch (err) {
       console.error('Failed to load report:', err);
+    }
+  };
+
+  const handleAdoSync = async () => {
+    if (!reportId || !report) return;
+    
+    setIsAdoSyncing(true);
+    setAdoSyncStatus('syncing');
+    setAdoSyncMessage('Syncing to Azure DevOps...');
+    
+    try {
+      const response = await fetch(`http://localhost:8000/api/sync-to-ado`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          report_id: reportId,
+          report_data: report
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to sync to ADO: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setAdoSyncStatus('success');
+        setAdoSyncMessage(`Work item created successfully: ${result.work_item_id}`);
+        
+        // Reload report to get updated ADO info
+        loadReport(reportId);
+      } else {
+        setAdoSyncStatus('error');
+        setAdoSyncMessage(result.error || 'Failed to sync to Azure DevOps');
+      }
+    } catch (error) {
+      console.error('ADO sync error:', error);
+      setAdoSyncStatus('error');
+      setAdoSyncMessage(error instanceof Error ? error.message : 'Failed to sync to Azure DevOps');
+    } finally {
+      setIsAdoSyncing(false);
+      
+      // Clear status after 5 seconds
+      setTimeout(() => {
+        setAdoSyncStatus('idle');
+        setAdoSyncMessage('');
+      }, 5000);
+    }
+  };
+
+  const handleViewInAdo = async (issueId: string) => {
+    setViewingInAdo(prev => new Set([...prev, issueId]));
+    
+    try {
+      const response = await fetch(`http://localhost:8000/api/open-in-ado/${issueId}`);
+      const result = await response.json();
+      
+      if (result.success && result.ado_url) {
+        // Open ADO Work Item in new tab
+        window.open(result.ado_url, '_blank');
+      } else {
+        console.error('Failed to get ADO URL:', result.error);
+        alert('Failed to open ADO Work Item. Make sure it has been synced to ADO first.');
+      }
+    } catch (error) {
+      console.error('Error opening ADO:', error);
+      alert('Failed to open ADO Work Item.');
+    } finally {
+      setViewingInAdo(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(issueId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleFixIssue = async (issueId: string) => {
+    setFixingIssues(prev => new Set([...prev, issueId]));
+    
+    try {
+      const response = await fetch(`http://localhost:8000/api/trigger-fix/${issueId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          report_id: reportId
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(`Fix triggered successfully! ${result.message || 'Check ADO for status updates.'}`);
+        
+        // Reload report to get updated status
+        if (reportId) {
+          loadReport(reportId);
+        }
+      } else {
+        alert(`Failed to trigger fix: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error triggering fix:', error);
+      alert('Failed to trigger fix.');
+    } finally {
+      setFixingIssues(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(issueId);
+        return newSet;
+      });
     }
   };
 
@@ -417,8 +578,54 @@ export function ReportPage() {
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </button>
+            <button
+              onClick={() => handleAdoSync()}
+              disabled={isAdoSyncing}
+              className={`inline-flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isAdoSyncing 
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : adoSyncStatus === 'success'
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : adoSyncStatus === 'error'
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              }`}
+            >
+              {isAdoSyncing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : adoSyncStatus === 'success' ? (
+                <CheckCircle className="w-4 h-4 mr-2" />
+              ) : adoSyncStatus === 'error' ? (
+                <AlertTriangle className="w-4 h-4 mr-2" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              {isAdoSyncing ? 'Syncing...' : 'Push to ADO'}
+            </button>
           </div>
         </div>
+
+        {/* ADO Sync Status Message */}
+        {adoSyncMessage && (
+          <div className={`mt-4 p-3 rounded-lg border ${
+            adoSyncStatus === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : adoSyncStatus === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-blue-50 border-blue-200 text-blue-800'
+          }`}>
+            <div className="flex items-center">
+              {adoSyncStatus === 'success' ? (
+                <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+              ) : adoSyncStatus === 'error' ? (
+                <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+              ) : (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
+              )}
+              <p className="text-sm font-medium">{adoSyncMessage}</p>
+            </div>
+          </div>
+        )}
         
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           UX Analysis Report
@@ -1096,6 +1303,40 @@ export function ReportPage() {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(issue.severity)}`}>
                             {issue.severity}
                           </span>
+                          
+                          {/* ADO Action Buttons */}
+                          <div className="mt-2 space-y-1">
+                            {issue.ado_work_item_id && (
+                              <button
+                                onClick={() => handleViewInAdo(issue.issue_id)}
+                                disabled={viewingInAdo.has(issue.issue_id)}
+                                className="w-full inline-flex items-center justify-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition-colors"
+                              >
+                                {viewingInAdo.has(issue.issue_id) ? (
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                ) : (
+                                  <ExternalLink className="w-3 h-3 mr-1" />
+                                )}
+                                View in ADO
+                              </button>
+                            )}
+                            
+                            {issue.ado_work_item_id && !issue.fix_applied && (
+                              <button
+                                onClick={() => handleFixIssue(issue.issue_id)}
+                                disabled={fixingIssues.has(issue.issue_id)}
+                                className="w-full inline-flex items-center justify-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 disabled:opacity-50 transition-colors"
+                              >
+                                {fixingIssues.has(issue.issue_id) ? (
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                ) : (
+                                  <Wrench className="w-3 h-3 mr-1" />
+                                )}
+                                Fix Issue
+                              </button>
+                            )}
+                          </div>
+
                           {!issue.fix_applied && (
                             <FixNowButton 
                               issue={issue} 
