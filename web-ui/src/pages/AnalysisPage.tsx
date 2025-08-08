@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Globe, 
@@ -19,9 +19,10 @@ type AnalysisMode = 'url' | 'screenshot' | 'url-scenario' | 'mock-scenario';
 
 interface AnalysisConfig {
   mode: AnalysisMode;
+  app: 'word' | 'excel' | 'powerpoint' | 'web';
   url?: string;
   screenshot?: File;
-  scenario?: string;
+  scenarioId?: string;
   scenarioFile?: string;
   mockAppPath?: string;
   enablePerformance: boolean;
@@ -35,10 +36,15 @@ interface AnalysisConfig {
 }
 
 interface Scenario {
+  id: string;
   name: string;
-  filename: string;
-  path: string;
   description: string;
+  category?: string;
+  app_type?: 'word' | 'excel' | 'powerpoint' | 'web';
+  source?: string;
+  mock_url?: string;
+  filename?: string;
+  path: string;
 }
 
 interface AnalysisModule {
@@ -88,9 +94,11 @@ export function AnalysisPage() {
   const { isConnected } = useConnectionStatus();
   
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [allScenarios, setAllScenarios] = useState<Scenario[]>([]);
   const [modules, setModules] = useState<AnalysisModule[]>([]);
   const [config, setConfig] = useState<AnalysisConfig>({
     mode: 'url',
+    app: 'web',
     scenarioFile: 'scenarios/basic_navigation.yaml', // Set default scenario
     enablePerformance: true,
     enableAccessibility: true,
@@ -102,12 +110,16 @@ export function AnalysisPage() {
     outputFormat: 'html'
   });
 
-  // Check if current scenario is a built-in Office scenario with locked URL
+  // Currently-selected scenario (if any)
+  const selectedScenario = useMemo(
+    () => scenarios.find(s => s.path === config.scenarioFile),
+    [scenarios, config.scenarioFile]
+  );
+
+  // Whether URL should be auto-set/locked for Office mock scenarios
   const isBuiltInScenarioSelected = () => {
-    if (!config.scenarioFile || scenarios.length === 0) return false;
-    const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
     if (!selectedScenario) return false;
-    return getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name) !== null;
+    return Boolean(selectedScenario.mock_url ?? getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name));
   };
 
   // Mock app options
@@ -140,12 +152,18 @@ export function AnalysisPage() {
       try {
         // Load scenarios
         const scenarioList = await apiClient.getScenarios();
-        setScenarios(scenarioList.map((scenario) => ({
-          name: scenario.name || scenario.filename.replace(/\.yaml$/, '').replace(/_/g, ' '),
-          filename: scenario.filename,
-          path: scenario.path,
-          description: scenario.description || `Test scenario: ${scenario.name || scenario.filename.replace(/\.yaml$/, '').replace(/_/g, ' ')}`
-        })));
+        const normalized = scenarioList.map((s: any) => ({
+          id: s.id ?? s.filename ?? s.path,
+          name: s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' '),
+          filename: s.filename,
+          path: s.path,
+          description: s.description || `Test scenario: ${s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' ')}`,
+          category: s.category,
+          app_type: (s.app_type ?? s.category ?? 'web').toLowerCase(),
+          source: s.source,
+          mock_url: s.mock_url
+        })) as Scenario[];
+        setAllScenarios(normalized);
 
         // Load modules
         const moduleList = await apiClient.getModules();
@@ -161,7 +179,7 @@ export function AnalysisPage() {
 
       } catch (error) {
         console.error('Failed to load scenarios and modules, using defaults:', error);
-        setScenarios(defaultScenarios);
+        setAllScenarios(defaultScenarios as any);
         setModules(defaultModules);
       }
     };
@@ -169,17 +187,26 @@ export function AnalysisPage() {
     loadScenariosAndModules();
   }, []);
 
+  // Recompute visible scenarios whenever app changes
+  useEffect(() => {
+    if (allScenarios.length === 0) return;
+    const app = config.app;
+    const filtered = allScenarios.filter(s => {
+      if (app === 'web') return (s.app_type ?? 'web') === 'web' || !s.app_type;
+      return (s.app_type ?? '').toLowerCase() === app;
+    });
+    setScenarios(filtered);
+    // clear scenario if it doesn't belong to the new app
+    if (config.scenarioFile && !filtered.some(s => s.path === config.scenarioFile)) {
+      setConfig(prev => ({ ...prev, scenarioFile: '' }));
+    }
+  }, [config.app, allScenarios]); 
+
   // Auto-fill mock URL for built-in scenarios
   useEffect(() => {
-    if (config.scenarioFile && scenarios.length > 0) {
-      const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
-      if (selectedScenario) {
-        const mockUrl = getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name);
-        if (mockUrl) {
-          setConfig(prev => ({ ...prev, url: mockUrl }));
-        }
-      }
-    }
+    if (!selectedScenario) return;
+    const inferred = selectedScenario.mock_url ?? getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name);
+    if (inferred) setConfig(prev => ({ ...prev, url: inferred }));
   }, [config.scenarioFile, scenarios]);
 
   // Handle analysis completion
@@ -223,6 +250,17 @@ export function AnalysisPage() {
     }
   ];
 
+  // Simple validity for the selected mode
+  const canSubmit = useMemo(() => {
+    if (!isConnected) return false;
+    if (isAnalyzing) return false;
+    if (config.mode === 'url') return Boolean(config.url);
+    if (config.mode === 'screenshot') return Boolean(config.screenshot);
+    if (config.mode === 'url-scenario') return Boolean(config.scenarioFile) && Boolean(config.url);
+    if (config.mode === 'mock-scenario') return Boolean(config.scenarioFile) && Boolean(config.app !== 'web');
+    return false;
+  }, [config, isConnected, isAnalyzing]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -252,11 +290,12 @@ export function AnalysisPage() {
         const scenarioBlob = new Blob([`# Auto-generated scenario for ${config.url}`], { type: 'text/yaml' });
         const scenarioFile = new File([scenarioBlob], 'auto-scenario.yaml', { type: 'text/yaml' });
         await startScenarioAnalysis(scenarioFile, config.url);
-      } else if (config.mode === 'mock-scenario' && config.mockAppPath && config.scenarioFile) {
+      } else if (config.mode === 'mock-scenario' && config.scenarioFile) {
         // For mock scenarios, create a simple scenario file
-        const scenarioBlob = new Blob([`# Mock app scenario for ${config.mockAppPath}`], { type: 'text/yaml' });
+        const scenarioBlob = new Blob([`# Mock app scenario for ${config.app}`], { type: 'text/yaml' });
         const scenarioFile = new File([scenarioBlob], 'mock-scenario.yaml', { type: 'text/yaml' });
-        await startScenarioAnalysis(scenarioFile, config.mockAppPath);
+        const mockUrl = selectedScenario?.mock_url ?? getBuiltInScenarioMockUrl(selectedScenario?.path ?? '', selectedScenario?.name ?? '') ?? '';
+        await startScenarioAnalysis(scenarioFile, mockUrl);
       } else {
         throw new Error('Please fill in all required fields');
       }
@@ -344,6 +383,34 @@ export function AnalysisPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* App selector (app-first) */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Target App
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(['web','word','excel','powerpoint'] as const).map(app => (
+              <label key={app} className={`cursor-pointer border-2 rounded-lg p-3 text-center capitalize ${config.app===app ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                <input
+                  type="radio"
+                  name="app"
+                  className="sr-only"
+                  value={app}
+                  checked={config.app === app}
+                  onChange={(e) => setConfig(prev => ({ ...prev, app: e.target.value as any }))}
+                  disabled={isAnalyzing}
+                />
+                {app}
+              </label>
+            ))}
+          </div>
+          {config.app !== 'web' && (
+            <p className="text-sm text-gray-500 mt-2">
+              Selecting {config.app} will auto-prefill a local mock URL for supported scenarios.
+            </p>
+          )}
+        </div>
+
         {/* Analysis Type Selection */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -477,8 +544,9 @@ export function AnalysisPage() {
                 >
                   <option value="">Choose a scenario...</option>
                   {scenarios.map((scenario) => (
-                    <option key={scenario.filename} value={scenario.path} title={scenario.description}>
-                      {scenario.name} - {scenario.description}
+                    <option key={scenario.path} value={scenario.path} title={scenario.description}>
+                      {scenario.name}
+                      {scenario.mock_url ? ' • mock' : ''}
                     </option>
                   ))}
                 </select>
@@ -491,7 +559,7 @@ export function AnalysisPage() {
                 {scenarios.length > 0 && (
                   <p className="text-sm text-green-600 mt-2 flex items-center">
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    {scenarios.length} scenarios loaded from API
+                    {scenarios.length} {config.app} scenarios available
                   </p>
                 )}
               </div>
@@ -567,7 +635,7 @@ export function AnalysisPage() {
         <div className="text-center">
           <button
             type="submit"
-            disabled={isAnalyzing || !isConnected}
+            disabled={!canSubmit}
             className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isAnalyzing ? (
