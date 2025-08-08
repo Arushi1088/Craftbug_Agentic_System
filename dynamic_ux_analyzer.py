@@ -18,6 +18,13 @@ except ImportError:
     OPENAI_AVAILABLE = False
     print("⚠️ OpenAI not installed. Run: pip install openai")
 
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BS4_AVAILABLE = False
+    print("⚠️ BeautifulSoup not installed. Run: pip install beautifulsoup4")
+
 # Load environment variables with validation
 try:
     from dotenv import load_dotenv
@@ -278,10 +285,12 @@ class DynamicUXAnalyzer:
                     logger.warning("No valid JSON found in AI response")
                     issues = []
                 
-            # Validate and enhance issues
+            # Validate and enhance issues with grounding validation
             validated_issues = []
             for issue in issues[:3]:  # Limit to 3 issues
                 if self._validate_issue_structure(issue):
+                    # Add grounding validation
+                    issue = self._validate_issue_grounding(issue, screen_html)
                     # Add metadata
                     issue['generated_by'] = 'ai'
                     issue['step'] = step_context.get('action', 'unknown') if step_context else 'unknown'
@@ -421,3 +430,65 @@ class DynamicUXAnalyzer:
             "generation_method": generation_count,
             "ai_enabled": not self.fallback_mode
         }
+
+    def _validate_issue_grounding(self, issue: Dict[str, Any], screen_html: str) -> Dict[str, Any]:
+        """Validate that AI issue claims are grounded in actual HTML content"""
+        if not BS4_AVAILABLE or not screen_html:
+            # Add warning if validation unavailable
+            issue['grounding_validation'] = 'unavailable'
+            return issue
+        
+        try:
+            soup = BeautifulSoup(screen_html, 'html.parser')
+            validation_results = {}
+            
+            # Check claims in issue description or title
+            description = f"{issue.get('title', '')} {issue.get('description', '')}"
+            
+            # Validate specific element claims
+            if 'button' in description.lower():
+                buttons = soup.find_all(['button', '[role="button"]', 'input[type="button"]', 'input[type="submit"]'])
+                validation_results['button_elements'] = len(buttons) > 0
+                
+            if 'form' in description.lower() or 'input' in description.lower():
+                forms = soup.find_all(['form', 'input', 'textarea', 'select'])
+                validation_results['form_elements'] = len(forms) > 0
+                
+            if 'navigation' in description.lower() or 'nav' in description.lower():
+                nav_elements = soup.find_all(['nav', '[role="navigation"]'])
+                nav_elements.extend(soup.find_all(attrs={'class': lambda x: x and 'nav' in str(x).lower()}))
+                validation_results['navigation_elements'] = len(nav_elements) > 0
+                
+            if 'image' in description.lower() or 'img' in description.lower():
+                images = soup.find_all('img')
+                validation_results['image_elements'] = len(images) > 0
+                
+            if 'link' in description.lower():
+                links = soup.find_all('a')
+                validation_results['link_elements'] = len(links) > 0
+            
+            # Calculate grounding score
+            if validation_results:
+                grounded_claims = sum(1 for v in validation_results.values() if v)
+                total_claims = len(validation_results)
+                grounding_score = grounded_claims / total_claims if total_claims > 0 else 1.0
+            else:
+                # No specific claims to validate
+                grounding_score = 1.0
+            
+            # Add validation metadata
+            issue['grounding_validation'] = {
+                'score': grounding_score,
+                'validated_claims': validation_results,
+                'grounded': grounding_score >= 0.5
+            }
+            
+            # Lower confidence if poorly grounded
+            if grounding_score < 0.5:
+                issue['confidence'] = issue.get('confidence', 'medium').replace('high', 'medium').replace('medium', 'low')
+                
+        except Exception as e:
+            logger.warning(f"Failed to validate issue grounding: {e}")
+            issue['grounding_validation'] = 'error'
+            
+        return issue

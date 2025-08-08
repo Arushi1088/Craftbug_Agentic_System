@@ -536,14 +536,29 @@ class EnhancedScenarioRunner:
                 step_result["status"] = "success"
                 
             elif action == "screenshot":
-                # Manual screenshot action (existing functionality)
+                # Manual screenshot action with enhanced reliability
                 timestamp = int(time.time())
                 screenshot_dir = Path("reports/screenshots")
                 screenshot_dir.mkdir(parents=True, exist_ok=True)
                 screenshot_path = screenshot_dir / f"step_{step_index}_{timestamp}.png"
-                await self.page.screenshot(path=str(screenshot_path))
-                step_result["screenshot"] = f"screenshots/{screenshot_path.name}"
-                step_result["status"] = "success"
+                
+                # Enhanced screenshot reliability with network idle waiting and retry
+                try:
+                    await self.page.wait_for_load_state('networkidle', timeout=10000)
+                    await asyncio.sleep(1)  # Additional buffer for UI rendering
+                    await self.page.screenshot(path=str(screenshot_path))
+                    step_result["screenshot"] = f"screenshots/{screenshot_path.name}"
+                    step_result["status"] = "success"
+                except Exception as e:
+                    # Retry with fallback
+                    try:
+                        await asyncio.sleep(2)
+                        await self.page.screenshot(path=str(screenshot_path))
+                        step_result["screenshot"] = f"screenshots/{screenshot_path.name}"
+                        step_result["status"] = "success"
+                    except Exception as retry_error:
+                        step_result["status"] = "failed"
+                        step_result["errors"].append(f"Screenshot failed: {retry_error}")
                 
             elif action == "assert_element_visible":
                 selector = step.get("selector", "")

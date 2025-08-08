@@ -1,0 +1,13 @@
+{
+  "analysis_id": "63d0c8c6",
+  "error": "'NoneType' object has no attribute 'get'",
+  "status": "failed",
+  "storage_metadata": {
+    "analysis_id": "b079fc59",
+    "saved_timestamp": "2025-08-08T09:47:08.174547",
+    "file_path": "reports/analysis/analysis_b079fc59_20250808_094708.json",
+    "filename": "analysis_b079fc59_20250808_094708.json",
+    "version": "2.0",
+    "file_size_bytes": 402
+  }
+}

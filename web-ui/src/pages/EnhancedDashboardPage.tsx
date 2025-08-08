@@ -36,6 +36,19 @@ const COLORS = {
 
 const CHART_COLORS = [COLORS.primary, COLORS.success, COLORS.warning, COLORS.danger, COLORS.info];
 
+// Utility function for safe numeric operations in charts
+const safeNum = (value: any): number => {
+  const num = typeof value === 'number' ? value : parseFloat(value) || 0;
+  return isNaN(num) || !isFinite(num) ? 0 : num;
+};
+
+// Check if data is valid for chart rendering
+const hasValidData = (data: any[]): boolean => {
+  return Array.isArray(data) && data.length > 0 && data.some(item => 
+    item && typeof item === 'object' && Object.keys(item).length > 0
+  );
+};
+
 // Issue Status Component with ADO integration
 interface IssueStatusProps {
   issue: {
