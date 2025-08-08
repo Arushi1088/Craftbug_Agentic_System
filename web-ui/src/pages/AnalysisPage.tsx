@@ -274,11 +274,13 @@ export function AnalysisPage() {
         const scenarioBlob = new Blob([`# Auto-generated scenario for ${config.url}`], { type: 'text/yaml' });
         const scenarioFile = new File([scenarioBlob], 'auto-scenario.yaml', { type: 'text/yaml' });
         await startScenarioAnalysis(scenarioFile, config.url);
-      } else if (config.mode === 'mock-scenario' && config.mockAppPath && config.scenarioFile) {
-        // For mock scenarios, create a simple scenario file
-        const scenarioBlob = new Blob([`# Mock app scenario for ${config.mockAppPath}`], { type: 'text/yaml' });
+      } else if (config.mode === 'mock-scenario' && config.scenarioFile) {
+        // For mock scenarios, use the selected scenario and app type
+        const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
+        const mockUrl = selectedScenario?.mock_url || config.url || 'http://localhost:3001';
+        const scenarioBlob = new Blob([`# Mock app scenario for ${config.app}`], { type: 'text/yaml' });
         const scenarioFile = new File([scenarioBlob], 'mock-scenario.yaml', { type: 'text/yaml' });
-        await startScenarioAnalysis(scenarioFile, config.mockAppPath);
+        await startScenarioAnalysis(scenarioFile, mockUrl);
       } else {
         throw new Error('Please fill in all required fields');
       }
