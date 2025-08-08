@@ -28,3 +28,26 @@ reports/screenshots/
 # Backup files
 *.backup
 *.save
+
+# ===== UX Analyzer local artifacts & build =====
+/web-ui/dist/
+/web-ui/*.vsix
+/web-ui/dev-server.log
+/node_modules/
+/storage/
+/runner/
+/reports/
+/reports/**/*.json
+/reports/backups/
+/reports/fix_contexts/
+/scenarios/custom/*_mock-scenario.yaml
+
+# env & scripts
+.env*
+*.local
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
