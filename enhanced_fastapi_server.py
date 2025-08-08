@@ -878,59 +878,72 @@ def load_all_scenarios():
     SCENARIOS_CACHE = load_all()
     return SCENARIOS_CACHE
 
+def _infer_app_type(meta: dict) -> str:
+    """
+    Infer app_type from any of: explicit app_type, category, id, name, filename, source.
+    Returns one of: 'word' | 'excel' | 'powerpoint' | 'web'
+    """
+    fields = [
+        str(meta.get("app_type", "")),
+        str(meta.get("category", "")),
+        str(meta.get("id", "")),
+        str(meta.get("name", "")),
+        str(meta.get("filename", "")),
+        str(meta.get("source", "")),
+        str(meta.get("path", "")),
+    ]
+    blob = " ".join(f.lower() for f in fields if f)
+
+    # order matters: avoid ppt→powerpoint misses
+    if "powerpoint" in blob or "ppt" in blob or "pptx" in blob:
+        return "powerpoint"
+    if "excel" in blob or "xls" in blob or "xlsx" in blob:
+        return "excel"
+    if "word" in blob or "doc" in blob or "docx" in blob:
+        return "word"
+    return "web"
+
 @app.get("/api/scenarios")
 async def get_scenarios(app: Optional[str] = Query(default=None), include_custom: bool = Query(default=True)):
-    """Get available scenarios with optional app filtering"""
+    """Get available scenarios with strong app inference and optional filtering"""
     try:
-        # Load scenarios using existing loader
-        all_scenarios = get_available_scenarios()
-        
-        # Convert to normalized format and filter
-        scenarios = []
-        for scenario in all_scenarios:
-            # Infer app_type from source path if not set
-            source_path = scenario.get("source", "").lower()
-            filename = scenario.get("filename", "").lower()
-            inferred_app_type = "web"
-            
-            if "word" in source_path or "word" in filename:
-                inferred_app_type = "word"
-            elif "excel" in source_path or "excel" in filename:
-                inferred_app_type = "excel"
-            elif "powerpoint" in source_path or "powerpoint" in filename or "ppt" in source_path:
-                inferred_app_type = "powerpoint"
-            
-            # Debug logging
-            if "word" in source_path:
-                logger.info(f"Word scenario found: {scenario.get('name')} -> {inferred_app_type}")
-            
-            # Normalize scenario format
+        all_scenarios = get_available_scenarios()  # keep your current source
+
+        normalized_list = []
+        for raw in all_scenarios:
+            app_type = _infer_app_type(raw)
+
+            # choose a mock URL when the app is an Office mock
+            mock_url = None
+            if app_type in ("word", "excel", "powerpoint"):
+                mock_url = MOCK_URLS.get(app_type)
+
             normalized = {
-                "id": scenario.get("id") or scenario.get("filename", scenario.get("name", "unknown")),
-                "name": scenario.get("name", scenario.get("filename", "Unknown Scenario")),
-                "description": scenario.get("description", ""),
-                "category": scenario.get("category", "General"),
-                "app_type": scenario.get("app_type") or inferred_app_type,
-                "source": scenario.get("source", ""),
-                "mock_url": scenario.get("mock_url"),
-                "filename": scenario.get("filename"),
-                "path": scenario.get("path")
+                "id": raw.get("id") or raw.get("filename") or raw.get("name") or "unknown",
+                "name": raw.get("name") or (raw.get("filename", "") or "Unknown Scenario").replace(".yaml", "").replace("_", " ").strip(),
+                "description": raw.get("description", ""),
+                "category": raw.get("category") or app_type.capitalize(),
+                "app_type": app_type,
+                "source": raw.get("source", ""),
+                "filename": raw.get("filename"),
+                "path": raw.get("path") or raw.get("filename"),
+                # prefer explicit mock_url if present in file, else inferred
+                "mock_url": raw.get("mock_url") or mock_url,
             }
-            
-            # Apply app filtering
+
+            # Optional: swap {mock_url} placeholders inside normalized if a future consumer needs it
+            # (we do not mutate the file here to keep this endpoint pure)
+
             if app:
-                scenario_app_type = normalized["app_type"].lower()
-                if scenario_app_type != app:
+                if normalized["app_type"] != app.lower():
                     continue
-            
-            # Apply custom filtering
-            if not include_custom and normalized["id"].startswith("custom_"):
+
+            if not include_custom and str(normalized["id"]).startswith("custom_"):
                 continue
-                
-            scenarios.append(normalized)
-        
-        logger.info(f"Returning {len(scenarios)} scenarios (app={app}, include_custom={include_custom})")
-        return {"scenarios": scenarios, "total": len(all_scenarios)}
+
+            normalized_list.append(normalized)
+
+        return {"scenarios": normalized_list, "total": len(normalized_list)}
     except Exception as e:
         logger.error(f"Error loading scenarios: {e}")
         return {"scenarios": [], "total": 0, "error": str(e)}
