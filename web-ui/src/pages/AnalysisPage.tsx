@@ -48,6 +48,31 @@ interface AnalysisModule {
   enabled: boolean;
 }
 
+// Mock URLs for built-in scenarios
+const MOCK_URLS = {
+  "word": "http://localhost:3001/mocks/word/basic-doc.html",
+  "excel": "http://localhost:3001/mocks/excel/open-format.html", 
+  "powerpoint": "http://localhost:3001/mocks/powerpoint/basic-deck.html",
+};
+
+// Function to determine if a scenario is a built-in Office scenario
+const getBuiltInScenarioMockUrl = (scenarioPath: string, scenarioName: string): string | null => {
+  const pathLower = scenarioPath.toLowerCase();
+  const nameLower = scenarioName.toLowerCase();
+  
+  if (pathLower.includes('word') || nameLower.includes('word')) {
+    return MOCK_URLS.word;
+  }
+  if (pathLower.includes('excel') || nameLower.includes('excel')) {
+    return MOCK_URLS.excel;
+  }
+  if (pathLower.includes('powerpoint') || pathLower.includes('ppt') || nameLower.includes('powerpoint') || nameLower.includes('ppt')) {
+    return MOCK_URLS.powerpoint;
+  }
+  
+  return null;
+};
+
 export function AnalysisPage() {
   const navigate = useNavigate();
   const { 
@@ -66,6 +91,7 @@ export function AnalysisPage() {
   const [modules, setModules] = useState<AnalysisModule[]>([]);
   const [config, setConfig] = useState<AnalysisConfig>({
     mode: 'url',
+    scenarioFile: 'scenarios/basic_navigation.yaml', // Set default scenario
     enablePerformance: true,
     enableAccessibility: true,
     enableKeyboard: true,
@@ -75,6 +101,14 @@ export function AnalysisPage() {
     enableFunctional: false,
     outputFormat: 'html'
   });
+
+  // Check if current scenario is a built-in Office scenario with locked URL
+  const isBuiltInScenarioSelected = () => {
+    if (!config.scenarioFile || scenarios.length === 0) return false;
+    const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
+    if (!selectedScenario) return false;
+    return getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name) !== null;
+  };
 
   // Mock app options
   const mockApps = [
@@ -135,12 +169,25 @@ export function AnalysisPage() {
     loadScenariosAndModules();
   }, []);
 
+  // Auto-fill mock URL for built-in scenarios
+  useEffect(() => {
+    if (config.scenarioFile && scenarios.length > 0) {
+      const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
+      if (selectedScenario) {
+        const mockUrl = getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name);
+        if (mockUrl) {
+          setConfig(prev => ({ ...prev, url: mockUrl }));
+        }
+      }
+    }
+  }, [config.scenarioFile, scenarios]);
+
   // Handle analysis completion
   useEffect(() => {
     if (currentAnalysis && currentAnalysis.status === 'completed') {
       // Navigate to results page after a short delay
       setTimeout(() => {
-        navigate(`/report/${currentAnalysis.analysis_id}`);
+        navigate(`/reports/${currentAnalysis.analysis_id}`);
       }, 2000);
     }
   }, [currentAnalysis, navigate]);
@@ -183,7 +230,9 @@ export function AnalysisPage() {
       resetAnalysis();
       
       if (config.mode === 'url' && config.url) {
-        await startUrlAnalysis(config.url, config.scenarioFile);
+        // Use the full scenario path for API
+        const scenarioName = config.scenarioFile || 'scenarios/basic_navigation.yaml';
+        await startUrlAnalysis(config.url, scenarioName);
       } else if (config.mode === 'screenshot' && config.screenshot) {
         const screenshotConfig = {
           modules: {
@@ -348,9 +397,11 @@ export function AnalysisPage() {
               value={config.url || ''}
               onChange={(e) => setConfig(prev => ({ ...prev, url: e.target.value }))}
               placeholder="https://example.com"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isBuiltInScenarioSelected() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               required
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isBuiltInScenarioSelected()}
+              readOnly={isBuiltInScenarioSelected()}
+              title={isBuiltInScenarioSelected() ? 'URL is automatically set for built-in Office scenarios' : ''}
             />
           )}
 
@@ -382,9 +433,11 @@ export function AnalysisPage() {
                   value={config.url || ''}
                   onChange={(e) => setConfig(prev => ({ ...prev, url: e.target.value }))}
                   placeholder="https://example.com"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isBuiltInScenarioSelected() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   required
-                  disabled={isAnalyzing}
+                  disabled={isAnalyzing || isBuiltInScenarioSelected()}
+                  readOnly={isBuiltInScenarioSelected()}
+                  title={isBuiltInScenarioSelected() ? 'URL is automatically set for built-in Office scenarios' : ''}
                 />
               )}
               
