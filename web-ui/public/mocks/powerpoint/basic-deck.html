@@ -1,10 +1,529 @@
-<!doctype html><meta charset="utf-8" />
-<title>PowerPoint Mock - Deck</title>
-<div id="deck">
-  <section class="slide" id="s1"><h2>Title Slide</h2></section>
-  <section class="slide" id="s2"><h2>Agenda</h2></section>
-</div>
-<button id="next">Next</button>
-<script>
-  let idx=1; document.getElementById('next').onclick=()=>{ idx=idx===1?2:1; location.hash='#s'+idx; };
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft PowerPoint - Mock</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f2f1;
+        }
+        .ribbon {
+            background-color: #d24726;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ribbon h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .toolbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #d1d1d1;
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .toolbar button {
+            background-color: #ffffff;
+            border: 1px solid #d1d1d1;
+            padding: 8px 16px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toolbar button:hover {
+            background-color: #f8f9fa;
+        }
+        .toolbar button.active {
+            background-color: #d24726;
+            color: white;
+        }
+        .presentation-container {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+        .slide-panel {
+            width: 250px;
+            background-color: #faf9f8;
+            border-right: 1px solid #d1d1d1;
+            overflow-y: auto;
+        }
+        .slide-thumbnail {
+            width: 220px;
+            height: 120px;
+            margin: 10px 15px;
+            border: 2px solid #d1d1d1;
+            background-color: white;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .slide-thumbnail.active {
+            border-color: #d24726;
+            box-shadow: 0 0 5px rgba(210, 71, 38, 0.3);
+        }
+        .main-editor {
+            flex: 1;
+            background-color: #e5e5e5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .slide-canvas {
+            width: 800px;
+            height: 600px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            border: 1px solid #ccc;
+        }
+        .slide-content {
+            padding: 40px;
+            height: 520px;
+            position: relative;
+        }
+        .text-box {
+            border: 2px dashed transparent;
+            padding: 10px;
+            margin: 10px 0;
+            min-height: 40px;
+            cursor: text;
+        }
+        .text-box.selected {
+            border-color: #d24726;
+        }
+        .text-box h1 {
+            margin: 0;
+            font-size: 36px;
+            color: #333;
+        }
+        .text-box h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .text-box p {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #666;
+        }
+        .animation-panel {
+            width: 300px;
+            background-color: #faf9f8;
+            border-left: 1px solid #d1d1d1;
+            padding: 20px;
+        }
+        .start-button {
+            background-color: #d24726;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 20px;
+        }
+        .start-button:hover {
+            background-color: #b8381e;
+        }
+        .layout-options {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .layout-option {
+            width: 60px;
+            height: 40px;
+            border: 1px solid #d1d1d1;
+            cursor: pointer;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .layout-option.active {
+            border-color: #d24726;
+            background-color: #fee;
+        }
+        .animation-item {
+            background-color: white;
+            border: 1px solid #d1d1d1;
+            margin: 5px 0;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+        .animation-item:hover {
+            background-color: #f8f9fa;
+        }
+        .timing-controls {
+            margin: 10px 0;
+        }
+        .timing-controls input {
+            width: 60px;
+            padding: 4px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ribbon">
+        <h1>📊 Microsoft PowerPoint</h1>
+        <div>Mock Office Application for UX Testing</div>
+    </div>
+    
+    <div class="toolbar">
+        <button onclick="performAction('file')">File</button>
+        <button onclick="performAction('edit')">Edit</button>
+        <button onclick="performAction('view')">View</button>
+        <button onclick="performAction('insert')">Insert</button>
+        <button onclick="performAction('design')">Design</button>
+        <button onclick="performAction('transitions')" id="transitions-btn">Transitions</button>
+        <button onclick="performAction('animations')" id="animations-btn">Animations</button>
+        
+        <div style="border-left: 1px solid #d1d1d1; padding-left: 10px; margin-left: 10px;">
+            <button onclick="addSlide()" id="add-slide-btn">➕ New Slide</button>
+            <button onclick="deleteSlide()" id="delete-slide-btn">🗑️ Delete</button>
+        </div>
+        
+        <div style="border-left: 1px solid #d1d1d1; padding-left: 10px; margin-left: 10px;">
+            <button onclick="playSlideshow()" id="play-btn">▶️ Play</button>
+            <button onclick="performAction('preview')">👁️ Preview</button>
+        </div>
+    </div>
+    
+    <button class="start-button" onclick="startPresentation()" id="start-btn">Start PowerPoint Analysis</button>
+    
+    <div class="presentation-container" id="presentation-container" style="display: none;">
+        <div class="slide-panel">
+            <h3 style="padding: 0 15px;">Slides</h3>
+            <div id="slide-thumbnails">
+                <!-- Thumbnails will be generated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="main-editor">
+            <div class="slide-canvas">
+                <div class="slide-content" id="current-slide-content">
+                    <div class="text-box selected" onclick="selectElement(this)">
+                        <h1 contenteditable="true">Click to add title</h1>
+                    </div>
+                    <div class="text-box" onclick="selectElement(this)">
+                        <p contenteditable="true">Click to add subtitle</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="animation-panel" id="animation-panel">
+            <h3>Slide Layouts</h3>
+            <div class="layout-options">
+                <div class="layout-option active" onclick="applyLayout('title')" title="Title Slide">
+                    <div>📄</div>
+                </div>
+                <div class="layout-option" onclick="applyLayout('content')" title="Content">
+                    <div>📝</div>
+                </div>
+                <div class="layout-option" onclick="applyLayout('two-content')" title="Two Content">
+                    <div>📋</div>
+                </div>
+                <div class="layout-option" onclick="applyLayout('blank')" title="Blank">
+                    <div>⬜</div>
+                </div>
+            </div>
+            
+            <h3>Animations</h3>
+            <div id="animation-list">
+                <div class="animation-item" onclick="addAnimation('fade-in')">
+                    💫 Fade In
+                </div>
+                <div class="animation-item" onclick="addAnimation('fly-in')">
+                    ✈️ Fly In
+                </div>
+                <div class="animation-item" onclick="addAnimation('bounce')">
+                    🏀 Bounce
+                </div>
+                <div class="animation-item" onclick="addAnimation('zoom')">
+                    🔍 Zoom
+                </div>
+            </div>
+            
+            <h3>Timing</h3>
+            <div class="timing-controls">
+                <label>Duration:</label>
+                <input type="number" id="duration-input" value="1" min="0.1" max="10" step="0.1" onchange="updateTiming()">
+                <span>seconds</span>
+            </div>
+            
+            <h3>Transitions</h3>
+            <div id="transition-list">
+                <div class="animation-item" onclick="addTransition('slide')">
+                    ➡️ Slide
+                </div>
+                <div class="animation-item" onclick="addTransition('fade')">
+                    🌫️ Fade
+                </div>
+                <div class="animation-item" onclick="addTransition('push')">
+                    📤 Push
+                </div>
+                <div class="animation-item" onclick="addTransition('wipe')">
+                    🧽 Wipe
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let slides = [];
+        let currentSlideIndex = 0;
+        let selectedElement = null;
+        let slideCounter = 1;
+        
+        function startPresentation() {
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('presentation-container').style.display = 'flex';
+            
+            // Initialize with sample slides
+            addSlide('Title Slide', 'title');
+            addSlide('Content Slide', 'content');
+            addSlide('Two Column Layout', 'two-content');
+            
+            updateSlideThumbnails();
+            selectSlide(0);
+            
+            performAction('presentation-started');
+        }
+        
+        function addSlide(title = null, layout = 'title') {
+            const slide = {
+                id: slideCounter++,
+                title: title || `Slide ${slideCounter}`,
+                layout: layout,
+                content: generateSlideContent(layout),
+                animations: [],
+                transition: 'none'
+            };
+            
+            slides.push(slide);
+            updateSlideThumbnails();
+            selectSlide(slides.length - 1);
+            
+            performAction('slide-added');
+        }
+        
+        function deleteSlide() {
+            if (slides.length > 1) {
+                slides.splice(currentSlideIndex, 1);
+                if (currentSlideIndex >= slides.length) {
+                    currentSlideIndex = slides.length - 1;
+                }
+                updateSlideThumbnails();
+                selectSlide(currentSlideIndex);
+                performAction('slide-deleted');
+            }
+        }
+        
+        function generateSlideContent(layout) {
+            switch(layout) {
+                case 'title':
+                    return `
+                        <div class="text-box" onclick="selectElement(this)">
+                            <h1 contenteditable="true">Click to add title</h1>
+                        </div>
+                        <div class="text-box" onclick="selectElement(this)">
+                            <p contenteditable="true">Click to add subtitle</p>
+                        </div>
+                    `;
+                case 'content':
+                    return `
+                        <div class="text-box" onclick="selectElement(this)">
+                            <h2 contenteditable="true">Click to add title</h2>
+                        </div>
+                        <div class="text-box" onclick="selectElement(this)">
+                            <p contenteditable="true">• Click to add text</p>
+                            <p contenteditable="true">• Add bullet points</p>
+                            <p contenteditable="true">• Create content</p>
+                        </div>
+                    `;
+                case 'two-content':
+                    return `
+                        <div class="text-box" onclick="selectElement(this)">
+                            <h2 contenteditable="true">Click to add title</h2>
+                        </div>
+                        <div style="display: flex; gap: 20px;">
+                            <div class="text-box" onclick="selectElement(this)" style="flex: 1;">
+                                <p contenteditable="true">Left content area</p>
+                            </div>
+                            <div class="text-box" onclick="selectElement(this)" style="flex: 1;">
+                                <p contenteditable="true">Right content area</p>
+                            </div>
+                        </div>
+                    `;
+                case 'blank':
+                    return `
+                        <div class="text-box" onclick="selectElement(this)">
+                            <p contenteditable="true">Click to add content</p>
+                        </div>
+                    `;
+                default:
+                    return generateSlideContent('title');
+            }
+        }
+        
+        function updateSlideThumbnails() {
+            const container = document.getElementById('slide-thumbnails');
+            container.innerHTML = '';
+            
+            slides.forEach((slide, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'slide-thumbnail';
+                thumbnail.onclick = () => selectSlide(index);
+                thumbnail.innerHTML = `
+                    <div>${index + 1}</div>
+                    <div>${slide.title}</div>
+                `;
+                if (index === currentSlideIndex) {
+                    thumbnail.classList.add('active');
+                }
+                container.appendChild(thumbnail);
+            });
+        }
+        
+        function selectSlide(index) {
+            currentSlideIndex = index;
+            const slide = slides[index];
+            document.getElementById('current-slide-content').innerHTML = slide.content;
+            updateSlideThumbnails();
+            
+            // Re-attach event listeners
+            document.querySelectorAll('.text-box').forEach(box => {
+                box.onclick = () => selectElement(box);
+            });
+            
+            performAction(`slide-selected-${index + 1}`);
+        }
+        
+        function selectElement(element) {
+            if (selectedElement) {
+                selectedElement.classList.remove('selected');
+            }
+            selectedElement = element;
+            element.classList.add('selected');
+            
+            performAction('element-selected');
+        }
+        
+        function applyLayout(layoutType) {
+            document.querySelectorAll('.layout-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            event.target.closest('.layout-option').classList.add('active');
+            
+            const slide = slides[currentSlideIndex];
+            slide.layout = layoutType;
+            slide.content = generateSlideContent(layoutType);
+            
+            selectSlide(currentSlideIndex);
+            performAction(`layout-applied-${layoutType}`);
+        }
+        
+        function addAnimation(animationType) {
+            if (selectedElement) {
+                const slide = slides[currentSlideIndex];
+                slide.animations.push({
+                    element: selectedElement.outerHTML,
+                    type: animationType,
+                    duration: parseFloat(document.getElementById('duration-input').value)
+                });
+                
+                selectedElement.style.animation = `${animationType} ${slide.animations[slide.animations.length - 1].duration}s ease-in-out`;
+                
+                performAction(`animation-added-${animationType}`);
+            }
+        }
+        
+        function addTransition(transitionType) {
+            const slide = slides[currentSlideIndex];
+            slide.transition = transitionType;
+            
+            performAction(`transition-added-${transitionType}`);
+        }
+        
+        function updateTiming() {
+            const duration = parseFloat(document.getElementById('duration-input').value);
+            performAction(`timing-updated-${duration}`);
+        }
+        
+        function playSlideshow() {
+            // Simulate slideshow mode
+            const slideCanvas = document.querySelector('.slide-canvas');
+            slideCanvas.style.transform = 'scale(1.2)';
+            slideCanvas.style.transition = 'transform 0.3s ease';
+            
+            setTimeout(() => {
+                slideCanvas.style.transform = 'scale(1)';
+            }, 1000);
+            
+            performAction('slideshow-started');
+        }
+        
+        function performAction(action) {
+            console.log(`PowerPoint action performed: ${action}`);
+            // This function simulates user interactions for UX analysis
+            const event = new CustomEvent('powerpointAction', { 
+                detail: { 
+                    action: action, 
+                    slide: currentSlideIndex + 1,
+                    totalSlides: slides.length,
+                    selectedElement: selectedElement ? selectedElement.tagName : null,
+                    timestamp: new Date().toISOString()
+                } 
+            });
+            document.dispatchEvent(event);
+        }
+        
+        // CSS animations for effects
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fade-in {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes fly-in {
+                from { transform: translateX(-100px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes bounce {
+                0%, 20%, 60%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-20px); }
+                80% { transform: translateY(-10px); }
+            }
+            @keyframes zoom {
+                from { transform: scale(0); }
+                to { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('PowerPoint Mock Application Loaded');
+        });
+    </script>
+</body>
+</html>

@@ -1,22 +1,385 @@
-<!doctype html><meta charset="utf-8" />
-<title>Excel Mock - Open & Format</title>
-<style>
-  #sheet { display:grid; grid-template-columns:repeat(6,100px); gap:2px; }
-  .cell { border:1px solid #ddd; padding:6px; min-height:28px; }
-  #toolbar { margin:12px 0; }
-</style>
-<div id="toolbar">
-  <button id="bold-btn">Bold</button>
-  <button id="format-currency">Currency</button>
-</div>
-<div id="sheet">
-  <div id="cell-A1" class="cell" contenteditable="true"></div>
-  <div id="cell-B1" class="cell" contenteditable="true"></div>
-  <div id="cell-C1" class="cell" contenteditable="true"></div>
-  <div class="cell"></div><div class="cell"></div><div class="cell"></div>
-</div>
-<script>
-document.getElementById('format-currency').onclick = () => {
-  document.getElementById('cell-B1').textContent = '$1,000';
-};
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Excel - Mock</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f2f1;
+        }
+        .ribbon {
+            background-color: #217346;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ribbon h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .toolbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #d1d1d1;
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .toolbar button {
+            background-color: #ffffff;
+            border: 1px solid #d1d1d1;
+            padding: 8px 16px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toolbar button:hover {
+            background-color: #f8f9fa;
+        }
+        .format-section {
+            border-left: 1px solid #d1d1d1;
+            padding-left: 10px;
+            margin-left: 10px;
+        }
+        .spreadsheet-container {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #faf9f8;
+            border-right: 1px solid #d1d1d1;
+            padding: 20px;
+        }
+        .spreadsheet-area {
+            flex: 1;
+            background-color: #ffffff;
+            overflow: auto;
+        }
+        .column-headers {
+            display: flex;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #d1d1d1;
+            height: 30px;
+        }
+        .column-header {
+            width: 100px;
+            border-right: 1px solid #d1d1d1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .row {
+            display: flex;
+            border-bottom: 1px solid #d1d1d1;
+            height: 25px;
+        }
+        .row-number {
+            width: 40px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #d1d1d1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .cell {
+            width: 100px;
+            border-right: 1px solid #d1d1d1;
+            padding: 2px 6px;
+            font-size: 12px;
+            background-color: white;
+        }
+        .cell:focus {
+            outline: 2px solid #0078d4;
+            background-color: #e3f2fd;
+        }
+        .selected {
+            background-color: #cce7ff !important;
+        }
+        .start-button {
+            background-color: #217346;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 20px;
+        }
+        .start-button:hover {
+            background-color: #1a5f3a;
+        }
+        .formula-bar {
+            background-color: white;
+            border-bottom: 1px solid #d1d1d1;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .formula-input {
+            flex: 1;
+            border: 1px solid #d1d1d1;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ribbon">
+        <h1>📊 Microsoft Excel</h1>
+        <div>Mock Office Application for UX Testing</div>
+    </div>
+    
+    <div class="toolbar">
+        <button onclick="performAction('file')">File</button>
+        <button onclick="performAction('edit')">Edit</button>
+        <button onclick="performAction('view')">View</button>
+        <button onclick="performAction('insert')">Insert</button>
+        
+        <div class="format-section">
+            <button onclick="formatCurrency()" id="currency-btn">💰 Currency</button>
+            <button onclick="formatBold()" id="bold-btn">B</button>
+            <button onclick="formatPercent()" id="percent-btn">%</button>
+        </div>
+        
+        <div class="format-section">
+            <button onclick="performAction('chart')">📈 Chart</button>
+            <button onclick="performAction('sort')">🔢 Sort</button>
+            <button onclick="performAction('filter')">🔽 Filter</button>
+        </div>
+    </div>
+    
+    <div class="formula-bar">
+        <span>fx</span>
+        <input type="text" class="formula-input" id="formula-bar" placeholder="Enter formula here..." />
+    </div>
+    
+    <button class="start-button" onclick="startSpreadsheet()" id="start-btn">Start Excel Analysis</button>
+    
+    <div class="spreadsheet-container" id="spreadsheet-container" style="display: none;">
+        <div class="sidebar">
+            <h3>Workbook</h3>
+            <ul>
+                <li onclick="selectSheet('Sheet1')" id="sheet1-tab" style="cursor: pointer; font-weight: bold;">📄 Sheet1</li>
+                <li onclick="selectSheet('Sheet2')" id="sheet2-tab" style="cursor: pointer;">📄 Sheet2</li>
+                <li onclick="selectSheet('Sheet3')" id="sheet3-tab" style="cursor: pointer;">📄 Sheet3</li>
+            </ul>
+            
+            <h3>Functions</h3>
+            <ul>
+                <li onclick="insertFunction('SUM')">SUM</li>
+                <li onclick="insertFunction('AVERAGE')">AVERAGE</li>
+                <li onclick="insertFunction('COUNT')">COUNT</li>
+                <li onclick="insertFunction('MAX')">MAX</li>
+                <li onclick="insertFunction('MIN')">MIN</li>
+            </ul>
+        </div>
+        
+        <div class="spreadsheet-area">
+            <div class="column-headers">
+                <div class="row-number"></div>
+                <div class="column-header">A</div>
+                <div class="column-header">B</div>
+                <div class="column-header">C</div>
+                <div class="column-header">D</div>
+                <div class="column-header">E</div>
+                <div class="column-header">F</div>
+            </div>
+            
+            <div id="spreadsheet-rows">
+                <!-- Rows will be generated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedCell = null;
+        let currentSheet = 'Sheet1';
+        
+        function startSpreadsheet() {
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('spreadsheet-container').style.display = 'flex';
+            generateSpreadsheet();
+            
+            // Add sample data for testing
+            setCellValue('A1', 'Product');
+            setCellValue('B1', 'Price');
+            setCellValue('C1', 'Quantity');
+            setCellValue('D1', 'Total');
+            
+            setCellValue('A2', 'Widget A');
+            setCellValue('B2', '10.50');
+            setCellValue('C2', '5');
+            setCellValue('D2', '=B2*C2');
+            
+            setCellValue('A3', 'Widget B');
+            setCellValue('B3', '25.00');
+            setCellValue('C3', '3');
+            setCellValue('D3', '=B3*C3');
+            
+            selectCell('A1');
+        }
+        
+        function generateSpreadsheet() {
+            const container = document.getElementById('spreadsheet-rows');
+            container.innerHTML = '';
+            
+            for (let row = 1; row <= 20; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+                
+                const rowNumber = document.createElement('div');
+                rowNumber.className = 'row-number';
+                rowNumber.textContent = row;
+                rowDiv.appendChild(rowNumber);
+                
+                for (let col of ['A', 'B', 'C', 'D', 'E', 'F']) {
+                    const cell = document.createElement('input');
+                    cell.className = 'cell';
+                    cell.id = `cell-${col}${row}`;
+                    cell.type = 'text';
+                    cell.onclick = () => selectCell(`${col}${row}`);
+                    cell.onchange = () => updateFormula();
+                    rowDiv.appendChild(cell);
+                }
+                
+                container.appendChild(rowDiv);
+            }
+        }
+        
+        function selectCell(cellId) {
+            if (selectedCell) {
+                document.getElementById(`cell-${selectedCell}`).classList.remove('selected');
+            }
+            selectedCell = cellId;
+            document.getElementById(`cell-${cellId}`).classList.add('selected');
+            
+            // Update formula bar
+            const cellValue = document.getElementById(`cell-${cellId}`).value;
+            document.getElementById('formula-bar').value = cellValue;
+        }
+        
+        function setCellValue(cellId, value) {
+            const cell = document.getElementById(`cell-${cellId}`);
+            if (cell) {
+                if (value.startsWith('=')) {
+                    // Simple formula evaluation for demo
+                    if (value.includes('*')) {
+                        const parts = value.substring(1).split('*');
+                        const val1 = parseFloat(getCellValue(parts[0])) || 0;
+                        const val2 = parseFloat(getCellValue(parts[1])) || 0;
+                        cell.value = (val1 * val2).toFixed(2);
+                    } else {
+                        cell.value = value;
+                    }
+                } else {
+                    cell.value = value;
+                }
+            }
+        }
+        
+        function getCellValue(cellId) {
+            const cell = document.getElementById(`cell-${cellId}`);
+            return cell ? cell.value : '';
+        }
+        
+        function formatCurrency() {
+            if (selectedCell) {
+                const cell = document.getElementById(`cell-${selectedCell}`);
+                const value = parseFloat(cell.value);
+                if (!isNaN(value)) {
+                    cell.value = '$' + value.toFixed(2);
+                }
+                performAction('currency-format');
+            }
+        }
+        
+        function formatBold() {
+            if (selectedCell) {
+                const cell = document.getElementById(`cell-${selectedCell}`);
+                cell.style.fontWeight = cell.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                performAction('bold-format');
+            }
+        }
+        
+        function formatPercent() {
+            if (selectedCell) {
+                const cell = document.getElementById(`cell-${selectedCell}`);
+                const value = parseFloat(cell.value);
+                if (!isNaN(value)) {
+                    cell.value = (value * 100).toFixed(1) + '%';
+                }
+                performAction('percent-format');
+            }
+        }
+        
+        function insertFunction(func) {
+            if (selectedCell) {
+                const cell = document.getElementById(`cell-${selectedCell}`);
+                cell.value = `=${func}()`;
+                cell.focus();
+                performAction(`insert-${func.toLowerCase()}`);
+            }
+        }
+        
+        function selectSheet(sheetName) {
+            // Update tab styling
+            document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+                tab.style.fontWeight = 'normal';
+            });
+            document.getElementById(`${sheetName.toLowerCase()}-tab`).style.fontWeight = 'bold';
+            
+            currentSheet = sheetName;
+            performAction(`switch-sheet-${sheetName}`);
+        }
+        
+        function updateFormula() {
+            const formulaBar = document.getElementById('formula-bar');
+            if (selectedCell) {
+                const cell = document.getElementById(`cell-${selectedCell}`);
+                formulaBar.value = cell.value;
+            }
+        }
+        
+        function performAction(action) {
+            console.log(`Excel action performed: ${action}`);
+            // This function simulates user interactions for UX analysis
+            const event = new CustomEvent('excelAction', { 
+                detail: { 
+                    action: action, 
+                    cell: selectedCell,
+                    sheet: currentSheet,
+                    timestamp: new Date().toISOString()
+                } 
+            });
+            document.dispatchEvent(event);
+        }
+        
+        // Handle formula bar changes
+        document.getElementById('formula-bar').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && selectedCell) {
+                const cell = document.getElementById(`cell-${selectedCell}`);
+                cell.value = this.value;
+                performAction('formula-entered');
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Excel Mock Application Loaded');
+        });
+    </script>
+</body>
+</html>

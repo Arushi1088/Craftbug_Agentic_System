@@ -6,8 +6,8 @@ export default defineConfig({
   base: '',
   plugins: [react()],
   server: {
-    port: 3001,
-    host: true,
+    port: 8080,
+    host: '127.0.0.1',
     allowedHosts: ['*.trycloudflare.com', 'leasing-gba-om-prior.trycloudflare.com'],
     proxy: {
       '/api': {

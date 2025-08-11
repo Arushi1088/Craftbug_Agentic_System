@@ -23,12 +23,56 @@ from contextlib import asynccontextmanager
 
 # Schema normalization imports
 try:
-    from schema_normalizer import normalize_report_schema, migrate_reports_on_startup, iterate_all_report_files
+    from schema_normalizer import migrate_reports_on_startup, iterate_all_report_files
 except ImportError:
     # Fallback functions if schema_normalizer is not available
-    def normalize_report_schema(data): return data
     def migrate_reports_on_startup(): pass
     def iterate_all_report_files(): return []
+
+def normalize_report_schema(data):
+    """
+    Robust report schema normalization - ensures reports always have required fields
+    """
+    if not isinstance(data, dict):
+        logger.error(f"normalize_report_schema received non-dict: {type(data)}")
+        return {
+            "status": "failed",
+            "error": "Invalid report data",
+            "ui_error": "Analysis failed due to invalid report format",
+            "module_results": {},
+            "scenario_results": [],
+            "overall_score": 0,
+            "total_issues": 0,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    # If already failed, ensure UI can render it
+    if data.get("status") == "failed" or data.get("error"):
+        data.setdefault("module_results", {})
+        data.setdefault("scenario_results", [])
+        data.setdefault("overall_score", 0)
+        data.setdefault("total_issues", 0)
+        data.setdefault("timestamp", datetime.now().isoformat())
+        data.setdefault("ui_error", data.get("error") or "Analysis failed")
+        return data
+
+    # Normal success path - ensure all required fields exist
+    data.setdefault("status", "completed")
+    data.setdefault("module_results", {})
+    data.setdefault("scenario_results", [])
+    data.setdefault("overall_score", data.get("overall_score", 0))
+    data.setdefault("total_issues", data.get("total_issues", 0))
+    data.setdefault("timestamp", data.get("timestamp", datetime.now().isoformat()))
+    
+    # Ensure module_results is always a dict
+    if not isinstance(data.get("module_results"), dict):
+        data["module_results"] = {}
+    
+    # Ensure scenario_results is always a list
+    if not isinstance(data.get("scenario_results"), list):
+        data["scenario_results"] = []
+    
+    return data
 
 # Load environment variables and validate API key
 try:
@@ -50,7 +94,8 @@ else:
 
 # Import enhanced components
 from scenario_executor import ScenarioExecutor, get_available_scenarios
-from enhanced_scenario_runner import execute_realistic_scenario, EnhancedScenarioRunner
+# Temporarily disabled due to Playwright import issues
+# from enhanced_scenario_runner import execute_realistic_scenario, EnhancedScenarioRunner
 from enhanced_report_handler import (
     save_analysis_to_disk, 
     load_analysis_from_disk, 
@@ -62,9 +107,35 @@ from enhanced_report_handler import (
 
 # Import utilities
 try:
-    from utils.scenario_resolver import resolve_scenario
+    from utils.scenario_resolver import resolve_scenario, validate_scenario_steps, _ensure_dict
 except ImportError:
-    def resolve_scenario(scenario): return scenario
+    pass
+
+def resolve_scenario_name_to_path_and_id(scenario_name: str) -> tuple:
+    """Resolve scenario name to file path and scenario ID"""
+    if not scenario_name:
+        return "scenarios/basic_navigation.yaml", None
+    
+    # Load all scenarios to find the match
+    from scenario_executor import get_available_scenarios
+    scenarios = get_available_scenarios()
+    for scenario in scenarios:
+        if scenario.get("name") == scenario_name:
+            file_path = scenario.get("source", scenario.get("path", ""))
+            scenario_id = scenario.get("id", "")
+            return file_path, scenario_id
+    
+    # If not found, try to find by filename match
+    if scenario_name.endswith('.yaml'):
+        scenario_path = f"scenarios/{scenario_name}"
+        if os.path.exists(scenario_path):
+            return scenario_path, None
+    
+    # Default fallback
+    logger.warning(f"Scenario '{scenario_name}' not found, using default")
+    return "scenarios/basic_navigation.yaml", None
+    def validate_scenario_steps(scenario): pass
+    def _ensure_dict(name, obj): return obj if isinstance(obj, dict) else {}
 
 # Import dashboard components
 try:
@@ -81,9 +152,9 @@ logger = logging.getLogger(__name__)
 
 # Mock URLs for deterministic testing
 MOCK_URLS = {
-    "word": "http://localhost:3001/mocks/word/basic-doc.html",
-    "excel": "http://localhost:3001/mocks/excel/open-format.html", 
-    "powerpoint": "http://localhost:3001/mocks/powerpoint/basic-deck.html",
+    "word": "http://localhost:4174/mocks/word/basic-doc.html",
+    "excel": "http://localhost:4174/mocks/excel/open-format.html", 
+    "powerpoint": "http://localhost:4174/mocks/powerpoint/basic-deck.html",
 }
 
 def substitute_mock_urls(scenario_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -193,7 +264,12 @@ app.add_middleware(
         "http://localhost:3002", 
         "http://localhost:3003", 
         "http://localhost:3004",
+        "http://localhost:4174",  # Vite preview server (mocks)
+        "http://localhost:4173",  # Vite preview server (mocks - backup)
         "http://localhost:5173",  # Vite dev server
+        "http://localhost:8080",  # Dashboard server
+        "http://127.0.0.1:8080",  # Dashboard server (127.0.0.1)
+        "http://127.0.0.1:5173",  # Vite dev server (127.0.0.1)
         "https://dev.azure.com",
         "https://*.trycloudflare.com",
         "https://leasing-gba-om-prior.trycloudflare.com"
@@ -288,6 +364,14 @@ async def process_realistic_analysis(analysis_id: str, request_data: Dict[str, A
             headless=request_data.get("headless", True)
         )
         
+        # Guard against None/invalid results from realistic execution
+        if not isinstance(result, dict):
+            logger.error(f"Realistic scenario returned invalid data type: {type(result)} for analysis {analysis_id}")
+            raise RuntimeError(f"Realistic scenario executor returned empty/invalid report: {type(result)}")
+        
+        # Apply schema normalization to ensure consistent structure
+        result = normalize_report_schema(result)
+        
         # Save to disk automatically
         file_path = save_analysis_to_disk(analysis_id, result)
         result["file_path"] = file_path
@@ -303,21 +387,58 @@ async def process_realistic_analysis(analysis_id: str, request_data: Dict[str, A
         logger.info(f"✅ Realistic analysis completed: {analysis_id}")
         
     except Exception as e:
-        logger.error(f"❌ Realistic analysis failed: {analysis_id}: {e}")
+        logger.exception(f"❌ Realistic analysis failed: {analysis_id}: {e}")  # Keep full stack trace
         
+        # Generate a proper error report with module structure for frontend compatibility
         error_result = {
             "analysis_id": analysis_id,
             "status": "failed",
             "error": str(e),
             "timestamp": datetime.now().isoformat(),
-            "type": "error_report"
+            "type": "error_report",
+            "url": request_data.get("url", ""),
+            "scenario_path": request_data.get("scenario_path", ""),
+            "overall_score": 0,
+            "total_issues": 1,
+            "module_results": {
+                "error_report": {
+                    "title": "Analysis Error",
+                    "score": 0,
+                    "findings": [
+                        {
+                            "type": "error",
+                            "message": f"Analysis failed: {str(e)}",
+                            "severity": "high",
+                            "recommendation": "Check server logs and try again. Verify scenario file and target URL are valid."
+                        }
+                    ],
+                    "recommendations": [
+                        "Verify the target URL is accessible",
+                        "Check that the scenario file exists and is valid",
+                        "Ensure required dependencies are installed"
+                    ],
+                    "threshold_met": False,
+                    "analytics_enabled": False
+                }
+            },
+            "scenario_results": [],
+            "craft_bugs_detected": [],
+            "performance_summary": {
+                "total_steps": 0,
+                "successful_steps": 0,
+                "total_craft_bugs": 0
+            },
+            "ui_error": f"Realistic analysis failed: {str(e)}"
         }
+        
+        # Apply schema normalization to error report too
+        error_result = normalize_report_schema(error_result)
         
         # Save error to disk too
         try:
             save_analysis_to_disk(analysis_id, error_result)
-        except:
-            pass
+        except Exception as save_error:
+            logger.error(f"Failed to save error report to disk: {save_error}")
         
         ANALYSIS_CACHE[analysis_id] = {
             "status": "failed",
@@ -534,31 +655,83 @@ async def analyze_enhanced(
         # Process with enhanced mock (faster)
         try:
             if request.scenario_path:
-                report = scenario_executor.execute_url_scenario(
+                report_data = scenario_executor.execute_url_scenario(
                     url=request.url,
                     scenario_path=request.scenario_path,
                     modules=request.modules
                 )
+                
+                # Guard against None/invalid executor results
+                if not isinstance(report_data, dict):
+                    error_msg = f"Scenario executor returned invalid data type: {type(report_data)}"
+                    logger.error(f"{error_msg} for URL {request.url}")
+                    raise RuntimeError(error_msg)
+                
+                # Ensure we have required fields for analysis status
+                if "analysis_id" not in report_data:
+                    report_data["analysis_id"] = analysis_id
+                
             else:
-                report = generate_mock_report(analysis_id, request.dict())
+                report_data = generate_mock_report(analysis_id, request.dict())
+            
+            # Apply robust schema normalization
+            report_data = normalize_report_schema(report_data)
+            
+            # Final safety check
+            if not isinstance(report_data, dict):
+                raise RuntimeError("Report normalization failed - not a dict")
             
             # Save to disk
-            file_path = save_analysis_to_disk(analysis_id, report)
-            report["file_path"] = file_path
+            file_path = save_analysis_to_disk(analysis_id, report_data)
+            report_data["file_path"] = file_path
             
             # Cache result
             ANALYSIS_CACHE[analysis_id] = {
                 "status": "completed",
-                "result": report,
+                "result": report_data,
                 "completed_at": datetime.now(),
                 "file_path": file_path
             }
             
         except Exception as e:
-            ANALYSIS_CACHE[analysis_id] = {
+            logger.exception(f"Enhanced analysis failed for {request.url}: {e}")  # Keep stack trace
+            
+            # Generate structured error report that the UI can render
+            error_report = {
+                "analysis_id": analysis_id,
                 "status": "failed",
                 "error": str(e),
-                "completed_at": datetime.now()
+                "ui_error": f"Analysis failed: {str(e)}",  # User-friendly error message
+                "timestamp": datetime.now().isoformat(),
+                "url": request.url,
+                "scenario_path": request.scenario_path,
+                "overall_score": 0,
+                "total_issues": 1,
+                "module_results": {},
+                "scenario_results": [],
+                "metadata": {
+                    "error_type": "enhanced_analysis_error",
+                    "execution_mode": request.execution_mode,
+                    "requested_modules": list(request.modules.keys())
+                }
+            }
+            
+            # Normalize the error report to ensure UI compatibility
+            error_report = normalize_report_schema(error_report)
+            
+            # Save error report to disk for debugging
+            try:
+                file_path = save_analysis_to_disk(analysis_id, error_report)
+                error_report["file_path"] = file_path
+            except Exception as save_error:
+                logger.error(f"Failed to save error report: {save_error}")
+            
+            # Cache error result
+            ANALYSIS_CACHE[analysis_id] = {
+                "status": "failed",
+                "result": error_report,
+                "completed_at": datetime.now(),
+                "error": str(e)
             }
         
         message = f"Enhanced mock analysis completed for {request.url}"
@@ -612,6 +785,23 @@ async def analyze_url_scenario(request: AnalysisRequest):
             modules=request.modules
         )
         
+        # Guard against None/invalid executor results
+        if not isinstance(report_data, dict):
+            error_msg = f"Scenario executor returned invalid data type: {type(report_data)}"
+            logger.error(f"{error_msg} for URL {request.url}")
+            raise RuntimeError(error_msg)
+        
+        # Ensure we have required fields for analysis status
+        if "analysis_id" not in report_data:
+            report_data["analysis_id"] = analysis_id
+        
+        # Apply robust schema normalization
+        report_data = normalize_report_schema(report_data)
+        
+        # Final safety check
+        if not isinstance(report_data, dict):
+            raise RuntimeError("Report normalization failed - not a dict")
+        
         # Save to both memory and disk
         MOCK_REPORTS[analysis_id] = report_data
         save_analysis_to_disk(analysis_id, report_data)
@@ -623,8 +813,42 @@ async def analyze_url_scenario(request: AnalysisRequest):
         )
         
     except Exception as e:
-        logger.error(f"Scenario analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        logger.exception(f"Scenario analysis failed for {request.url}: {e}")  # Keep stack trace
+        
+        # Generate structured error report that the UI can render
+        error_report = {
+            "analysis_id": analysis_id,
+            "status": "failed",
+            "error": str(e),
+            "ui_error": f"Scenario analysis failed: {str(e)}",
+            "timestamp": datetime.now().isoformat(),
+            "url": request.url,
+            "scenario_path": request.scenario_path,
+            "overall_score": 0,
+            "total_issues": 1,
+            "module_results": {},
+            "scenario_results": [],
+            "metadata": {
+                "error_type": "url_scenario_analysis_error",
+                "requested_modules": list(request.modules.keys())
+            }
+        }
+        
+        # Normalize the error report
+        error_report = normalize_report_schema(error_report)
+        
+        # Save error report
+        MOCK_REPORTS[analysis_id] = error_report
+        try:
+            save_analysis_to_disk(analysis_id, error_report)
+        except Exception as save_error:
+            logger.error(f"Failed to save error report: {save_error}")
+        
+        return AnalysisResponse(
+            analysis_id=analysis_id,
+            status="failed",
+            message=f"Scenario analysis failed for {request.url}: {str(e)}"
+        )
 
 @app.post("/api/analyze/mock-scenario", response_model=AnalysisResponse)
 async def analyze_mock_scenario(request: AnalysisRequest):
@@ -644,6 +868,23 @@ async def analyze_mock_scenario(request: AnalysisRequest):
             modules=request.modules
         )
         
+        # Guard against None/invalid executor results
+        if not isinstance(report_data, dict):
+            error_msg = f"Mock scenario executor returned invalid data type: {type(report_data)}"
+            logger.error(f"{error_msg} for app {request.app_path}")
+            raise RuntimeError(error_msg)
+        
+        # Ensure we have required fields for analysis status
+        if "analysis_id" not in report_data:
+            report_data["analysis_id"] = analysis_id
+        
+        # Apply robust schema normalization
+        report_data = normalize_report_schema(report_data)
+        
+        # Final safety check
+        if not isinstance(report_data, dict):
+            raise RuntimeError("Report normalization failed - not a dict")
+        
         # Save to both memory and disk
         MOCK_REPORTS[analysis_id] = report_data
         save_analysis_to_disk(analysis_id, report_data)
@@ -655,7 +896,62 @@ async def analyze_mock_scenario(request: AnalysisRequest):
         )
         
     except Exception as e:
-        logger.error(f"Mock scenario analysis failed: {e}")
+        logger.exception(f"Mock scenario analysis failed for {request.app_path}: {e}")  # Keep stack trace
+        
+        # Generate structured error report that the UI can render
+        error_report = {
+            "analysis_id": analysis_id,
+            "status": "failed",
+            "error": str(e),
+            "ui_error": f"Mock scenario analysis failed: {str(e)}",
+            "timestamp": datetime.now().isoformat(),
+            "app_path": request.app_path,
+            "scenario_path": request.scenario_path,
+            "overall_score": 0,
+            "total_issues": 1,
+            "module_results": {},
+            "scenario_results": [],
+            "metadata": {
+                "error_type": "mock_scenario_analysis_error",
+                "requested_modules": list(request.modules.keys())
+            }
+        }
+        
+        # Normalize the error report
+        error_report = normalize_report_schema(error_report)
+        
+        # Save error report
+        MOCK_REPORTS[analysis_id] = error_report
+        try:
+            save_analysis_to_disk(analysis_id, error_report)
+        except Exception as save_error:
+            logger.error(f"Failed to save error report: {save_error}")
+        
+        return AnalysisResponse(
+            analysis_id=analysis_id,
+            status="failed",
+            message=f"Mock scenario analysis failed for {request.app_path}: {str(e)}"
+        )
+        
+        # Generate structured error report for frontend
+        error_report = {
+            "analysis_id": analysis_id,
+            "status": "failed",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat(),
+            "app_path": request.app_path,
+            "scenario_path": request.scenario_path,
+            "module_results": {},
+            "scenario_results": [],
+            "overall_score": 0,
+            "total_issues": 0,
+            "ui_error": f"Mock scenario analysis failed: {str(e)}"
+        }
+        
+        # Save error report so frontend can display it
+        MOCK_REPORTS[analysis_id] = error_report
+        save_analysis_to_disk(analysis_id, error_report)
+        
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 # Enhanced Report Endpoints with Schema Normalization
@@ -703,7 +999,12 @@ async def get_report(report_id: str):
             result["requested_id"] = report_id
             return result
         elif cached["status"] == "failed":
-            raise HTTPException(status_code=500, detail=cached.get("error", "Analysis failed"))
+            # Return the failed result with proper structure instead of raising exception
+            result = cached["result"]
+            result = normalize_report_schema(result)
+            result["analysis_id"] = report_id
+            result["requested_id"] = report_id
+            return result
         else:
             # Still processing
             return {
@@ -1259,27 +1560,76 @@ async def analyze_url(
             "functional": False
         }
         
+        # Resolve scenario name to path and ID
+        scenario_path, scenario_id = resolve_scenario_name_to_path_and_id(scenario_name)
+        
         request = AnalysisRequest(
             url=url,
-            scenario_path=resolve_scenario(scenario_name),
+            scenario_path=scenario_path,
             modules=modules_dict
         )
         
         # Process analysis in background
         async def run_analysis():
             try:
-                report_data = scenario_executor.execute_url_scenario(
-                    url=request.url,
-                    scenario_path=request.scenario_path,
-                    modules=request.modules
-                )
+                # Handle specific scenario ID selection for Word/Excel/PowerPoint scenarios
+                if scenario_id and scenario_path.endswith(('word_scenarios.yaml', 'excel_scenarios.yaml', 'powerpoint_scenarios.yaml')):
+                    # For Office app scenarios, we need to pass the specific scenario ID
+                    report_data = scenario_executor.execute_specific_scenario(
+                        url=request.url,
+                        scenario_path=request.scenario_path,
+                        scenario_id=scenario_id,
+                        modules=request.modules
+                    )
+                else:
+                    # For regular scenarios, use the existing method
+                    report_data = scenario_executor.execute_url_scenario(
+                        url=request.url,
+                        scenario_path=request.scenario_path,
+                        modules=request.modules
+                    )
+                
+                # Guard against None/invalid executor results
+                if not isinstance(report_data, dict):
+                    error_msg = f"Background scenario executor returned invalid data type: {type(report_data)}"
+                    logger.error(f"{error_msg} for URL {request.url}")
+                    raise RuntimeError(error_msg)
+                
+                # Apply robust schema normalization
+                report_data = normalize_report_schema(report_data)
+                
+                # Ensure we have required fields for analysis status
+                if "analysis_id" not in report_data:
+                    report_data["analysis_id"] = analysis_id
                 
                 MOCK_REPORTS[analysis_id] = report_data
                 save_analysis_to_disk(analysis_id, report_data)
                 logger.info(f"URL analysis completed: {analysis_id}")
                 
             except Exception as e:
-                logger.error(f"URL analysis failed: {analysis_id} - {e}")
+                logger.exception(f"Background URL analysis failed: {analysis_id} - {e}")
+                
+                # Generate error report for background task
+                error_report = {
+                    "analysis_id": analysis_id,
+                    "status": "failed",
+                    "error": str(e),
+                    "ui_error": f"Background analysis failed: {str(e)}",
+                    "timestamp": datetime.now().isoformat(),
+                    "url": request.url,
+                    "scenario_path": request.scenario_path,
+                    "overall_score": 0,
+                    "total_issues": 1,
+                    "module_results": {},
+                    "scenario_results": []
+                }
+                
+                error_report = normalize_report_schema(error_report)
+                MOCK_REPORTS[analysis_id] = error_report
+                try:
+                    save_analysis_to_disk(analysis_id, error_report)
+                except Exception as save_error:
+                    logger.error(f"Failed to save background error report: {save_error}")
         
         background_tasks.add_task(run_analysis)
         
@@ -1335,6 +1685,19 @@ async def analyze_scenario(
             modules=request.modules
         )
         
+        # Guard against None/invalid executor results
+        if not isinstance(report_data, dict):
+            error_msg = f"Custom scenario executor returned invalid data type: {type(report_data)}"
+            logger.error(f"{error_msg} for URL {url}")
+            raise RuntimeError(error_msg)
+        
+        # Apply robust schema normalization
+        report_data = normalize_report_schema(report_data)
+        
+        # Ensure we have required fields for analysis status
+        if "analysis_id" not in report_data:
+            report_data["analysis_id"] = analysis_id
+        
         MOCK_REPORTS[analysis_id] = report_data
         save_analysis_to_disk(analysis_id, report_data)
         
@@ -1346,7 +1709,31 @@ async def analyze_scenario(
         )
         
     except Exception as e:
-        logger.error(f"Scenario analysis failed: {e}")
+        logger.exception(f"Custom scenario analysis failed: {e}")
+        
+        # Generate structured error report
+        error_report = {
+            "analysis_id": analysis_id,
+            "status": "failed",
+            "error": str(e),
+            "ui_error": f"Custom scenario analysis failed: {str(e)}",
+            "timestamp": datetime.now().isoformat(),
+            "url": url,
+            "scenario_path": scenario_path,
+            "overall_score": 0,
+            "total_issues": 1,
+            "module_results": {},
+            "scenario_results": []
+        }
+        
+        error_report = normalize_report_schema(error_report)
+        MOCK_REPORTS[analysis_id] = error_report
+        try:
+            save_analysis_to_disk(analysis_id, error_report)
+        except Exception as save_error:
+            logger.error(f"Failed to save custom scenario error report: {save_error}")
+        
+        raise HTTPException(status_code=500, detail=f"Custom scenario analysis failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Scenario analysis failed: {str(e)}")
 
 async def update_ado_work_item_on_fix(issue_data: Dict[str, Any], fix_details: Dict[str, Any]) -> Dict[str, Any]:

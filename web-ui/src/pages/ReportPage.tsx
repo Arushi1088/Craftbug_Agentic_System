@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useReports, useFixManager } from '../hooks/useAPI';
 import { AnalysisReport, UXIssue } from '../services/api';
+import { ENHANCED_SAMPLE_REPORT } from '../data/sampleReport';
 
 // Enhanced type definitions for normalized report structure
 type Finding = { 
@@ -63,6 +64,8 @@ type NormalizedReport = {
   ado_integration?: any;
   scenario_results?: any[];
   ux_issues?: UXIssue[];
+  isFailed?: boolean;
+  ui_error?: string | null;
 };
 
 // Interface for module findings from real backend data
@@ -99,17 +102,23 @@ const moduleIcons: { [key: string]: React.ReactNode } = {
   ux_heuristics: <Brain className="w-5 h-5" />,
   best_practices: <ShieldCheck className="w-5 h-5" />,
   health_alerts: <AlertTriangle className="w-5 h-5" />,
-  functional: <PlayCircle className="w-5 h-5" />
+  functional: <PlayCircle className="w-5 h-5" />,
+  craft_bug: <AlertTriangle className="w-5 h-5" />,
+  navigation: <ArrowLeft className="w-5 h-5" />,
+  visual_design: <Eye className="w-5 h-5" />
 };
 
 const moduleNames: { [key: string]: string } = {
   performance: 'Performance',
-  accessibility: 'Accessibility',
+  accessibility: 'Accessibility', 
   keyboard: 'Keyboard Navigation',
   ux_heuristics: 'UX Heuristics',
   best_practices: 'Best Practices',
   health_alerts: 'Health Alerts',
-  functional: 'Functional Testing'
+  functional: 'Functional Testing',
+  craft_bug: 'Craft Bug Detection',
+  navigation: 'Navigation',
+  visual_design: 'Visual Design'
 };
 
 // URL safety helper function
@@ -125,15 +134,65 @@ const toAbsoluteUrl = (u?: string | null) => {
 
 // Report normalization function for consistent data shape with scenario fallback
 const normalizeReport = (r: any): NormalizedReport => {
+  console.log('🔍 Normalizing report data:', r);
+  
+  // Check if this is a failed report
+  const isFailed = r?.status === 'failed' || !!r?.error;
+  const ui_error = r?.ui_error || r?.error || null;
+  
+  if (isFailed) {
+    console.log('⚠️ Handling failed report:', ui_error);
+    // For failed reports, create a minimal but displayable structure
+    return {
+      analysis_id: r?.analysis_id ?? '',
+      url: toAbsoluteUrl(r?.url ?? null),
+      status: 'failed',
+      total_issues: 0,
+      modules: [],
+      timestamp: r?.timestamp || new Date().toISOString(),
+      app_type: r?.app_type,
+      overall_score: 0,
+      performance_metrics: r?.performance_metrics,
+      has_screenshots: false,
+      ado_integration: r?.ado_integration,
+      scenario_results: [],
+      ux_issues: [],
+      isFailed: true,
+      ui_error: ui_error
+    };
+  }
+  
+  // Handle the enhanced report structure with module_results
   const mr = r?.module_results && typeof r.module_results === 'object'
     ? r.module_results
     : {};
 
   let entries = Object.entries(mr);
+  console.log('📊 Module results entries:', entries);
+  
   // Fallback: derive from scenario_results if module_results empty
   if (entries.length === 0 && Array.isArray(r?.scenario_results)) {
+    console.log('⚠️ No module_results found, deriving from scenario_results');
     const derived = deriveFromScenarios(r.scenario_results);
     entries = Object.entries(derived);
+  }
+  
+  // Additional fallback: check for legacy format with direct modules
+  if (entries.length === 0 && r?.modules && typeof r.modules === 'object') {
+    console.log('⚠️ Using legacy modules format');
+    entries = Object.entries(r.modules).map(([key, value]: [string, any]) => [
+      key,
+      {
+        score: value?.score || 0,
+        findings: value?.issues ? value.issues.map((issue: any) => ({
+          type: issue.title || 'Issue',
+          message: issue.description || 'No description',
+          severity: issue.severity || 'medium',
+          recommendation: 'Review and fix this issue'
+        })) : [],
+        recommendations: []
+      }
+    ]);
   }
 
   const modules: NormalizedModule[] = entries.map(([key, v]: [string, any]) => ({
@@ -160,7 +219,9 @@ const normalizeReport = (r: any): NormalizedReport => {
     has_screenshots: r?.has_screenshots,
     ado_integration: r?.ado_integration,
     scenario_results: Array.isArray(r?.scenario_results) ? r.scenario_results : [],
-    ux_issues: Array.isArray(r?.ux_issues) ? r.ux_issues : []
+    ux_issues: Array.isArray(r?.ux_issues) ? r.ux_issues : [],
+    isFailed: false,
+    ui_error: null
   };
 };
 
@@ -350,8 +411,8 @@ function FixNowButton({ issue, reportId, onFixApplied }: FixNowButtonProps) {
     }
   };
 
-  const fixResult = getFixResult(issue.issue_id);
-  const fixing = isFixing(issue.issue_id);
+  const fixResult = getFixResult();
+  const fixing = isFixing;
 
   return (
     <div className="mt-2">
@@ -429,8 +490,8 @@ function ModuleFixNowButton({ moduleKey, findingIndex, reportId, onFixApplied }:
     }
   };
 
-  const fixResult = getFixResult(issueId);
-  const fixing = isFixing(issueId);
+  const fixResult = getFixResult();
+  const fixing = isFixing;
 
   return (
     <div className="mt-2">
@@ -476,37 +537,60 @@ function ModuleFixNowButton({ moduleKey, findingIndex, reportId, onFixApplied }:
 
 export function ReportPage() {
   const { reportId } = useParams<{ reportId: string }>();
-  const { fetchReport, downloadReport, loading, error } = useReports();
+  const { downloadReport } = useReports();
   const [report, setReport] = useState<NormalizedReport | null>(null);
+  const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [hideFixed, setHideFixed] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [useSampleData, setUseSampleData] = useState(false);
 
   useEffect(() => {
     if (!reportId) return;
+    
+    // Handle sample data mode
+    if (reportId === 'sample' || useSampleData) {
+      console.log('📊 Using sample report data');
+      const normalized = normalizeReport(ENHANCED_SAMPLE_REPORT);
+      console.log('✅ Sample report normalized:', normalized);
+      setReport(normalized);
+      return;
+    }
     
     let ignore = false;
     const ac = new AbortController();
     
     const loadReport = async () => {
+      setLoading(true);
       try {
         console.log('📊 Loading report:', reportId);
         setLocalError(null);
         
-        const response = await fetch(`/api/reports/${reportId}`, { 
-          signal: ac.signal 
-        });
-        
+        // Use direct fetch instead of hook to avoid dependency issues
+        const response = await fetch(`http://localhost:8000/api/reports/${reportId}`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch report: ${response.status}`);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const rawData = await response.json();
         console.log('✅ Raw report data received:', rawData);
+        console.log('🔍 Raw data total_issues:', rawData.total_issues);
+        console.log('🔍 Raw data module_results:', rawData.module_results);
         
         if (!ignore) {
           const normalized = normalizeReport(rawData);
           console.log('✅ Normalized report:', normalized);
+          console.log('🔍 Normalized total_issues:', normalized.total_issues);
+          console.log('🔍 Normalized modules count:', normalized.modules.length);
+          console.log('🔍 Normalized modules:', normalized.modules.map(m => ({ key: m.key, findings: m.findings.length })));
+          console.log('📊 Raw report structure analysis:');
+          console.log('- module_results keys:', Object.keys(rawData?.module_results || {}));
+          console.log('- scenario_results count:', rawData?.scenario_results?.length || 0);
+          console.log('- legacy modules keys:', Object.keys((rawData as any)?.modules || {}));
+          console.log('- ux_issues count:', rawData?.ux_issues?.length || 0);
+          console.log('- total_issues:', rawData?.total_issues);
+          console.log('- overall_score:', rawData?.overall_score);
           console.log('REPORT RAW', rawData);
           console.log('MODULE KEYS', normalized.modules.map(m => m.key));
           console.log('TOTAL ISSUES', normalized.total_issues, 'computed:', normalized.modules.reduce((n,m)=>n+m.findings.length,0));
@@ -525,7 +609,16 @@ export function ReportPage() {
       } catch (err) {
         if (!ignore) {
           console.error('❌ Failed to load report:', reportId, err);
-          setLocalError(err instanceof Error ? err.message : 'Failed to load report');
+          // Handle specific 404 error for demo reports
+          if (err instanceof Error && err.message.includes('404') && reportId.includes('demo')) {
+            setLocalError(`Report "${reportId}" not found. Backend server may not be running. Try using the sample data below to see the enhanced analytics modules.`);
+          } else {
+            setLocalError(err instanceof Error ? err.message : 'Failed to load report');
+          }
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
         }
       }
     };
@@ -536,7 +629,7 @@ export function ReportPage() {
       ignore = true; 
       ac.abort(); 
     };
-  }, [reportId]);
+  }, [reportId, useSampleData]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -586,12 +679,12 @@ export function ReportPage() {
     );
   }
 
-  if (error || localError) {
+  if (localError) {
     return (
       <div className="text-center py-12">
         <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Report Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || localError || 'The requested report could not be found.'}</p>
+        <p className="text-gray-600 mb-6">{localError || 'The requested report could not be found.'}</p>
         <Link
           to="/analyze"
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -625,6 +718,84 @@ export function ReportPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      {/* Debug Controls - Development Only */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center space-x-4">
+            <h3 className="text-sm font-medium text-yellow-800">Debug Controls</h3>
+            <button
+              onClick={() => {
+                setUseSampleData(!useSampleData);
+                if (!useSampleData) {
+                  // When enabling sample data, immediately load it
+                  const normalized = normalizeReport(ENHANCED_SAMPLE_REPORT);
+                  setReport(normalized);
+                }
+              }}
+              className={`px-3 py-1 text-xs rounded ${
+                useSampleData 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {useSampleData ? 'Using Sample Data' : 'Use Sample Data'}
+            </button>
+            <button
+              onClick={() => setDebugMode(!debugMode)}
+              className={`px-3 py-1 text-xs rounded ${
+                debugMode 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {debugMode ? 'Debug Mode On' : 'Enable Debug Mode'}
+            </button>
+            <span className="text-xs text-yellow-700">
+              ID: {reportId} | Modules: {report?.modules?.length || 0} | Issues: {report?.total_issues || 0}
+            </span>
+          </div>
+          {debugMode && (
+            <div className="mt-2 text-xs text-yellow-600">
+              💡 Sample data shows enhanced report with accessibility, UX heuristics, performance, keyboard, best practices, health alerts, and craft bug detection modules
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Failed Report Banner */}
+      {report?.isFailed && (
+        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start">
+            <AlertTriangle className="w-5 h-5 text-red-400 mr-3 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-red-800">Analysis Failed</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{report.ui_error || 'The analysis could not be completed due to an unknown error.'}</p>
+                <div className="mt-3">
+                  <p className="text-xs text-red-600">
+                    <strong>Troubleshooting steps:</strong>
+                  </p>
+                  <ul className="list-disc list-inside text-xs text-red-600 mt-1 space-y-1">
+                    <li>Verify the target URL is accessible and valid</li>
+                    <li>Check that the scenario file exists and contains valid YAML/JSON</li>
+                    <li>Ensure the backend server is running and responding</li>
+                    <li>Review server logs for detailed error information</li>
+                  </ul>
+                </div>
+                <div className="mt-3">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-xs bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded border border-red-300"
+                  >
+                    Retry Analysis
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -994,10 +1165,10 @@ export function ReportPage() {
                                   {step.screenshot && (
                                     <div className="mt-2">
                                       <img
-                                        src={`http://localhost:8000/reports/${step.screenshot}`}
+                                        src={`http://127.0.0.1:8000/reports/${step.screenshot}`}
                                         alt={`Screenshot for ${step.action} step`}
                                         className="w-full border rounded shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                                        onClick={() => window.open(`http://localhost:8000/reports/${step.screenshot}`, '_blank')}
+                                        onClick={() => window.open(`http://127.0.0.1:8000/reports/${step.screenshot}`, '_blank')}
                                         onError={(e) => {
                                           console.error('Failed to load screenshot:', step.screenshot);
                                           (e.target as HTMLImageElement).style.display = 'none';
@@ -1395,13 +1566,48 @@ export function ReportPage() {
       {/* Debug Section - Development Only */}
       {process.env.NODE_ENV === 'development' && report && (
         <div className="mt-8 bg-gray-50 rounded-lg p-4">
-          <details>
+          <details open={debugMode}>
             <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-              🐛 Debug JSON (Development)
+              🐛 Debug Information (Development)
             </summary>
-            <pre className="mt-2 text-xs bg-white p-3 rounded border overflow-auto max-h-96">
-              {JSON.stringify(report, null, 2)}
-            </pre>
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Report Structure</h4>
+                  <ul className="space-y-1 text-gray-600">
+                    <li>Analysis ID: {report.analysis_id}</li>
+                    <li>Status: {report.status}</li>
+                    <li>Total Issues: {report.total_issues}</li>
+                    <li>Overall Score: {report.overall_score || 'N/A'}</li>
+                    <li>Modules Count: {report.modules?.length || 0}</li>
+                    <li>URL: {report.url || 'N/A'}</li>
+                    <li>Timestamp: {report.timestamp || 'N/A'}</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Module Breakdown</h4>
+                  <ul className="space-y-1 text-gray-600">
+                    {report.modules?.map((module, idx) => (
+                      <li key={idx}>
+                        {module.key}: {module.findings?.length || 0} issues 
+                        {module.score && ` (Score: ${module.score})`}
+                      </li>
+                    )) || <li>No modules found</li>}
+                  </ul>
+                </div>
+              </div>
+              
+              {debugMode && (
+                <details>
+                  <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                    📊 Raw JSON Data
+                  </summary>
+                  <pre className="mt-2 text-xs bg-white p-3 rounded border overflow-auto max-h-96">
+                    {JSON.stringify(report, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
           </details>
         </div>
       )}

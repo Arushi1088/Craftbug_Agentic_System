@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 YAML Scenario Executor
-Executes UX analysis based on YAML scenario definitions
+Executes UX analysis based on YAML scenario definitions with robust error handling
 """
 
 import yaml
@@ -14,6 +14,21 @@ from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Import robust scenario resolver
+try:
+    from utils.scenario_resolver import resolve_scenario, validate_scenario_steps, _ensure_dict
+except ImportError:
+    logger.warning("utils.scenario_resolver not available, using fallback")
+    def resolve_scenario(scenario_path, scenario_id=None):
+        with open(scenario_path, 'r') as f:
+            data = yaml.safe_load(f)
+        if 'tests' in data:
+            first_test = next(iter(data['tests'].values()))
+            return first_test.get('scenarios', [{}])[0] if first_test.get('scenarios') else {}
+        return data
+    def validate_scenario_steps(scenario): pass
+    def _ensure_dict(name, obj): return obj if isinstance(obj, dict) else {}
 
 # Mock URLs for deterministic testing
 MOCK_URLS = {
@@ -93,86 +108,126 @@ class ScenarioExecutor:
             raise
     
     def execute_url_scenario(self, url: str, scenario_path: str, modules: Dict[str, bool]) -> Dict[str, Any]:
-        """Execute scenario analysis for a URL"""
+        """Execute scenario analysis for a URL with robust error handling"""
         if self.deterministic_mode:
             analysis_id = "test12345"
         else:
             analysis_id = str(uuid.uuid4())[:8]
         
         try:
-            scenario_data = self.load_scenario(scenario_path)
+            # Use robust scenario resolution
+            resolved_scenario = resolve_scenario(scenario_path, scenario_id=None)
+            resolved_scenario = _ensure_dict("resolved_scenario", resolved_scenario)
+            validate_scenario_steps(resolved_scenario)
             
             # Apply mock URL substitution for deterministic testing
-            scenario_data = substitute_mock_urls(scenario_data)
+            resolved_scenario = substitute_mock_urls(resolved_scenario)
+            resolved_scenario = _ensure_dict("resolved_scenario_after_substitution", resolved_scenario)
             
-            # Check if scenario data is valid
-            if not scenario_data or 'tests' not in scenario_data:
-                logger.warning(f"Scenario file {scenario_path} is empty or malformed, using fallback")
-                return self._generate_fallback_report(analysis_id, url, modules)
+            # For legacy compatibility, check if we need to extract from 'tests' format
+            if "steps" in resolved_scenario:
+                # Direct scenario format
+                report = self._generate_scenario_report_from_steps(
+                    analysis_id=analysis_id,
+                    url=url,
+                    scenario_steps=resolved_scenario["steps"],
+                    scenario_config=resolved_scenario,
+                    modules=modules
+                )
+            else:
+                # Fallback to original logic for complex nested formats
+                scenario_data = self.load_scenario(scenario_path)
+                scenario_data = substitute_mock_urls(scenario_data)
+                
+                # Check if scenario data is valid
+                if not scenario_data or 'tests' not in scenario_data:
+                    logger.warning(f"Scenario file {scenario_path} is empty or malformed, using fallback")
+                    return self._generate_fallback_report(analysis_id, url, modules)
+                
+                # Extract test configuration
+                test_name = list(scenario_data.get('tests', {}).keys())[0]
+                test_config = scenario_data['tests'][test_name]
+                
+                # Generate scenario-based report
+                report = self._generate_scenario_report(
+                    analysis_id=analysis_id,
+                    url=url,
+                    scenario_data=scenario_data,
+                    test_config=test_config,
+                    modules=modules
+                )
             
-            # Extract test configuration
-            test_name = list(scenario_data.get('tests', {}).keys())[0]
-            test_config = scenario_data['tests'][test_name]
-            
-            # Generate scenario-based report
-            report = self._generate_scenario_report(
-                analysis_id=analysis_id,
-                url=url,
-                scenario_data=scenario_data,
-                test_config=test_config,
-                modules=modules
-            )
-            
+            # Ensure report is valid dict
+            report = _ensure_dict("final_report", report)
             return report
             
+        except FileNotFoundError as e:
+            logger.error(f"Scenario file not found: {e}")
+            return self._generate_error_report(analysis_id, url, modules, f"Scenario file not found: {e}")
         except Exception as e:
             logger.error(f"Scenario execution failed: {e}")
-            return {
-                "analysis_id": analysis_id,
-                "error": str(e),
-                "status": "failed"
-            }
+            return self._generate_error_report(analysis_id, url, modules, f"Scenario execution failed: {e}")
     
     def execute_mock_scenario(self, mock_app_path: str, scenario_path: str, modules: Dict[str, bool]) -> Dict[str, Any]:
-        """Execute scenario analysis for a mock application"""
+        """Execute scenario analysis for a mock application with robust error handling"""
         if self.deterministic_mode:
             analysis_id = "test12345"
         else:
             analysis_id = str(uuid.uuid4())[:8]
         
         try:
-            scenario_data = self.load_scenario(scenario_path)
+            # Use robust scenario resolution
+            resolved_scenario = resolve_scenario(scenario_path, scenario_id=None)
+            resolved_scenario = _ensure_dict("resolved_scenario", resolved_scenario)
+            validate_scenario_steps(resolved_scenario)
             
             # Apply mock URL substitution for deterministic testing
-            scenario_data = substitute_mock_urls(scenario_data)
+            resolved_scenario = substitute_mock_urls(resolved_scenario)
+            resolved_scenario = _ensure_dict("resolved_scenario_after_substitution", resolved_scenario)
             
-            # Check if scenario data is valid
-            if not scenario_data or 'tests' not in scenario_data:
-                logger.warning(f"Scenario file {scenario_path} is empty or malformed, using fallback")
-                return self._generate_fallback_report(analysis_id, f"mock://{mock_app_path}", modules)
+            # For legacy compatibility, check if we need to extract from 'tests' format
+            if "steps" in resolved_scenario:
+                # Direct scenario format
+                report = self._generate_mock_scenario_report_from_steps(
+                    analysis_id=analysis_id,
+                    mock_app_path=mock_app_path,
+                    scenario_steps=resolved_scenario["steps"],
+                    scenario_config=resolved_scenario,
+                    modules=modules
+                )
+            else:
+                # Fallback to original logic for complex nested formats
+                scenario_data = self.load_scenario(scenario_path)
+                scenario_data = substitute_mock_urls(scenario_data)
+                
+                # Check if scenario data is valid
+                if not scenario_data or 'tests' not in scenario_data:
+                    logger.warning(f"Scenario file {scenario_path} is empty or malformed, using fallback")
+                    return self._generate_fallback_report(analysis_id, f"mock://{mock_app_path}", modules)
+                
+                # Extract test configuration
+                test_name = list(scenario_data.get('tests', {}).keys())[0]
+                test_config = scenario_data['tests'][test_name]
+                
+                # Generate mock app scenario report
+                report = self._generate_mock_scenario_report(
+                    analysis_id=analysis_id,
+                    mock_app_path=mock_app_path,
+                    scenario_data=scenario_data,
+                    test_config=test_config,
+                    modules=modules
+                )
             
-            # Extract test configuration
-            test_name = list(scenario_data.get('tests', {}).keys())[0]
-            test_config = scenario_data['tests'][test_name]
-            
-            # Generate mock app scenario report
-            report = self._generate_mock_scenario_report(
-                analysis_id=analysis_id,
-                mock_app_path=mock_app_path,
-                scenario_data=scenario_data,
-                test_config=test_config,
-                modules=modules
-            )
-            
+            # Ensure report is valid dict
+            report = _ensure_dict("final_mock_report", report)
             return report
             
+        except FileNotFoundError as e:
+            logger.error(f"Scenario file not found: {e}")
+            return self._generate_error_report(analysis_id, f"mock://{mock_app_path}", modules, f"Scenario file not found: {e}")
         except Exception as e:
             logger.error(f"Mock scenario execution failed: {e}")
-            return {
-                "analysis_id": analysis_id,
-                "error": str(e),
-                "status": "failed"
-            }
+            return self._generate_error_report(analysis_id, f"mock://{mock_app_path}", modules, f"Mock scenario execution failed: {e}")
     
     def _generate_scenario_report(self, analysis_id: str, url: str, scenario_data: Dict, 
                                 test_config: Dict, modules: Dict[str, bool]) -> Dict[str, Any]:
@@ -324,7 +379,122 @@ class ScenarioExecutor:
         
         return report
     
-    def _check_thresholds(self, module: str, score: int, thresholds: Dict) -> bool:
+    def _generate_error_report(self, analysis_id: str, url: str, modules: Dict[str, bool], error_message: str) -> Dict[str, Any]:
+        """Generate a structured error report that the UI can render"""
+        timestamp = datetime.now().isoformat()
+        
+        return {
+            "analysis_id": analysis_id,
+            "timestamp": timestamp,
+            "status": "failed",
+            "error": error_message,
+            "ui_error": error_message,  # For frontend display
+            "url": url,
+            "overall_score": 0,
+            "total_issues": 1,
+            "module_results": {},
+            "scenario_results": [],
+            "metadata": {
+                "error_type": "scenario_execution_error",
+                "requested_modules": list(modules.keys()),
+                "deterministic_mode": self.deterministic_mode
+            }
+        }
+    
+    def _generate_scenario_report_from_steps(self, analysis_id: str, url: str, scenario_steps: List[Dict], 
+                                           scenario_config: Dict, modules: Dict[str, bool]) -> Dict[str, Any]:
+        """Generate report from resolved scenario steps"""
+        import random
+        
+        if self.deterministic_mode:
+            random.seed(self.fixed_seed)
+            fixed_timestamp = "2025-07-30T14:30:00.000000"
+        else:
+            fixed_timestamp = datetime.now().isoformat()
+        
+        # Simulate scenario execution
+        step_results = []
+        scenario_score = random.randint(75, 95) if not self.deterministic_mode else 85
+        
+        for i, step in enumerate(scenario_steps):
+            action = step.get('action', 'unknown')
+            
+            step_result = {
+                "step_number": i + 1,
+                "action": action,
+                "status": "success" if random.random() > 0.1 else "warning",
+                "duration_ms": random.randint(50, 300) if not self.deterministic_mode else 150,
+            }
+            
+            if action == "navigate_to_url":
+                step_result["url"] = step.get('url', '').replace('{server_url}', url.rstrip('/'))
+            elif action == "click":
+                step_result["selector"] = step.get('selector', '')
+            elif action == "type":
+                step_result["selector"] = step.get('selector', '')
+                step_result["text"] = step.get('text', '')
+            
+            step_results.append(step_result)
+        
+        # Generate module results
+        module_results = {}
+        enabled_modules = [k for k, v in modules.items() if v]
+        
+        for module in enabled_modules:
+            base_score = scenario_score + random.randint(-10, 10) if not self.deterministic_mode else scenario_score
+            score = max(0, min(100, base_score))
+            
+            module_results[module] = {
+                "score": score,
+                "threshold_met": score >= 70,
+                "findings": self._generate_module_findings(module, score),
+                "recommendations": self._generate_module_recommendations(module, score)
+            }
+        
+        overall_score = sum(r["score"] for r in module_results.values()) // len(module_results) if module_results else scenario_score
+        
+        return {
+            "analysis_id": analysis_id,
+            "timestamp": fixed_timestamp,
+            "status": "completed",
+            "type": "url_scenario",
+            "url": url,
+            "scenario_file": "Resolved scenario",
+            "overall_score": overall_score,
+            "total_issues": sum(len(r.get("findings", [])) for r in module_results.values()),
+            "scenario_results": [{
+                "name": scenario_config.get("name", "Resolved Scenario"),
+                "score": scenario_score,
+                "steps": step_results,
+                "status": "passed" if scenario_score >= 70 else "warning"
+            }],
+            "module_results": module_results,
+            "metadata": {
+                "total_scenarios": 1,
+                "total_steps": len(scenario_steps),
+                "scenarios_passed": 1 if scenario_score >= 70 else 0,
+                "deterministic_mode": self.deterministic_mode
+            }
+        }
+    
+    def _generate_mock_scenario_report_from_steps(self, analysis_id: str, mock_app_path: str, scenario_steps: List[Dict], 
+                                                scenario_config: Dict, modules: Dict[str, bool]) -> Dict[str, Any]:
+        """Generate mock app report from resolved scenario steps"""
+        # Generate report similar to URL scenario but for mock app
+        report = self._generate_scenario_report_from_steps(
+            analysis_id, mock_app_path, scenario_steps, scenario_config, modules
+        )
+        
+        # Update for mock app specifics
+        report["type"] = "mock_scenario"
+        report["mock_app_path"] = mock_app_path
+        report.pop("url", None)
+        
+        # Add mock app specific metadata
+        report["metadata"]["mock_app_path"] = mock_app_path
+        report["metadata"]["app_type"] = self._detect_app_type(mock_app_path)
+        
+        return report
         """Check if module score meets defined thresholds"""
         module_thresholds = thresholds.get(module, {})
         
@@ -724,3 +894,52 @@ def _generate_fallback_report(executor, analysis_id: str, url: str, modules: Dic
 
 # Monkey patch the method to the ScenarioExecutor class
 ScenarioExecutor._generate_fallback_report = _generate_fallback_report
+
+def execute_specific_scenario(self, url: str, scenario_path: str, scenario_id: str, modules: Dict[str, bool]) -> Dict[str, Any]:
+    """Execute a specific scenario by ID from a scenarios file"""
+    analysis_id = str(uuid.uuid4())[:8] if not self.deterministic_mode else "test12345"
+    
+    try:
+        # Load the scenario file
+        with open(scenario_path, 'r') as f:
+            scenario_data = yaml.safe_load(f)
+        
+        # Find the specific scenario by ID
+        scenarios = scenario_data.get('scenarios', [])
+        target_scenario = None
+        for scenario in scenarios:
+            if scenario.get('id') == scenario_id:
+                target_scenario = scenario
+                break
+        
+        if not target_scenario:
+            raise ValueError(f"Scenario with ID '{scenario_id}' not found in {scenario_path}")
+        
+        # Apply mock URL substitution
+        target_scenario = substitute_mock_urls(target_scenario)
+        target_scenario = _ensure_dict("target_scenario_after_substitution", target_scenario)
+        
+        # Extract steps and config for the method signature
+        scenario_steps = target_scenario.get('steps', [])
+        scenario_config = {
+            'name': target_scenario.get('name', ''),
+            'description': target_scenario.get('description', ''),
+            'task_goal': target_scenario.get('task_goal', ''),
+            'app_type': target_scenario.get('app_type', 'web')
+        }
+        
+        # Generate report using the correct method signature
+        return self._generate_scenario_report_from_steps(
+            analysis_id=analysis_id,
+            url=url,
+            scenario_steps=scenario_steps,
+            scenario_config=scenario_config,
+            modules=modules
+        )
+    
+    except Exception as e:
+        logger.error(f"Error executing specific scenario {scenario_id}: {str(e)}")
+        return self._generate_fallback_report(analysis_id, url, modules)
+
+# Add the method to ScenarioExecutor class
+ScenarioExecutor.execute_specific_scenario = execute_specific_scenario

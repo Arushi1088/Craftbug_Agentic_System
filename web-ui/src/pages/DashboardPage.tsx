@@ -195,8 +195,8 @@ export function DashboardPage() {
 
     try {
       setCreatingTickets(true);
-      const result = await createADOTickets(selectedReport, demoMode);
-      alert(`Created ${result.work_items_created} work items in ADO ${demoMode ? '(Demo Mode)' : ''}`);
+      await createADOTickets();
+      alert(`Created work items in ADO ${demoMode ? '(Demo Mode)' : ''}`);
     } catch (error) {
       alert('Failed to create ADO tickets');
     } finally {
@@ -420,7 +420,7 @@ export function DashboardPage() {
               data={[
                 {
                   x: Object.keys(analytics.issue_type_distribution || {}).map(type => type.replace('_', ' ')),
-                  y: Object.values(analytics.issue_type_distribution || {}),
+                  y: Object.values(analytics.issue_type_distribution || {}) as number[],
                   type: 'bar',
                   marker: { color: '#3b82f6' }
                 }
@@ -562,7 +562,7 @@ export function DashboardPage() {
           {filteredReports.slice(0, 6).map((report) => (
             <Link
               key={report.analysis_id}
-              to={`/report/${report.analysis_id}`}
+              to={`/reports/${report.analysis_id}`}
               className="block p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between mb-2">

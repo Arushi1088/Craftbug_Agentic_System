@@ -1,30 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Globe, 
-  Image, 
-  Settings,
-  Upload,
-  ArrowRight,
-  Loader2,
-  FileText,
-  Zap,
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
-import { useAnalysis, useConnectionStatus } from '../hooks/useAPI';
-import apiClient from '../services/api';
+import { AlertCircle, Settings, Play } from 'lucide-react';
+import { useAnalysis } from '../hooks/useAPI';
+import { apiClient } from '../services/api';
 
-type AnalysisMode = 'url' | 'screenshot' | 'url-scenario' | 'mock-scenario';
-
-interface AnalysisConfig {
-  mode: AnalysisMode;
-  app: 'word' | 'excel' | 'powerpoint' | 'web';
-  url?: string;
-  screenshot?: File;
-  scenario?: string;
-  scenarioFile?: string;
-  mockAppPath?: string;
+type AnalysisConfig = {
+  app: string;
+  scenarioFile: string;
+  mode: 'mock-scenario';
   enablePerformance: boolean;
   enableAccessibility: boolean;
   enableKeyboard: boolean;
@@ -32,617 +15,240 @@ interface AnalysisConfig {
   enableBestPractices: boolean;
   enableHealthAlerts: boolean;
   enableFunctional: boolean;
-  outputFormat: 'html' | 'json' | 'text';
-}
+};
 
-interface Scenario {
+interface ScenarioDTO {
   id: string;
   name: string;
-  filename: string;
-  path: string;
-  description: string;
-  category?: string;
-  app_type?: 'word' | 'excel' | 'powerpoint' | 'web';
-  source?: string;
-  mock_url?: string;
+  description?: string;
+  app_type: string;
 }
-
-interface AnalysisModule {
-  key: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-}
-
-// Mock URLs for built-in scenarios
-const MOCK_URLS = {
-  "word": "http://localhost:3001/mocks/word/basic-doc.html",
-  "excel": "http://localhost:3001/mocks/excel/open-format.html", 
-  "powerpoint": "http://localhost:3001/mocks/powerpoint/basic-deck.html",
-};
-
-// Function to determine if a scenario is a built-in Office scenario
-const getBuiltInScenarioMockUrl = (scenarioPath: string, scenarioName: string): string | null => {
-  const pathLower = scenarioPath.toLowerCase();
-  const nameLower = scenarioName.toLowerCase();
-  
-  if (pathLower.includes('word') || nameLower.includes('word')) {
-    return MOCK_URLS.word;
-  }
-  if (pathLower.includes('excel') || nameLower.includes('excel')) {
-    return MOCK_URLS.excel;
-  }
-  if (pathLower.includes('powerpoint') || pathLower.includes('ppt') || nameLower.includes('powerpoint') || nameLower.includes('ppt')) {
-    return MOCK_URLS.powerpoint;
-  }
-  
-  return null;
-};
 
 export function AnalysisPage() {
   const navigate = useNavigate();
-  const { 
-    isAnalyzing, 
-    currentAnalysis, 
-    error, 
-    progress,
-    startUrlAnalysis, 
-    startScreenshotAnalysis, 
-    startScenarioAnalysis,
-    resetAnalysis 
-  } = useAnalysis();
-  const { isConnected } = useConnectionStatus();
+  const { isAnalyzing, currentAnalysis, error, progress, startMockScenario, resetAnalysis } = useAnalysis();
   
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [modules, setModules] = useState<AnalysisModule[]>([]);
+  const [selectedApp, setSelectedApp] = useState<string>('');
+  const [scenarios, setScenarios] = useState<ScenarioDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+  
   const [config, setConfig] = useState<AnalysisConfig>({
-    mode: 'url',
-    app: 'web',
-    scenarioFile: 'scenarios/basic_navigation.yaml', // Set default scenario
+    app: '',
+    scenarioFile: '',
+    mode: 'mock-scenario',
     enablePerformance: true,
     enableAccessibility: true,
     enableKeyboard: true,
     enableUxHeuristics: true,
     enableBestPractices: true,
     enableHealthAlerts: true,
-    enableFunctional: false,
-    outputFormat: 'html'
+    enableFunctional: true,
   });
 
-  // Filter scenarios based on selected app type for mock-scenario mode
-  const filteredScenarios = config.mode === 'mock-scenario' 
-    ? scenarios.filter(scenario => scenario.app_type === config.app)
-    : scenarios;
-
-  // Check if current scenario is a built-in Office scenario with locked URL
-  const isBuiltInScenarioSelected = () => {
-    if (!config.scenarioFile || scenarios.length === 0) return false;
-    const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
-    if (!selectedScenario) return false;
-    // Check if scenario has mock_url or can be inferred as built-in
-    return Boolean(selectedScenario.mock_url || getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name));
-  };
-
-  // Mock app options
-  const mockApps = [
-    { id: 'word', name: 'Microsoft Word (Mock)', path: 'mocks/word.html' },
-    { id: 'excel', name: 'Microsoft Excel (Mock)', path: 'mocks/excel.html' },
-    { id: 'powerpoint', name: 'Microsoft PowerPoint (Mock)', path: 'mocks/powerpoint.html' },
-    { id: 'integration', name: 'Integration Hub (Mock)', path: 'mocks/integration.html' }
-  ];
-
-  // Load available scenarios and modules on component mount
-  useEffect(() => {
-    const defaultScenarios = [
-      { id: 'basic_navigation', name: 'Basic Navigation', filename: 'basic_navigation.yaml', path: 'scenarios/basic_navigation.yaml', description: 'Test basic page navigation and menu interactions', app_type: 'web' as const },
-      { id: 'login_flow', name: 'Login Flow', filename: 'login_flow.yaml', path: 'scenarios/login_flow.yaml', description: 'Test user authentication and login process', app_type: 'web' as const },
-      { id: 'office_tests', name: 'Office Tests', filename: 'office_tests.yaml', path: 'scenarios/office_tests.yaml', description: 'Comprehensive Office application testing scenarios', app_type: 'web' as const }
-    ];
-
-    const defaultModules = [
-      { key: 'performance', name: 'Performance Analysis', description: 'Core Web Vitals and loading metrics', enabled: true },
-      { key: 'accessibility', name: 'Accessibility Audit', description: 'WCAG 2.1 compliance testing', enabled: true },
-      { key: 'keyboard', name: 'Keyboard Navigation', description: 'Keyboard accessibility evaluation', enabled: true },
-      { key: 'ux_heuristics', name: 'UX Heuristics', description: 'Nielsen\'s usability principles', enabled: true },
-      { key: 'best_practices', name: 'Best Practices', description: 'Modern web development standards', enabled: true },
-      { key: 'health_alerts', name: 'Health Alerts', description: 'Critical issues detection', enabled: true },
-      { key: 'functional', name: 'Functional Testing', description: 'User journey validation', enabled: false }
-    ];
-
-    const loadScenariosAndModules = async () => {
-      try {
-        // Load all scenarios first (we'll filter client-side for better UX)
-        const scenarioList = await apiClient.getScenarios();
-        
-        const normalizedScenarios = scenarioList.map((s: any) => ({
-          id: s.id ?? s.filename ?? s.path,
-          name: s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' '),
-          filename: s.filename,
-          path: s.path,
-          description: s.description || `Test scenario: ${s.name || (s.filename ?? '').replace(/\.yaml$/, '').replace(/_/g, ' ')}`,
-          category: s.category,
-          app_type: (s.app_type ?? s.category ?? 'web').toLowerCase(),
-          source: s.source,
-          mock_url: s.mock_url
-        })) as Scenario[];
-        
-        setScenarios(normalizedScenarios);
-
-        // Load modules
-        const moduleList = await apiClient.getModules();
-        setModules(moduleList);
-        
-        // Initialize config with default module states
-        const initialModuleConfig = moduleList.reduce((acc, module) => ({
-          ...acc,
-          [`enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}`]: module.enabled
-        }), {});
-        
-        setConfig(prev => ({ ...prev, ...initialModuleConfig }));
-
-      } catch (error) {
-        console.error('Failed to load scenarios and modules, using defaults:', error);
-        setScenarios(defaultScenarios);
-        setModules(defaultModules);
-      }
-    };
-
-    loadScenariosAndModules();
+  const loadScenarios = useCallback(async (appType: string) => {
+    if (!appType) return;
+    
+    setLoading(true);
+    try {
+      console.log(`🔍 Loading scenarios for app: ${appType}`);
+      const data = await apiClient.getScenarios();
+      const filtered = data?.filter((s: ScenarioDTO) => s.app_type === appType) || [];
+      console.log(`✅ Found ${filtered.length} scenarios for ${appType}:`, filtered);
+      setScenarios(filtered);
+    } catch (error) {
+      console.error('❌ Failed to load scenarios:', error);
+      setScenarios([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Auto-fill mock URL for built-in scenarios
-  useEffect(() => {
-    if (config.scenarioFile && scenarios.length > 0) {
-      const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
-      if (selectedScenario) {
-        // Use mock_url from scenario if available, otherwise try to infer from built-in logic
-        const mockUrl = selectedScenario.mock_url || getBuiltInScenarioMockUrl(selectedScenario.path, selectedScenario.name);
-        if (mockUrl) {
-          setConfig(prev => ({ ...prev, url: mockUrl }));
-        }
-      }
-    }
-  }, [config.scenarioFile, scenarios]);
-
-  // Handle analysis completion
-  useEffect(() => {
-    if (currentAnalysis && currentAnalysis.status === 'completed') {
-      // Navigate to results page after a short delay
-      setTimeout(() => {
-        navigate(`/reports/${currentAnalysis.analysis_id}`);
-      }, 2000);
-    }
-  }, [currentAnalysis, navigate]);
-
-  const analysisTypes = [
-    {
-      id: 'url' as AnalysisMode,
-      icon: <Globe className="w-6 h-6" />,
-      title: 'URL Analysis',
-      description: 'Analyze a live website or web application',
-      placeholder: 'https://example.com'
-    },
-    {
-      id: 'screenshot' as AnalysisMode,
-      icon: <Image className="w-6 h-6" />,
-      title: 'Screenshot Analysis',
-      description: 'Upload an image for visual UX analysis',
-      placeholder: 'Upload image file...'
-    },
-    {
-      id: 'url-scenario' as AnalysisMode,
-      icon: <Zap className="w-6 h-6" />,
-      title: 'URL + Scenario Testing',
-      description: 'Test live websites with predefined scenarios',
-      placeholder: 'https://example.com'
-    },
-    {
-      id: 'mock-scenario' as AnalysisMode,
-      icon: <FileText className="w-6 h-6" />,
-      title: 'Mock App + Scenario',
-      description: 'Test prototypes with predefined user journeys',
-      placeholder: '/path/to/mock-app.json'
-    }
-  ];
+  const handleAppSelection = (app: string) => {
+    console.log(`📱 App selected: ${app}`);
+    setSelectedApp(app);
+    
+    // Update config and reset scenario selection
+    setConfig(prev => {
+      const next: AnalysisConfig = { ...prev, app: selectedApp, scenarioFile: '' };
+      console.log('🔧 Updated config:', next);
+      return next;
+    });
+    
+    // Load scenarios for the selected app
+    loadScenarios(app);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedApp || !config.scenarioFile) {
+      console.warn('⚠️ Missing required fields');
+      return;
+    }
+
+    console.log('🚀 Starting analysis with config:', { selectedApp, config });
     
     try {
-      resetAnalysis();
-      
-      if (config.mode === 'url' && config.url) {
-        // Use the full scenario path for API
-        const scenarioName = config.scenarioFile || 'scenarios/basic_navigation.yaml';
-        await startUrlAnalysis(config.url, scenarioName);
-      } else if (config.mode === 'screenshot' && config.screenshot) {
-        const screenshotConfig = {
-          modules: {
-            performance: config.enablePerformance,
-            accessibility: config.enableAccessibility,
-            keyboard: config.enableKeyboard,
-            ux_heuristics: config.enableUxHeuristics,
-            best_practices: config.enableBestPractices,
-            health_alerts: config.enableHealthAlerts,
-            functional: config.enableFunctional
-          },
-          output_format: config.outputFormat
-        };
-        await startScreenshotAnalysis(config.screenshot, screenshotConfig);
-      } else if (config.mode === 'url-scenario' && config.url && config.scenarioFile) {
-        // Create scenario file from selected path
-        const scenarioBlob = new Blob([`# Auto-generated scenario for ${config.url}`], { type: 'text/yaml' });
-        const scenarioFile = new File([scenarioBlob], 'auto-scenario.yaml', { type: 'text/yaml' });
-        await startScenarioAnalysis(scenarioFile, config.url);
-      } else if (config.mode === 'mock-scenario' && config.scenarioFile) {
-        // For mock scenarios, use the selected scenario and app type
-        const selectedScenario = scenarios.find(s => s.path === config.scenarioFile);
-        const mockUrl = selectedScenario?.mock_url || config.url || 'http://localhost:3001';
-        const scenarioBlob = new Blob([`# Mock app scenario for ${config.app}`], { type: 'text/yaml' });
-        const scenarioFile = new File([scenarioBlob], 'mock-scenario.yaml', { type: 'text/yaml' });
-        await startScenarioAnalysis(scenarioFile, mockUrl);
-      } else {
-        throw new Error('Please fill in all required fields');
+      const result = await startMockScenario(selectedApp, config.scenarioFile, config);
+      if (result?.analysis_id) {
+        console.log('✅ Analysis started, navigating to:', result.analysis_id);
+        navigate(`/analysis/${result.analysis_id}`);
       }
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.error('❌ Analysis failed:', error);
     }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setConfig(prev => ({ ...prev, screenshot: file }));
-    }
-  };
-
-  // Connection status indicator
-  const ConnectionStatus = () => (
-    <div className={`flex items-center space-x-2 text-sm ${
-      isConnected ? 'text-green-600' : 'text-red-600'
-    }`}>
-      {isConnected ? (
-        <CheckCircle className="w-4 h-4" />
-      ) : (
-        <AlertCircle className="w-4 h-4" />
-      )}
-      <span>{isConnected ? 'Connected to API' : 'API Connection Lost'}</span>
-    </div>
-  );
-
-  // Progress indicator
-  const ProgressIndicator = () => {
-    if (!isAnalyzing) return null;
-    
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Analysis in Progress</h3>
-          <span className="text-blue-600 font-medium">{progress}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-          <div 
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>
-            {currentAnalysis ? currentAnalysis.message : 'Preparing analysis...'}
-          </span>
-        </div>
-        {currentAnalysis?.estimated_duration_minutes && (
-          <p className="text-xs text-gray-500 mt-2">
-            Estimated time: {currentAnalysis.estimated_duration_minutes} minutes
-          </p>
-        )}
-      </div>
-    );
   };
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          Start UX Analysis
-        </h1>
-        <p className="text-gray-600 mb-4">
-          Configure your analysis settings and choose what to evaluate
-        </p>
-        <ConnectionStatus />
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">UX Analysis</h1>
+        <p className="text-lg text-gray-600">Configure your analysis settings and choose what to evaluate</p>
+        <div className="flex items-center justify-center mt-4 space-x-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-sm text-green-600 font-medium">Connected to API</span>
+        </div>
       </div>
 
-      {/* Show progress if analysis is running */}
-      <ProgressIndicator />
+      {/* Progress */}
+      {isAnalyzing && (
+        <div className="bg-white rounded-xl shadow p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold">Analysis in Progress</div>
+            <div className="text-blue-600">{progress}%</div>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
+          </div>
+          {currentAnalysis?.message && <div className="text-sm text-gray-600 mt-2">{currentAnalysis.message}</div>}
+        </div>
+      )}
 
-      {/* Show error if any */}
+      {/* Errors */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
           <div className="flex items-center space-x-2">
             <AlertCircle className="w-5 h-5" />
             <span className="font-medium">Analysis Error:</span>
+            <span>{error}</span>
           </div>
-          <p className="mt-2">{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Analysis Type Selection */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Target App Selection */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
             <Settings className="w-5 h-5 mr-2" />
-            Analysis Type
+            Select Target Application
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {analysisTypes.map((type) => (
-              <label
-                key={type.id}
-                className={`cursor-pointer border-2 rounded-lg p-4 transition-colors ${
-                  config.mode === type.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {['word', 'excel', 'powerpoint'].map((app) => (
+              <button
+                key={app}
+                type="button"
+                onClick={() => handleAppSelection(app)}
+                className={`p-4 border-2 rounded-lg transition-all ${
+                  selectedApp === app 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
                 }`}
+                disabled={isAnalyzing}
               >
-                <input
-                  type="radio"
-                  name="mode"
-                  value={type.id}
-                  checked={config.mode === type.id}
-                  onChange={(e) => setConfig(prev => ({ ...prev, mode: e.target.value as AnalysisMode }))}
-                  className="sr-only"
-                  disabled={isAnalyzing}
-                />
-                <div className="flex items-start space-x-3">
-                  <div className={`p-2 rounded-lg ${
-                    config.mode === type.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {type.icon}
+                <div className="text-center">
+                  <div className="text-2xl mb-2">
+                    {app === 'word' ? '📄' : app === 'excel' ? '📊' : '📽️'}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{type.title}</h3>
-                    <p className="text-sm text-gray-600">{type.description}</p>
+                  <div className="font-medium">
+                    {app === 'word' ? 'Word' : app === 'excel' ? 'Excel' : 'PowerPoint'}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    {app === 'word' ? 'Microsoft Word' : app === 'excel' ? 'Microsoft Excel' : 'Microsoft PowerPoint'}
                   </div>
                 </div>
-              </label>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Input Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {analysisTypes.find(t => t.id === config.mode)?.title} Input
-          </h2>
-          
-          {config.mode === 'url' && (
-            <input
-              type="url"
-              value={config.url || ''}
-              onChange={(e) => setConfig(prev => ({ ...prev, url: e.target.value }))}
-              placeholder="https://example.com"
-              className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isBuiltInScenarioSelected() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-              required
-              disabled={isAnalyzing || isBuiltInScenarioSelected()}
-              readOnly={isBuiltInScenarioSelected()}
-              title={isBuiltInScenarioSelected() ? 'URL is automatically set for built-in Office scenarios' : ''}
-            />
-          )}
+        {/* Scenario Selection */}
+        {selectedApp && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-lg font-semibold mb-2">
+              Select Scenario for {selectedApp === 'word' ? 'Microsoft Word' : selectedApp === 'excel' ? 'Microsoft Excel' : 'Microsoft PowerPoint'}
+            </h2>
 
-          {config.mode === 'screenshot' && (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-600 mb-2">Upload an image file for analysis</p>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            <div>
+              <label className="block text-sm font-medium mb-1">Scenario</label>
+              <select
+                className="w-full p-3 border rounded-lg"
+                value={config.scenarioFile || ''}
+                onChange={(e) => setConfig(p => ({ ...p, scenarioFile: e.target.value }))}
                 required
-                disabled={isAnalyzing}
-              />
-              {config.screenshot && (
-                <p className="text-sm text-green-600 mt-2">
-                  Selected: {config.screenshot.name}
-                </p>
+                disabled={isAnalyzing || scenarios.length === 0}
+              >
+                <option value="">Choose a scenario...</option>
+                {scenarios.map(s => (
+                  <option key={s.id} value={s.id} title={s.description || ''}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              {scenarios.length > 0 && (
+                <p className="text-sm text-green-600 mt-1">✅ {scenarios.length} {selectedApp} scenarios loaded</p>
+              )}
+              {scenarios.length === 0 && !loading && selectedApp && (
+                <p className="text-sm text-gray-500 mt-1">No scenarios available for {selectedApp}</p>
               )}
             </div>
-          )}
-
-          {(config.mode === 'url-scenario' || config.mode === 'mock-scenario') && (
-            <div className="space-y-4">
-              {config.mode === 'url-scenario' && (
-                <input
-                  type="url"
-                  value={config.url || ''}
-                  onChange={(e) => setConfig(prev => ({ ...prev, url: e.target.value }))}
-                  placeholder="https://example.com"
-                  className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isBuiltInScenarioSelected() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                  required
-                  disabled={isAnalyzing || isBuiltInScenarioSelected()}
-                  readOnly={isBuiltInScenarioSelected()}
-                  title={isBuiltInScenarioSelected() ? 'URL is automatically set for built-in Office scenarios' : ''}
-                />
-              )}
-              
-              {config.mode === 'mock-scenario' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Target App
-                    </label>
-                    <div className="grid grid-cols-4 gap-3">
-                      {[
-                        { id: 'web', name: 'Web' },
-                        { id: 'word', name: 'Word' },
-                        { id: 'excel', name: 'Excel' },
-                        { id: 'powerpoint', name: 'PowerPoint' }
-                      ].map((app) => (
-                        <label
-                          key={app.id}
-                          className={`cursor-pointer border-2 rounded-lg p-3 text-center transition-colors ${
-                            config.app === app.id
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="app"
-                            value={app.id}
-                            checked={config.app === app.id}
-                            onChange={(e) => setConfig(prev => ({ 
-                              ...prev, 
-                              app: e.target.value as 'word' | 'excel' | 'powerpoint' | 'web',
-                              scenarioFile: '' // Reset scenario when app changes
-                            }))}
-                            className="sr-only"
-                            disabled={isAnalyzing}
-                          />
-                          <span className="font-medium">{app.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      {config.app === 'web' 
-                        ? 'General web application scenarios'
-                        : `Selecting ${config.app} will auto-prefill a local mock URL for supported scenarios.`}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Scenario ({filteredScenarios.length} available for {config.app})
-                    </label>
-                    <select
-                      value={config.scenarioFile || ''}
-                      onChange={(e) => setConfig(prev => ({ ...prev, scenarioFile: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                      disabled={isAnalyzing}
-                      title={filteredScenarios.find(s => s.path === config.scenarioFile)?.description || 'Select a scenario to see description'}
-                    >
-                      <option value="">Choose a scenario...</option>
-                      {filteredScenarios.map((scenario) => (
-                        <option key={scenario.id} value={scenario.path} title={scenario.description}>
-                          {scenario.name} - {scenario.description}
-                        </option>
-                      ))}
-                    </select>
-                    {filteredScenarios.length === 0 && scenarios.length > 0 && (
-                      <p className="text-sm text-orange-600 mt-2 flex items-center">
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        No scenarios available for {config.app}. Try selecting a different app.
-                      </p>
-                    )}
-                    {scenarios.length === 0 && (
-                      <p className="text-sm text-gray-500 mt-2 flex items-center">
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading scenarios from backend...
-                      </p>
-                    )}
-                    {filteredScenarios.length > 0 && (
-                      <p className="text-sm text-green-600 mt-2 flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        {filteredScenarios.length} {config.app} scenarios loaded
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Analysis Modules */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Analysis Modules
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {modules.map((module) => {
-              const configKey = `enable${module.key.charAt(0).toUpperCase() + module.key.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())}` as keyof AnalysisConfig;
-              return (
-                <label
-                  key={module.key}
-                  className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50"
-                >
+        {selectedApp && config.scenarioFile && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Analysis Modules</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { key: 'enablePerformance', label: 'Performance Analysis', desc: 'Core Web Vitals and loading metrics' },
+                { key: 'enableAccessibility', label: 'Accessibility Audit', desc: 'WCAG 2.1 compliance testing' },
+                { key: 'enableKeyboard', label: 'Keyboard Navigation', desc: 'Keyboard accessibility testing' },
+                { key: 'enableUxHeuristics', label: 'UX Heuristics', desc: 'Nielsen\'s usability principles' },
+                { key: 'enableBestPractices', label: 'Best Practices', desc: 'Industry standard compliance' },
+                { key: 'enableHealthAlerts', label: 'Health Alerts', desc: 'Critical issue detection' },
+                { key: 'enableFunctional', label: 'Functional Testing', desc: 'Feature workflow validation' },
+              ].map(module => (
+                <label key={module.key} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
                   <input
                     type="checkbox"
-                    checked={config[configKey] as boolean}
-                    onChange={(e) => setConfig(prev => ({ 
-                      ...prev, 
-                      [configKey]: e.target.checked 
-                    }))}
-                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={config[module.key as keyof AnalysisConfig] as boolean}
+                    onChange={(e) => setConfig(p => ({ ...p, [module.key]: e.target.checked }))}
+                    className="mt-1"
                     disabled={isAnalyzing}
                   />
                   <div>
-                    <h3 className="font-medium text-gray-900">{module.name}</h3>
-                    <p className="text-sm text-gray-600">{module.description}</p>
+                    <div className="font-medium">{module.label}</div>
+                    <div className="text-sm text-gray-600">{module.desc}</div>
                   </div>
                 </label>
-              );
-            })}
-            {modules.length === 0 && (
-              <p className="text-sm text-gray-500 col-span-2 text-center">
-                Loading analysis modules...
-              </p>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Output Format */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Output Format
-          </h2>
-          <div className="flex space-x-4">
-            {['html', 'json', 'text'].map((format) => (
-              <label key={format} className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="outputFormat"
-                  value={format}
-                  checked={config.outputFormat === format}
-                  onChange={(e) => setConfig(prev => ({ 
-                    ...prev, 
-                    outputFormat: e.target.value as 'html' | 'json' | 'text'
-                  }))}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isAnalyzing}
-                />
-                <span className="text-gray-700 capitalize">{format}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Submit Button */}
-        <div className="text-center">
-          <button
-            type="submit"
-            disabled={isAnalyzing || !isConnected}
-            className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Running Analysis...
-              </>
-            ) : (
-              <>
-                Start Analysis
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            )}
-          </button>
-          {!isConnected && (
-            <p className="text-sm text-red-600 mt-2">
-              Cannot start analysis: API connection lost
-            </p>
-          )}
-        </div>
+        {selectedApp && config.scenarioFile && (
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={isAnalyzing || !selectedApp || !config.scenarioFile}
+              className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Play className="w-5 h-5 mr-2" />
+              {isAnalyzing ? 'Running Analysis...' : 'Start Analysis'}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
