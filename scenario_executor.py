@@ -41,9 +41,9 @@ except ImportError:
 
 # Mock URLs for deterministic testing
 MOCK_URLS = {
-    "word": "http://localhost:8080/mocks/word/basic-doc.html",
-    "excel": "http://localhost:8080/mocks/excel/open-format.html", 
-    "powerpoint": "http://localhost:8080/mocks/powerpoint/basic-deck.html",
+    "word": "http://127.0.0.1:9000/mocks/word/basic-doc.html",
+    "excel": "http://127.0.0.1:9000/mocks/excel/open-format.html", 
+    "powerpoint": "http://127.0.0.1:9000/mocks/powerpoint/basic-deck.html",
 }
 
 def substitute_mock_urls(scenario_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -864,6 +864,31 @@ class ScenarioExecutor:
                     # Add accessibility issues to UX issues
                     ux_issues.extend(accessibility_issues)
                     
+                    # Run craft bug detection if UX heuristics module is enabled
+                    if modules.get('ux_heuristics', False):
+                        try:
+                            logger.info(f"🐛 Running craft bug detection for UX heuristics analysis...")
+                            craft_bug_results = await self._run_craft_bug_analysis(page, url)
+                            
+                            if craft_bug_results and craft_bug_results.get('total_bugs_found', 0) > 0:
+                                craft_bugs = craft_bug_results.get('findings', [])
+                                for bug in craft_bugs:
+                                    ux_issues.append({
+                                        "type": "craft_bug",
+                                        "message": f"Craft Bug (Category {bug.get('category', 'General')}): {bug.get('description', 'UX interaction issue')}",
+                                        "severity": bug.get("severity", "medium"),
+                                        "element": bug.get("element", "interaction element"),
+                                        "recommendation": bug.get("recommendation", "Fix interaction responsiveness"),
+                                        "category": f"Craft Bug Category {bug.get('category', 'General')}",
+                                        "craft_bug": True,
+                                        "metric_value": bug.get('metric_value', None)
+                                    })
+                                logger.info(f"🐛 Added {len(craft_bugs)} craft bugs to UX issues")
+                            else:
+                                logger.info(f"🐛 Craft bug analysis completed - no bugs found")
+                        except Exception as e:
+                            logger.warning(f"⚠️ Craft bug detection failed: {e}")
+                    
                 finally:
                     await browser.close()
                 
@@ -1137,6 +1162,45 @@ class ScenarioExecutor:
         
         return accessibility_issues
     
+    async def _run_craft_bug_analysis(self, page: Page, url: str) -> Dict[str, Any]:
+        """Run craft bug detection analysis on the current page"""
+        try:
+            # Import CraftBugDetector
+            from craft_bug_detector import CraftBugDetector
+            
+            # Initialize detector
+            detector = CraftBugDetector()
+            
+            # Run craft bug analysis using existing page
+            craft_bug_report = await detector.analyze_craft_bugs(page, url)
+            
+            # Convert CraftBugReport to dict format for integration
+            results = {
+                "total_bugs_found": len(craft_bug_report.findings),
+                "findings": []
+            }
+            
+            # Convert findings to expected format
+            for finding in craft_bug_report.findings:
+                results["findings"].append({
+                    "category": finding.category,
+                    "description": finding.description,
+                    "severity": finding.severity,
+                    "element": finding.location,
+                    "recommendation": "Fix craft bug interaction issue",
+                    "metric_value": finding.metrics
+                })
+            
+            logger.info(f"🐛 Craft bug analysis completed: {results['total_bugs_found']} bugs found")
+            return results
+            
+        except ImportError:
+            logger.warning("⚠️ CraftBugDetector not available - skipping craft bug analysis")
+            return {"total_bugs_found": 0, "findings": []}
+        except Exception as e:
+            logger.error(f"❌ Craft bug analysis failed: {e}")
+            return {"total_bugs_found": 0, "findings": []}
+    
     def _generate_real_analysis_report(self, analysis_id: str, url: str, scenario_config: Dict,
                                      step_results: List[Dict], ux_issues: List[Dict], 
                                      performance_metrics: Dict, modules: Dict[str, bool]) -> Dict[str, Any]:
@@ -1249,6 +1313,12 @@ class ScenarioExecutor:
                             "message": step['warning'],
                             "severity": "medium"
                         })
+                
+                # Add craft bug detection for ux_heuristics module
+                if module == 'ux_heuristics':
+                    # Note: We need page access here, which we don't have in this context
+                    # This will be handled by integrating craft bugs at the browser execution level
+                    logger.info(f"🐛 UX Heuristics module enabled - craft bugs will be detected during browser execution")
                 
                 module_results[module] = {
                     "score": score,
