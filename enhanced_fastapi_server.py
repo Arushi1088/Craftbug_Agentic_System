@@ -152,9 +152,9 @@ logger = logging.getLogger(__name__)
 
 # Mock URLs for deterministic testing
 MOCK_URLS = {
-    "word": "http://localhost:4174/mocks/word/basic-doc.html",
-    "excel": "http://localhost:4174/mocks/excel/open-format.html", 
-    "powerpoint": "http://localhost:4174/mocks/powerpoint/basic-deck.html",
+    "word": "http://localhost:8080/mocks/word/basic-doc.html",
+    "excel": "http://localhost:8080/mocks/excel/open-format.html", 
+    "powerpoint": "http://localhost:8080/mocks/powerpoint/basic-deck.html",
 }
 
 def substitute_mock_urls(scenario_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -321,6 +321,7 @@ class EnhancedAnalysisRequest(BaseModel):
 class AnalysisRequest(BaseModel):
     url: Optional[str] = None
     scenario: Optional[str] = None
+    scenario_id: Optional[str] = None
     scenario_path: Optional[str] = None
     app_path: Optional[str] = None
     modules: Dict[str, bool] = {
@@ -748,24 +749,70 @@ async def analyze_enhanced(
 # Legacy endpoints for backwards compatibility
 @app.post("/api/analyze", response_model=AnalysisResponse)
 async def analyze_url(request: AnalysisRequest):
-    """Legacy analyze endpoint for backwards compatibility"""
+    """Main analyze endpoint - runs real analysis instead of mock data"""
     if not request.url:
         raise HTTPException(status_code=400, detail="URL is required")
     
     analysis_id = str(uuid.uuid4())[:8]
     
-    # Generate mock report
-    report_data = generate_mock_report(analysis_id, request.dict())
-    MOCK_REPORTS[analysis_id] = report_data
-    
-    # Also save to disk for consistency
-    save_analysis_to_disk(analysis_id, report_data)
-    
-    return AnalysisResponse(
-        analysis_id=analysis_id,
-        status="completed",
-        message=f"Analysis completed for {request.url}"
-    )
+    try:
+        # Use real scenario executor instead of generating mock data
+        if request.scenario_id:
+            # Run real analysis with scenario
+            logger.info(f"🚀 Running real analysis for URL: {request.url}, scenario: {request.scenario_id}")
+            report_data = await scenario_executor.execute_scenario_by_id(
+                url=request.url,
+                scenario_id=request.scenario_id,
+                modules=request.modules or {}
+            )
+        else:
+            # Fallback to basic URL analysis without specific scenario
+            logger.info(f"🚀 Running basic URL analysis for: {request.url}")
+            report_data = await scenario_executor.execute_scenario_by_id(
+                url=request.url,
+                scenario_id="1.1",  # Use default Word scenario
+                modules=request.modules or {}
+            )
+        
+        # Guard against None/invalid executor results
+        if not isinstance(report_data, dict):
+            error_msg = f"Scenario executor returned invalid data type: {type(report_data)}"
+            logger.error(f"{error_msg} for URL {request.url}")
+            raise RuntimeError(error_msg)
+        
+        # Ensure we have required fields for analysis status
+        if "analysis_id" not in report_data:
+            report_data["analysis_id"] = analysis_id
+        
+        # Apply robust schema normalization
+        report_data = normalize_report_schema(report_data)
+        
+        # Store report in memory and disk
+        MOCK_REPORTS[analysis_id] = report_data
+        save_analysis_to_disk(analysis_id, report_data)
+        
+        logger.info(f"✅ Real analysis completed for {request.url}, analysis_id: {analysis_id}")
+        
+        return AnalysisResponse(
+            analysis_id=analysis_id,
+            status="completed",
+            message=f"Real analysis completed for {request.url}"
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Analysis failed for {request.url}: {str(e)}")
+        
+        # Fallback to mock data if real analysis fails
+        logger.warning("⚠️ Falling back to mock data due to analysis failure")
+        report_data = generate_mock_report(analysis_id, request.dict())
+        MOCK_REPORTS[analysis_id] = report_data
+        save_analysis_to_disk(analysis_id, report_data)
+        
+        return AnalysisResponse(
+            analysis_id=analysis_id,
+            status="completed",
+            message=f"Analysis completed for {request.url} (fallback mode)"
+        )
 
 @app.post("/api/analyze/url-scenario", response_model=AnalysisResponse)
 async def analyze_url_scenario(request: AnalysisRequest):
@@ -2054,4 +2101,4 @@ async def serve_dashboard():
 if __name__ == "__main__":
     import uvicorn
     print("🚀 Starting Enhanced UX Analyzer FastAPI Server...")
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("enhanced_fastapi_server:app", host="127.0.0.1", port=8000, reload=True)

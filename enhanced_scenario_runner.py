@@ -18,6 +18,11 @@ try:
     from playwright.async_api import async_playwright, Browser, Page, TimeoutError as PlaywrightTimeoutError
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
+    # Create dummy types for when Playwright is not available
+    from typing import Any
+    Page = Any
+    Browser = Any
+    PlaywrightTimeoutError = Exception
     PLAYWRIGHT_AVAILABLE = False
     print("⚠️ Playwright not installed. Run: pip install playwright && playwright install")
 
@@ -52,7 +57,7 @@ class CraftBugDetector:
             self.ai_analyzer = None
             logger.info("📊 Using traditional pattern-based analysis")
     
-    async def analyze_page_state(self, page: Page, step_context: Dict) -> List[Dict]:
+    async def analyze_page_state(self, page: Any, step_context: Dict) -> List[Dict]:
         """Enhanced page analysis with AI-powered issue generation"""
         all_issues = []
         
@@ -98,7 +103,7 @@ class CraftBugDetector:
         
         return unique_issues
     
-    async def _traditional_analysis(self, page: Page, step_context: Dict) -> List[Dict]:
+    async def _traditional_analysis(self, page: Any, step_context: Dict) -> List[Dict]:
         """Traditional pattern-based analysis (original implementation)"""
         issues = []
         
@@ -238,7 +243,7 @@ class CraftBugDetector:
         
         return unique_issues
 
-    async def run_scenario(self, scenario_config: Dict, browser: Browser = None) -> Dict:
+    async def run_scenario(self, scenario_config: Dict, browser: Any = None) -> Dict:
         """Run a complete scenario with AI-powered craft bug detection"""
         scenario_id = scenario_config.get('id', 'unknown')
         logger.info(f"🎬 Starting scenario: {scenario_id}")
@@ -283,7 +288,7 @@ class CraftBugDetector:
         finally:
             await page.close()
     
-    async def _execute_scenario_steps(self, page: Page, scenario_config: Dict) -> Dict:
+    async def _execute_scenario_steps(self, page: Any, scenario_config: Dict) -> Dict:
         """Execute the individual steps of a scenario"""
         steps = scenario_config.get('steps', [])
         results = {
@@ -325,7 +330,7 @@ class CraftBugDetector:
         results['execution_time'] = round((time.time() - start_time) * 1000, 2)
         return results
     
-    async def _execute_step(self, page: Page, step: Dict):
+    async def _execute_step(self, page: Any, step: Dict):
         """Execute a single scenario step"""
         action = step.get('action')
         target = step.get('target')
@@ -410,8 +415,8 @@ class EnhancedScenarioRunner:
     """Enhanced scenario runner with real browser automation and craft bug detection"""
     
     def __init__(self, headless: bool = True, deterministic_mode: bool = False):
-        self.browser: Optional[Browser] = None
-        self.page: Optional[Page] = None
+        self.browser: Optional[Any] = None
+        self.page: Optional[Any] = None
         self.craft_bug_detector = CraftBugDetector()
         self.execution_log = []
         self.performance_metrics = []
@@ -648,14 +653,28 @@ class EnhancedScenarioRunner:
             for i, step in enumerate(steps):
                 logger.info(f"🎯 Executing step {i+1}/{len(steps)}: {step.get('action')}")
                 step_result = await self.execute_scenario_step(step, i)
+                
+                # Guard against None step results
+                if step_result is None:
+                    logger.error(f"Step {i+1} returned None result")
+                    step_result = {
+                        "step_number": i + 1,
+                        "action": step.get('action', 'unknown'),
+                        "status": "failed",
+                        "error": "Step execution returned None",
+                        "duration_ms": 0,
+                        "craft_bugs": []
+                    }
+                
                 scenario_result["steps"].append(step_result)
                 
-                if step_result["status"] == "success":
+                if step_result.get("status") == "success":
                     successful_steps += 1
                     
                 # Collect craft bugs from each step
                 step_bugs = step_result.get("craft_bugs", [])
-                total_craft_bugs.extend(step_bugs)
+                if step_bugs is not None:
+                    total_craft_bugs.extend(step_bugs)
                 
                 # Brief pause between steps for realistic simulation
                 if not self.deterministic_mode:
@@ -663,6 +682,8 @@ class EnhancedScenarioRunner:
             
             # Analyze interaction patterns
             pattern_issues = self.craft_bug_detector.analyze_interaction_patterns(scenario_result["steps"])
+            if pattern_issues is None:
+                pattern_issues = []
             scenario_result["pattern_issues"] = pattern_issues
             
             # Calculate scores
@@ -674,7 +695,7 @@ class EnhancedScenarioRunner:
             scenario_result["overall_score"] = max(0, base_score - craft_bug_penalty - pattern_penalty)
             
             # Performance summary
-            durations = [s.get("duration_ms", 0) for s in scenario_result["steps"]]
+            durations = [s.get("duration_ms", 0) for s in scenario_result["steps"] if s is not None]
             scenario_result["performance_summary"] = {
                 "total_steps": len(steps),
                 "successful_steps": successful_steps,
@@ -688,13 +709,14 @@ class EnhancedScenarioRunner:
             scenario_result["status"] = "completed"
             
             # Check if any steps have screenshots
-            has_screenshots = any(step.get("screenshot") for step in scenario_result["steps"])
+            has_screenshots = any(step.get("screenshot") for step in scenario_result["steps"] if step is not None)
             scenario_result["has_screenshots"] = has_screenshots
             
         except Exception as e:
             scenario_result["status"] = "failed"
             scenario_result["error"] = str(e)
-            logger.error(f"❌ Scenario execution failed: {e}")
+            scenario_result["ui_error"] = f"Scenario execution failed: {str(e)}"
+            logger.exception(f"❌ Scenario execution failed: {e}")  # Keep full stack trace
             
         finally:
             # Clean up browser
@@ -705,6 +727,22 @@ class EnhancedScenarioRunner:
             scenario_result["end_time"] = end_time
             scenario_result["total_duration_ms"] = int((end_time - start_time) * 1000)
             scenario_result["timestamp"] = datetime.now().isoformat()
+        
+        # Final safeguard - ensure we always return a valid dictionary
+        if scenario_result is None:
+            logger.error("scenario_result is None - creating fallback result")
+            scenario_result = {
+                "analysis_id": analysis_id,
+                "status": "failed",
+                "error": "Scenario execution returned None",
+                "ui_error": "Scenario execution failed unexpectedly",
+                "steps": [],
+                "craft_bugs_detected": [],
+                "pattern_issues": [],
+                "performance_summary": {},
+                "overall_score": 0,
+                "timestamp": datetime.now().isoformat()
+            }
         
         return scenario_result
 
@@ -721,10 +759,17 @@ async def execute_realistic_scenario(url: str, scenario_path: str, headless: boo
             with open(scenario_path, 'r') as f:
                 scenario_data = json.load(f)
     except Exception as e:
+        logger.error(f"Failed to load scenario from {scenario_path}: {e}")
         return {
             "error": f"Failed to load scenario: {e}",
             "status": "failed",
-            "analysis_id": str(uuid.uuid4())[:8]
+            "analysis_id": str(uuid.uuid4())[:8],
+            "ui_error": f"Scenario loading failed: {str(e)}",
+            "module_results": {},
+            "scenario_results": [],
+            "overall_score": 0,
+            "total_issues": 0,
+            "timestamp": datetime.now().isoformat()
         }
     
     # Create and execute scenario
@@ -751,13 +796,45 @@ async def execute_realistic_scenario(url: str, scenario_path: str, headless: boo
             ]
         }
     
-    result = await runner.execute_full_scenario(scenario_config)
-    
-    # Add URL to result
-    result["url"] = url
-    result["scenario_path"] = scenario_path
-    
-    return result
+    try:
+        result = await runner.execute_full_scenario(scenario_config)
+        
+        # Guard against None result from execute_full_scenario
+        if result is None:
+            logger.error(f"execute_full_scenario returned None for URL {url}")
+            result = {
+                "analysis_id": str(uuid.uuid4())[:8],
+                "status": "failed",
+                "error": "Scenario execution returned None result",
+                "ui_error": "Scenario execution failed unexpectedly",
+                "module_results": {},
+                "scenario_results": [],
+                "overall_score": 0,
+                "total_issues": 0,
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # Add URL and scenario path to result
+        result["url"] = url
+        result["scenario_path"] = scenario_path
+        
+        return result
+        
+    except Exception as e:
+        logger.exception(f"execute_realistic_scenario failed for URL {url}: {e}")
+        return {
+            "analysis_id": str(uuid.uuid4())[:8],
+            "status": "failed",
+            "error": str(e),
+            "ui_error": f"Realistic scenario execution failed: {str(e)}",
+            "url": url,
+            "scenario_path": scenario_path,
+            "module_results": {},
+            "scenario_results": [],
+            "overall_score": 0,
+            "total_issues": 0,
+            "timestamp": datetime.now().isoformat()
+        }
 
 if __name__ == "__main__":
     # Example usage with AI-powered analysis
