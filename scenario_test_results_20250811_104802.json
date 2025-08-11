@@ -1,0 +1,30 @@
+{
+  "scenarios/login_flow.yaml": {
+    "status": "failed",
+    "error": "Network error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/analyze/url-scenario (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107f13250>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+  },
+  "scenarios/excel_scenarios.yaml": {
+    "status": "failed",
+    "error": "Network error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/analyze/url-scenario (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107f11a50>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+  },
+  "scenarios/word_scenarios.yaml": {
+    "status": "failed",
+    "error": "Network error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/analyze/url-scenario (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107f13710>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+  },
+  "scenarios/office_tests.yaml": {
+    "status": "failed",
+    "error": "Network error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/analyze/url-scenario (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107f05590>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+  },
+  "scenarios/powerpoint_scenarios.yaml": {
+    "status": "failed",
+    "error": "Network error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/analyze/url-scenario (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107f01150>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+  },
+  "scenarios/basic_navigation.yaml": {
+    "status": "failed",
+    "error": "Network error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/analyze/url-scenario (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107f05650>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+  },
+  "scenarios/enhanced_test_scenario.yaml": {
+    "status": "failed",
+    "error": "Network error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/analyze/url-scenario (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x107f05f90>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+  }
+}

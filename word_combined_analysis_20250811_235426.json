@@ -1,0 +1,379 @@
+{
+  "standard_analysis": {
+    "analysis_id": "bb01c158",
+    "timestamp": "2025-08-11T23:54:08.078975",
+    "url": "http://localhost:8080/mocks/word/basic-doc.html",
+    "mode": "real_browser",
+    "overall_score": 97,
+    "modules": {
+      "performance": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Implement lazy loading for images and components",
+          "Minimize and compress JavaScript and CSS files",
+          "Use CDN for static assets"
+        ],
+        "metrics": {
+          "response_time": 0,
+          "dom_content_loaded": 0,
+          "first_paint": 216,
+          "score_breakdown": {
+            "load_time": 100,
+            "resource_optimization": 100
+          }
+        }
+      },
+      "accessibility": {
+        "score": 85,
+        "findings": [
+          {
+            "type": "accessibility",
+            "severity": "high",
+            "message": "Form input missing accessible label",
+            "element": "input",
+            "selector": "input:nth-of-type(1)"
+          },
+          {
+            "type": "accessibility",
+            "severity": "high",
+            "message": "Form input missing accessible label",
+            "element": "input",
+            "selector": "input:nth-of-type(2)"
+          },
+          {
+            "type": "accessibility",
+            "severity": "medium",
+            "message": "Potential color contrast issues detected",
+            "element": "page",
+            "selector": "body"
+          }
+        ],
+        "recommendations": [
+          "Add proper ARIA labels and roles",
+          "Ensure sufficient color contrast",
+          "Implement proper heading hierarchy"
+        ],
+        "metrics": {
+          "response_time": 100,
+          "issues_found": 3,
+          "score_breakdown": {
+            "alt_text": 85,
+            "form_labels": 85,
+            "color_contrast": 85
+          }
+        }
+      },
+      "keyboard": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Ensure logical tab order",
+          "Add visible focus indicators",
+          "Implement keyboard shortcuts"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      },
+      "ux_heuristics": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Follow ux_heuristics best practices",
+          "Regularly audit ux_heuristics compliance",
+          "Implement ux_heuristics monitoring"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      },
+      "best_practices": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Follow best_practices best practices",
+          "Regularly audit best_practices compliance",
+          "Implement best_practices monitoring"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      },
+      "health_alerts": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Follow health_alerts best practices",
+          "Regularly audit health_alerts compliance",
+          "Implement health_alerts monitoring"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      }
+    },
+    "status": "completed",
+    "module_results": {
+      "performance": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Implement lazy loading for images and components",
+          "Minimize and compress JavaScript and CSS files",
+          "Use CDN for static assets"
+        ],
+        "metrics": {
+          "response_time": 0,
+          "dom_content_loaded": 0,
+          "first_paint": 216,
+          "score_breakdown": {
+            "load_time": 100,
+            "resource_optimization": 100
+          }
+        }
+      },
+      "accessibility": {
+        "score": 85,
+        "findings": [
+          {
+            "type": "accessibility",
+            "severity": "high",
+            "message": "Form input missing accessible label",
+            "element": "input",
+            "selector": "input:nth-of-type(1)"
+          },
+          {
+            "type": "accessibility",
+            "severity": "high",
+            "message": "Form input missing accessible label",
+            "element": "input",
+            "selector": "input:nth-of-type(2)"
+          },
+          {
+            "type": "accessibility",
+            "severity": "medium",
+            "message": "Potential color contrast issues detected",
+            "element": "page",
+            "selector": "body"
+          }
+        ],
+        "recommendations": [
+          "Add proper ARIA labels and roles",
+          "Ensure sufficient color contrast",
+          "Implement proper heading hierarchy"
+        ],
+        "metrics": {
+          "response_time": 100,
+          "issues_found": 3,
+          "score_breakdown": {
+            "alt_text": 85,
+            "form_labels": 85,
+            "color_contrast": 85
+          }
+        }
+      },
+      "keyboard": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Ensure logical tab order",
+          "Add visible focus indicators",
+          "Implement keyboard shortcuts"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      },
+      "ux_heuristics": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Follow ux_heuristics best practices",
+          "Regularly audit ux_heuristics compliance",
+          "Implement ux_heuristics monitoring"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      },
+      "best_practices": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Follow best_practices best practices",
+          "Regularly audit best_practices compliance",
+          "Implement best_practices monitoring"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      },
+      "health_alerts": {
+        "score": 100,
+        "findings": [],
+        "recommendations": [
+          "Follow health_alerts best practices",
+          "Regularly audit health_alerts compliance",
+          "Implement health_alerts monitoring"
+        ],
+        "metrics": {
+          "response_time": 1819,
+          "steps_completed": 4,
+          "score_breakdown": {
+            "execution": 100,
+            "usability": 100
+          }
+        }
+      }
+    },
+    "scenario_results": [
+      {
+        "step": 1,
+        "action": "navigate",
+        "target": "http://localhost:8080/mocks/word/basic-doc.html",
+        "status": "success",
+        "duration_ms": 165,
+        "description": "Navigated to http://localhost:8080/mocks/word/basic-doc.html"
+      },
+      {
+        "step": 2,
+        "action": "wait",
+        "duration_ms": 1005,
+        "status": "success",
+        "description": "Waited for 1.0s"
+      },
+      {
+        "step": 3,
+        "action": "click",
+        "target": "#comments-tab",
+        "status": "success",
+        "duration_ms": 146,
+        "description": "Clicked element #comments-tab"
+      },
+      {
+        "step": 4,
+        "action": "wait",
+        "duration_ms": 503,
+        "status": "success",
+        "description": "Waited for 0.5s"
+      }
+    ],
+    "total_issues": 3,
+    "ux_issues": [
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      }
+    ],
+    "execution_time": 1.819,
+    "performance_metrics": {
+      "domContentLoaded": 0,
+      "loadComplete": 0,
+      "firstPaint": 216,
+      "firstContentfulPaint": 216,
+      "domNodes": 71,
+      "images": 0,
+      "scripts": 1,
+      "stylesheets": 0
+    },
+    "scenario_info": {
+      "name": "Basic Document Navigation",
+      "description": "Navigate and interact with Word interface elements",
+      "steps_total": 4,
+      "steps_successful": 4,
+      "steps_failed": 0,
+      "steps_warnings": 0
+    },
+    "requested_id": "bb01c158",
+    "browser_automation": true,
+    "real_analysis": true
+  },
+  "craft_bug_analysis": {
+    "total_bugs_found": 1,
+    "findings": [
+      {
+        "category": "B",
+        "description": "Conflicting animations: 2 conflicts",
+        "severity": "medium",
+        "location": "animation_system",
+        "metrics": {
+          "layoutThrashCount": 0,
+          "animationConflicts": 2,
+          "judderEvents": 0,
+          "frameTimes": [],
+          "layoutShifts": [],
+          "animationConflictList": [
+            {
+              "timestamp": 797.0999999940395,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            },
+            {
+              "timestamp": 2064.4000000059605,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ],
+          "rawLayoutShiftsCount": 0,
+          "rawAnimationConflictsCount": 2
+        },
+        "timestamp": 1754936665.0514932
+      }
+    ],
+    "analysis_duration": 1.8856728076934814
+  },
+  "analysis_timestamp": "2025-08-11T23:54:26.424460"
+}

@@ -1,0 +1,140 @@
+# Word Craft Bug Testing Scenarios
+# Specialized scenarios designed to trigger and detect intentional UX craft bugs
+
+scenarios:
+  - id: "craft-1"
+    name: "Word Craft Bug Detection Test"
+    description: "Comprehensive test that triggers all categories of craft bugs in Word mock"
+    task_goal: "Perform Word tasks while detecting embedded craft bugs"
+    trigger_craft_bugs: true
+    interactive_analysis: true
+    craft_bug_focus: true
+    steps:
+      - action: "navigate"
+        target: "{mock_url}"
+        description: "Open Word application with craft bugs enabled"
+        expected_outcome: "Word interface loads with embedded craft bug JavaScript"
+        
+      - action: "wait"
+        duration: 2000
+        description: "Allow page to fully load and craft bug monitoring to initialize"
+        
+      - action: "click"
+        target: "#comments-tab"
+        description: "Click Comments tab (has craft-bug-hover class)"
+        expected_outcome: "Comments panel opens, animation conflicts triggered"
+        craft_bug_trigger: "animation_conflicts"
+        
+      - action: "wait"
+        duration: 1500
+        description: "Allow animation conflicts to be measured"
+        
+      - action: "hover"
+        target: ".share-button.craft-bug-hover"
+        description: "Hover over Share button to trigger hover craft bug"
+        expected_outcome: "No hover feedback (intentional craft bug)"
+        craft_bug_trigger: "feedback_failure"
+        
+      - action: "wait"
+        duration: 1000
+        description: "Allow hover metrics to be captured"
+        
+      - action: "click"
+        target: ".image-insert-btn.craft-bug-hover"
+        description: "Click Pictures button with craft bug"
+        expected_outcome: "Button click triggers layout thrash"
+        craft_bug_trigger: "layout_thrash"
+        
+      - action: "wait"
+        duration: 1200
+        description: "Allow layout shift measurements"
+        
+      - action: "type"
+        target: "textarea"
+        text: "Testing input lag in Word editor with multiple typing events to trigger intentional delays"
+        delay: 50
+        description: "Type text to trigger input lag craft bugs"
+        expected_outcome: "Text input shows detectable delays"
+        craft_bug_trigger: "input_lag"
+        
+      - action: "wait"
+        duration: 2000
+        description: "Allow input lag metrics to accumulate"
+        
+      - action: "hover"
+        target: ".craft-bug-hover"
+        description: "Hover over any other craft bug element"
+        craft_bug_trigger: "feedback_failure"
+        
+      - action: "wait"
+        duration: 800
+        description: "Final wait for all craft bug metrics to complete"
+
+  - id: "craft-2"  
+    name: "Word Performance Stress Test with Craft Bugs"
+    description: "Heavy interaction test designed to trigger maximum craft bug detection"
+    task_goal: "Stress test Word interface while monitoring craft bugs"
+    trigger_craft_bugs: true
+    interactive_analysis: true
+    stress_test: true
+    steps:
+      - action: "navigate"
+        target: "{mock_url}"
+        description: "Open Word for stress testing"
+        
+      - action: "wait"
+        duration: 1000
+        description: "Initial load wait"
+        
+      - action: "click"
+        target: "#comments-tab"
+        description: "Open comments (trigger 1)"
+        craft_bug_trigger: "animation_conflicts"
+        
+      - action: "type"
+        target: "textarea"
+        text: "Rapid typing test for input lag detection with multiple sequential inputs"
+        delay: 20
+        description: "Fast typing to trigger input lag"
+        craft_bug_trigger: "input_lag"
+        
+      - action: "click"
+        target: ".share-button.craft-bug-hover"
+        description: "Click share button"
+        craft_bug_trigger: "feedback_failure"
+        
+      - action: "click"
+        target: ".image-insert-btn.craft-bug-hover" 
+        description: "Click pictures button"
+        craft_bug_trigger: "layout_thrash"
+        
+      - action: "hover"
+        target: ".craft-bug-hover"
+        description: "Hover test"
+        craft_bug_trigger: "feedback_failure"
+        
+      - action: "click"
+        target: ".craft-bug-hover"
+        description: "Click craft bug element"
+        craft_bug_trigger: "layout_thrash"
+        
+      - action: "wait"
+        duration: 3000
+        description: "Final metrics collection"
+
+# Analysis configuration for craft bug scenarios
+analysis:
+  craft_bug_detection: true
+  focus_areas:
+    - animation_conflicts
+    - input_lag_detection  
+    - layout_thrash_monitoring
+    - feedback_failure_analysis
+    - performance_degradation
+    
+  craft_bug_categories:
+    - category_a: "Critical UX failures"
+    - category_b: "Animation and layout issues" 
+    - category_c: "Navigation problems"
+    - category_d: "Input and interaction delays"
+    - category_e: "Feedback and response issues"

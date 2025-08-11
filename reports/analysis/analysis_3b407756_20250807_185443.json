@@ -19,5 +19,6 @@
       "findings": []
     }
   },
-  "total_issues": 0
+  "total_issues": 0,
+  "ui_error": "[Errno 2] No such file or directory: 'basic_navigation'"
 }

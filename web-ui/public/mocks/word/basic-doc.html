@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Microsoft Word - Mock</title>
+    <title>Microsoft Word - Mock (Enhanced with Craft Bugs)</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -38,9 +38,52 @@
             border-radius: 2px;
             cursor: pointer;
             font-size: 14px;
+            /* CRAFT BUG E: Remove hover states for some buttons */
+        }
+        .toolbar button.craft-bug-hover:hover {
+            /* CRAFT BUG E: No hover feedback - background stays same */
+            background-color: #ffffff;
         }
         .toolbar button:hover {
             background-color: #f8f9fa;
+        }
+        
+        /* CRAFT BUG A: Layout thrash styles */
+        .layout-thrash {
+            contain: none;
+        }
+        
+        /* CRAFT BUG B: Motion sickness inducing parallax */
+        .parallax-bg {
+            background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff, #ff0000);
+            background-size: 400% 400%;
+            animation: parallax-motion 2s linear infinite;
+        }
+        @keyframes parallax-motion {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* CRAFT BUG B: Jarring animations without easing */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        /* CRAFT BUG D: Cursor flicker */
+        .cursor-flicker {
+            cursor: pointer;
+            animation: cursor-change 0.1s infinite alternate;
+        }
+        @keyframes cursor-change {
+            0% { cursor: pointer; }
+            100% { cursor: text; }
         }
         .editor-container {
             display: flex;
@@ -85,9 +128,19 @@
             border-radius: 4px;
             cursor: pointer;
             margin-bottom: 20px;
+            /* CRAFT BUG A: Add loading delay indication */
+            position: relative;
         }
         .start-button:hover {
             background-color: #106ebe;
+        }
+        .start-button.loading {
+            background-color: #666;
+            cursor: wait;
+        }
+        .start-button.loading::after {
+            content: " (Loading...)";
+            /* CRAFT BUG E: Delayed loading state that appears after action */
         }
         .comments-panel {
             width: 300px;
@@ -95,6 +148,12 @@
             border-left: 1px solid #d1d1d1;
             padding: 20px;
             overflow-y: auto;
+            /* CRAFT BUG B: Add jarring transition without easing */
+            transition: transform 0.5s linear;
+        }
+        .comments-panel.slide-in {
+            /* CRAFT BUG B: Conflicting animations */
+            animation: bounce 0.5s linear, shake 0.5s linear;
         }
         .comments-header {
             display: flex;
@@ -199,10 +258,10 @@
         }
     </style>
 </head>
-<body>
+<body data-craft-bugs="loading,motion,input,feedback">
     <div class="ribbon">
         <h1>📄 Microsoft Word</h1>
-        <div>Mock Office Application for UX Testing</div>
+        <div>Mock Office Application with Craft Bugs for UX Testing</div>
     </div>
     
     <div class="toolbar">
@@ -213,10 +272,10 @@
         <button>Format</button>
         <button>Tools</button>
         <button id="review-tab">Review</button>
-        <button id="comments-tab">Comments</button>
-        <button>Help</button>
-        <button class="image-insert-btn" style="margin-left: auto;">Pictures</button>
-        <button class="share-button">Share</button>
+        <button id="comments-tab" class="craft-bug-hover">Comments</button>
+        <button class="craft-bug-hover">Help</button>
+        <button class="image-insert-btn craft-bug-hover" style="margin-left: auto;">Pictures</button>
+        <button class="share-button craft-bug-hover">Share</button>
     </div>
     
     <div class="editor-container">
@@ -233,12 +292,12 @@
         </div>
         
         <div class="document-area">
-            <button class="start-button" onclick="startEditing()">Start Editing</button>
+            <button class="start-button" onclick="startEditingWithCraftBugs()">Start Editing</button>
             
-            <div class="document">
+            <div class="document" id="main-document">
                 <h2>Document Title</h2>
                 <div id="editor-content">
-                    <textarea id="editor" placeholder="Start typing your document here..."></textarea>
+                    <textarea id="editor" placeholder="Start typing your document here..." class="cursor-flicker"></textarea>
                 </div>
                 
                 <!-- Review controls (hidden by default) -->
@@ -295,54 +354,247 @@
     </div>
 
     <script>
-        function startEditing() {
-            const editor = document.getElementById('editor');
-            editor.focus();
+        // CRAFT BUG SYSTEM - Intentional UX issues for detection
+        const CRAFT_BUGS = {
+            loading: {
+                startButtonDelay: 3000,
+                imageLoadDelay: 2000,
+                layoutThrash: true,
+                blockingOperations: true
+            },
+            motion: {
+                jarringTransitions: true,
+                conflictingAnimations: true,
+                motionSickness: true,
+                parallaxEffects: true
+            },
+            input: {
+                inputLag: 200,
+                inconsistentTargets: true,
+                doubleClickRequired: false,
+                cursorFlicker: true
+            },
+            feedback: {
+                noHoverStates: true,
+                delayedLoadingStates: true,
+                silentFailures: true,
+                inconsistentMessages: true
+            }
+        };
+        
+        // Track craft bug metrics for detection
+        window.craftBugMetrics = {
+            buttonResponseTimes: [],
+            layoutShifts: [],
+            animationConflicts: [],
+            inputDelays: [],
+            feedbackFailures: []
+        };
+        
+        // CRAFT BUG A: Loading & Performance Issues
+        function startEditingWithCraftBugs() {
+            const button = document.querySelector('.start-button');
+            const startTime = performance.now();
             
-            // Add some sample text for testing
-            if (editor.value === '') {
-                editor.value = 'Welcome to Microsoft Word mock application.\n\nThis is a test document for UX analysis.';
+            // CRAFT BUG A1: Artificial 3-second delay
+            button.textContent = 'Loading...';
+            button.classList.add('loading');
+            button.disabled = true;
+            
+            // CRAFT BUG A4: Blocking operation
+            const blockingStart = performance.now();
+            while (performance.now() - blockingStart < 100) {
+                // Intentional blocking loop
             }
             
-            // Hide the start button
-            document.querySelector('.start-button').style.display = 'none';
+            setTimeout(() => {
+                const editor = document.getElementById('editor');
+                editor.focus();
+                
+                // CRAFT BUG A3: Slow image loading simulation
+                insertSlowLoadingImage();
+                
+                // CRAFT BUG A2: Layout thrash
+                causeLayoutThrash();
+                
+                // Add sample text for testing
+                if (editor.value === '') {
+                    editor.value = 'Welcome to Microsoft Word mock application with craft bugs.\n\nThis document contains intentional UX issues for detection and analysis.';
+                }
+                
+                // CRAFT BUG E: Delayed loading state appears after completion
+                setTimeout(() => {
+                    button.classList.add('loading');
+                    setTimeout(() => {
+                        button.style.display = 'none';
+                        button.classList.remove('loading');
+                    }, 500);
+                }, 200);
+                
+                // Record metrics
+                const responseTime = performance.now() - startTime;
+                window.craftBugMetrics.buttonResponseTimes.push(responseTime);
+                
+            }, CRAFT_BUGS.loading.startButtonDelay);
         }
         
-        function showComments() {
+        // CRAFT BUG A2: Layout thrash function
+        function causeLayoutThrash() {
+            const document_el = document.getElementById('main-document');
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    document_el.style.width = (800 + Math.random() * 50) + 'px';
+                    const height = document_el.offsetHeight; // Force reflow
+                    document_el.style.width = '800px';
+                    
+                    // Record layout shift
+                    window.craftBugMetrics.layoutShifts.push({
+                        timestamp: performance.now(),
+                        severity: 'high'
+                    });
+                }, i * 50);
+            }
+        }
+        
+        // CRAFT BUG A3: Slow image loading
+        function insertSlowLoadingImage() {
+            const editor = document.getElementById('editor-content');
+            const img = document.createElement('img');
+            
+            // Simulate slow loading
+            setTimeout(() => {
+                img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlPC90ZXh0Pgo8L3N2Zz4K';
+                img.className = 'inserted-image heavy-dom';
+                img.style.maxWidth = '200px';
+                img.style.margin = '10px';
+                img.alt = '';
+                editor.appendChild(img);
+            }, CRAFT_BUGS.loading.imageLoadDelay);
+        }
+        
+        // CRAFT BUG B: Motion & Animation Issues
+        function showCommentsWithCraftBugs() {
             const panel = document.getElementById('comments-panel');
             panel.style.display = 'block';
             
-            // Add visual feedback
+            // CRAFT BUG B: Conflicting animations
+            panel.classList.add('slide-in');
+            
+            // CRAFT BUG B: Motion sickness parallax
+            document.body.classList.add('parallax-bg');
+            
+            // Add visual feedback with jarring transition
             const commentsTab = document.getElementById('comments-tab');
             commentsTab.style.backgroundColor = '#0078d4';
             commentsTab.style.color = 'white';
+            commentsTab.style.transition = 'all 0.5s linear'; // No easing
+            
+            // Record animation conflict
+            window.craftBugMetrics.animationConflicts.push({
+                timestamp: performance.now(),
+                type: 'conflicting_animations',
+                severity: 'medium'
+            });
         }
         
-        function closeComments() {
+        function closeCommentsWithCraftBugs() {
             const panel = document.getElementById('comments-panel');
-            panel.style.display = 'none';
             
-            // Reset button style
+            // CRAFT BUG B: Jarring close animation
+            panel.style.transition = 'transform 0.3s linear';
+            panel.style.transform = 'translateX(100%)';
+            
+            setTimeout(() => {
+                panel.style.display = 'none';
+                panel.style.transform = '';
+                panel.classList.remove('slide-in');
+                document.body.classList.remove('parallax-bg');
+            }, 300);
+            
+            // Reset button style with jarring transition
             const commentsTab = document.getElementById('comments-tab');
             commentsTab.style.backgroundColor = '#ffffff';
             commentsTab.style.color = 'black';
         }
         
-        function resolveComment(button) {
-            const comment = button.parentElement;
-            comment.style.opacity = '0.5';
-            button.textContent = 'Resolved';
-            button.disabled = true;
-            button.style.backgroundColor = '#107c10';
+        // CRAFT BUG D: Input Handling Issues
+        function addInputLagToCraftBug() {
+            const editor = document.getElementById('editor');
+            let inputQueue = [];
+            let processing = false;
+            
+            editor.addEventListener('keydown', function(e) {
+                if (CRAFT_BUGS.input.inputLag > 0) {
+                    e.preventDefault();
+                    
+                    inputQueue.push({
+                        key: e.key,
+                        timestamp: performance.now()
+                    });
+                    
+                    if (!processing) {
+                        processing = true;
+                        setTimeout(() => {
+                            processInputQueue();
+                            processing = false;
+                        }, CRAFT_BUGS.input.inputLag);
+                    }
+                }
+            });
+            
+            function processInputQueue() {
+                while (inputQueue.length > 0) {
+                    const input = inputQueue.shift();
+                    const currentPos = editor.selectionStart;
+                    const value = editor.value;
+                    
+                    if (input.key.length === 1) {
+                        editor.value = value.slice(0, currentPos) + input.key + value.slice(currentPos);
+                        editor.selectionStart = editor.selectionEnd = currentPos + 1;
+                    }
+                    
+                    // Record input delay
+                    window.craftBugMetrics.inputDelays.push({
+                        delay: performance.now() - input.timestamp,
+                        timestamp: performance.now()
+                    });
+                }
+            }
         }
         
-        // Add some interactive behavior
+        // CRAFT BUG E: Feedback Issues
+        function resolveCommentWithCraftBugs(button) {
+            // CRAFT BUG E: No immediate feedback
+            const comment = button.parentElement;
+            
+            // CRAFT BUG E: Delayed success message
+            setTimeout(() => {
+                comment.style.opacity = '0.5';
+                button.textContent = 'Resolved';
+                button.disabled = true;
+                button.style.backgroundColor = '#107c10';
+                
+                // CRAFT BUG E: Inconsistent success message
+                const messages = ['Resolved!', 'Done', 'Complete', 'Finished'];
+                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                button.textContent = randomMessage;
+            }, 1000);
+            
+            // Record feedback failure
+            window.craftBugMetrics.feedbackFailures.push({
+                type: 'delayed_feedback',
+                delay: 1000,
+                timestamp: performance.now()
+            });
+        }
+        
+        // Initialize craft bugs on load
         document.addEventListener('DOMContentLoaded', function() {
             const buttons = document.querySelectorAll('.toolbar button');
             buttons.forEach(button => {
                 button.addEventListener('click', function() {
                     if (this.id === 'comments-tab') {
-                        showComments();
+                        showCommentsWithCraftBugs();
                     } else if (this.id === 'review-tab') {
                         showReview();
                     } else if (this.classList.contains('share-button')) {
@@ -350,17 +602,50 @@
                     } else if (this.classList.contains('image-insert-btn')) {
                         insertImage();
                     } else {
-                        alert('Feature: ' + this.textContent + ' clicked!');
+                        // CRAFT BUG E: Some buttons have delayed/inconsistent feedback
+                        if (Math.random() > 0.5) {
+                            setTimeout(() => {
+                                alert('Feature: ' + this.textContent + ' clicked!');
+                            }, 500);
+                        } else {
+                            alert('Feature: ' + this.textContent + ' clicked!');
+                        }
                     }
                 });
             });
+            
+            // Initialize input lag
+            addInputLagToCraftBug();
+            
+            // CRAFT BUG A: Add random layout shifts during page interaction
+            setInterval(() => {
+                if (Math.random() > 0.8) {
+                    causeLayoutThrash();
+                }
+            }, 5000);
         });
+        
+        // Backwards compatible functions
+        function startEditing() {
+            startEditingWithCraftBugs();
+        }
+        
+        function showComments() {
+            showCommentsWithCraftBugs();
+        }
+        
+        function closeComments() {
+            closeCommentsWithCraftBugs();
+        }
+        
+        function resolveComment(button) {
+            resolveCommentWithCraftBugs(button);
+        }
         
         function showReview() {
             const controls = document.getElementById('review-controls');
             controls.style.display = 'block';
             
-            // Add visual feedback
             const reviewTab = document.getElementById('review-tab');
             reviewTab.style.backgroundColor = '#0078d4';
             reviewTab.style.color = 'white';
@@ -384,10 +669,16 @@
         function sendShare() {
             const email = document.querySelector('.email-input').value;
             if (email) {
-                alert('Document shared with ' + email);
-                closeShare();
+                // CRAFT BUG E: Silent failure - no loading state for 2 seconds
+                setTimeout(() => {
+                    alert('Document shared with ' + email);
+                    closeShare();
+                }, 2000);
             } else {
-                alert('Please enter an email address');
+                // CRAFT BUG E: Delayed error message
+                setTimeout(() => {
+                    alert('Please enter an email address');
+                }, 800);
             }
         }
         
@@ -401,7 +692,6 @@
             img.alt = '';
             editor.appendChild(img);
             
-            // Add right-click context menu simulation
             img.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 const altText = prompt('Enter alt text for accessibility:');
@@ -411,6 +701,11 @@
                 }
             });
         }
+        
+        // Expose craft bug metrics for analysis
+        window.getCraftBugMetrics = function() {
+            return window.craftBugMetrics;
+        };
     </script>
 </body>
 </html>

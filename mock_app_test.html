@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock App Analysis Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .scenario-select { margin: 20px 0; }
+        .analyze-btn { 
+            background: #3B82F6; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        .results { margin-top: 20px; padding: 20px; background: #F3F4F6; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Mock App Analysis Test</h1>
+        
+        <div class="scenario-select">
+            <label for="appType">App Type:</label>
+            <select id="appType">
+                <option value="word">Word</option>
+                <option value="excel">Excel</option>
+                <option value="powerpoint">PowerPoint</option>
+            </select>
+            
+            <label for="scenario">Scenario:</label>
+            <select id="scenario">
+                <option value="">Loading scenarios...</option>
+            </select>
+        </div>
+        
+        <button class="analyze-btn" onclick="runAnalysis()">🎯 Start Mock App Analysis</button>
+        
+        <div id="results" class="results" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        const MOCK_BASE = 'http://localhost:4174/mocks';
+        
+        let scenarios = [];
+        
+        async function loadScenarios() {
+            try {
+                console.log('🔄 Loading scenarios from:', API_BASE + '/api/scenarios');
+                const response = await fetch(API_BASE + '/api/scenarios');
+                const data = await response.json();
+                scenarios = data.scenarios;
+                console.log('✅ Loaded scenarios:', scenarios.length);
+                updateScenarioDropdown();
+            } catch (error) {
+                console.error('❌ Failed to load scenarios:', error);
+                document.getElementById('results').innerHTML = '<div class="error">Failed to load scenarios: ' + error.message + '</div>';
+                document.getElementById('results').style.display = 'block';
+            }
+        }
+        
+        function updateScenarioDropdown() {
+            const appType = document.getElementById('appType').value;
+            const scenarioSelect = document.getElementById('scenario');
+            
+            const filtered = scenarios.filter(s => s.app_type === appType);
+            scenarioSelect.innerHTML = filtered.map(s => 
+                `<option value="${s.id}">${s.name}</option>`
+            ).join('');
+        }
+        
+        async function runAnalysis() {
+            const appType = document.getElementById('appType').value;
+            const scenarioId = document.getElementById('scenario').value;
+            const resultsDiv = document.getElementById('results');
+            
+            if (!scenarioId) {
+                resultsDiv.innerHTML = '<div class="error">Please select a scenario</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            
+            const scenario = scenarios.find(s => s.id === scenarioId);
+            const mockUrl = `${MOCK_BASE}/${appType}/basic-doc.html`;
+            
+            resultsDiv.innerHTML = '<div>🔄 Starting analysis...</div>';
+            resultsDiv.style.display = 'block';
+            
+            try {
+                // Create scenario content
+                const scenarioContent = `# Mock app scenario for ${appType}
+tests:
+  Mock App Analysis:
+    description: Automated testing of ${appType} application  
+    scenarios:
+    - name: ${scenario.name}
+      steps:
+      - action: navigate_to_url
+        url: "{url}"
+      - action: wait_for_element
+        selector: "body"
+        timeout: 5000
+      - action: accessibility_scan
+        scope: full_page
+      - action: performance_check
+        metrics: ['load_time', 'responsiveness']`;
+
+                console.log('🚀 Starting analysis with URL:', mockUrl);
+                
+                const formData = new FormData();
+                formData.append('scenario_file', new Blob([scenarioContent], {type: 'text/yaml'}), 'scenario.yaml');
+                formData.append('url', mockUrl);
+                
+                const response = await fetch(API_BASE + '/api/analyze/scenario', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Analysis failed: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Analysis result:', result);
+                
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Analysis completed!<br>
+                        📊 Analysis ID: ${result.analysis_id}<br>
+                        📝 Status: ${result.status}<br>
+                        🔗 <a href="http://127.0.0.1:8080/reports/${result.analysis_id}" target="_blank">View Report</a>
+                    </div>
+                `;
+                
+                // Test report retrieval
+                setTimeout(async () => {
+                    try {
+                        const reportResponse = await fetch(API_BASE + `/api/reports/${result.analysis_id}`);
+                        const report = await reportResponse.json();
+                        
+                        resultsDiv.innerHTML += `
+                            <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 3px;">
+                                <strong>📋 Report Summary:</strong><br>
+                                Overall Score: ${report.overall_score}/100<br>
+                                Scenarios: ${report.scenario_results?.length || 0}<br>
+                                Modules: ${Object.keys(report.module_results || {}).length}
+                            </div>
+                        `;
+                    } catch (error) {
+                        console.error('Failed to load report:', error);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Analysis failed:', error);
+                resultsDiv.innerHTML = '<div class="error">❌ Analysis failed: ' + error.message + '</div>';
+            }
+        }
+        
+        // Initialize
+        document.getElementById('appType').addEventListener('change', updateScenarioDropdown);
+        loadScenarios();
+    </script>
+</body>
+</html>

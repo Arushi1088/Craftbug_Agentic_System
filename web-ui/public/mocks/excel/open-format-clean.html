@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Microsoft Excel - Mock (Enhanced with Craft Bugs)</title>
+    <title>Microsoft Excel - Mock</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -134,53 +134,19 @@
             padding: 4px 8px;
             font-size: 12px;
         }
-        
-        /* CRAFT BUG STYLES FOR EXCEL */
-        
-        /* CRAFT BUG A: Layout thrash for cells */
-        .cell-thrash {
-            will-change: transform, width, height;
-        }
-        
-        /* CRAFT BUG B: Jarring cell selection animation */
-        .cell-selected-buggy {
-            border: 2px solid #217346;
-            animation: cell-bounce 0.3s linear infinite alternate;
-        }
-        @keyframes cell-bounce {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.05); }
-        }
-        
-        /* CRAFT BUG D: Formula bar input lag indicator */
-        .formula-lag {
-            background-color: #ffebee;
-            transition: background-color 0.5s linear;
-        }
-        
-        /* CRAFT BUG E: No hover states for some buttons */
-        .toolbar button.excel-craft-bug:hover {
-            background-color: #ffffff; /* No change */
-        }
-        
-        /* CRAFT BUG B: Scroll lag simulation */
-        .spreadsheet-area.scroll-lag {
-            scroll-behavior: unset;
-            overscroll-behavior: contain;
-        }
     </style>
 </head>
-<body data-craft-bugs="loading,motion,input,feedback">
+<body>
     <div class="ribbon">
         <h1>📊 Microsoft Excel</h1>
-        <div>Mock Office Application with Craft Bugs for UX Testing</div>
+        <div>Mock Office Application for UX Testing</div>
     </div>
     
     <div class="toolbar">
         <button onclick="performAction('file')">File</button>
-        <button onclick="performAction('edit')" class="excel-craft-bug">Edit</button>
+        <button onclick="performAction('edit')">Edit</button>
         <button onclick="performAction('view')">View</button>
-        <button onclick="performAction('insert')" class="excel-craft-bug">Insert</button>
+        <button onclick="performAction('insert')">Insert</button>
         
         <div class="format-section">
             <button onclick="formatCurrency()" id="currency-btn">💰 Currency</button>
@@ -410,182 +376,9 @@
             }
         });
         
-        // CRAFT BUG SYSTEM FOR EXCEL
-        const EXCEL_CRAFT_BUGS = {
-            loading: {
-                startDelay: 2500,
-                cellLoadDelay: 100,
-                layoutThrash: true
-            },
-            motion: {
-                cellBounce: true,
-                scrollLag: true,
-                jarringTransitions: true
-            },
-            input: {
-                formulaBarLag: 300,
-                cellSelectionLag: 150,
-                scrollLag: true
-            },
-            feedback: {
-                noHoverStates: true,
-                delayedCellFeedback: true,
-                silentFormulas: true
-            }
-        };
-        
-        // Track Excel craft bug metrics
-        window.excelCraftBugMetrics = {
-            cellSelectionTimes: [],
-            scrollLagEvents: [],
-            formulaBarDelays: [],
-            layoutShifts: []
-        };
-        
-        // Enhanced startSpreadsheet with craft bugs
-        const originalStartSpreadsheet = startSpreadsheet;
-        startSpreadsheet = function() {
-            const startBtn = document.getElementById('start-btn');
-            const startTime = performance.now();
-            
-            // CRAFT BUG A: Loading delay
-            startBtn.textContent = 'Loading Excel...';
-            startBtn.disabled = true;
-            
-            setTimeout(() => {
-                originalStartSpreadsheet();
-                
-                // CRAFT BUG A: Add layout thrash after load
-                addLayoutThrashToExcel();
-                
-                // CRAFT BUG B: Add scroll lag
-                addScrollLagToExcel();
-                
-                // CRAFT BUG D: Add cell selection lag
-                addCellSelectionLag();
-                
-                // Record metrics
-                const responseTime = performance.now() - startTime;
-                window.excelCraftBugMetrics.cellSelectionTimes.push(responseTime);
-                
-            }, EXCEL_CRAFT_BUGS.loading.startDelay);
-        };
-        
-        // CRAFT BUG A: Layout thrash function
-        function addLayoutThrashToExcel() {
-            const cells = document.querySelectorAll('.cell');
-            cells.forEach((cell, index) => {
-                setTimeout(() => {
-                    cell.style.width = (120 + Math.random() * 10) + 'px';
-                    const height = cell.offsetHeight; // Force reflow
-                    cell.style.width = '120px';
-                    
-                    window.excelCraftBugMetrics.layoutShifts.push({
-                        cell: cell.id,
-                        timestamp: performance.now()
-                    });
-                }, index * 5);
-            });
-        }
-        
-        // CRAFT BUG B: Scroll lag function
-        function addScrollLagToExcel() {
-            const spreadsheetArea = document.querySelector('.spreadsheet-area');
-            if (spreadsheetArea) {
-                spreadsheetArea.classList.add('scroll-lag');
-                
-                spreadsheetArea.addEventListener('scroll', function(e) {
-                    const lagStart = performance.now();
-                    
-                    // Artificial scroll lag
-                    setTimeout(() => {
-                        const lagEnd = performance.now();
-                        window.excelCraftBugMetrics.scrollLagEvents.push({
-                            lag: lagEnd - lagStart,
-                            timestamp: performance.now()
-                        });
-                    }, 50);
-                });
-            }
-        }
-        
-        // CRAFT BUG D: Cell selection lag
-        function addCellSelectionLag() {
-            const cells = document.querySelectorAll('.cell');
-            cells.forEach(cell => {
-                const originalOnClick = cell.onclick;
-                cell.onclick = function() {
-                    // CRAFT BUG D: Add selection lag
-                    setTimeout(() => {
-                        if (originalOnClick) {
-                            originalOnClick();
-                        }
-                        
-                        // CRAFT BUG B: Add jarring bounce
-                        cell.classList.add('cell-selected-buggy');
-                        
-                        // Record lag
-                        window.excelCraftBugMetrics.cellSelectionTimes.push({
-                            lag: EXCEL_CRAFT_BUGS.input.cellSelectionLag,
-                            timestamp: performance.now()
-                        });
-                    }, EXCEL_CRAFT_BUGS.input.cellSelectionLag);
-                };
-            });
-        }
-        
-        // CRAFT BUG D: Formula bar lag enhancement
-        const originalUpdateFormula = updateFormula;
-        updateFormula = function() {
-            const formulaBar = document.getElementById('formula-bar');
-            
-            // CRAFT BUG D: Formula bar lag
-            if (formulaBar) {
-                formulaBar.classList.add('formula-lag');
-                
-                setTimeout(() => {
-                    originalUpdateFormula();
-                    formulaBar.classList.remove('formula-lag');
-                    
-                    // Record delay
-                    window.excelCraftBugMetrics.formulaBarDelays.push({
-                        delay: EXCEL_CRAFT_BUGS.input.formulaBarLag,
-                        timestamp: performance.now()
-                    });
-                }, EXCEL_CRAFT_BUGS.input.formulaBarLag);
-            } else {
-                originalUpdateFormula();
-            }
-        };
-        
-        // CRAFT BUG E: Enhanced performAction with silent failures
-        const originalPerformAction = performAction;
-        performAction = function(action) {
-            // CRAFT BUG E: Random silent failures
-            if (Math.random() > 0.8) {
-                // Silent failure - no action taken
-                console.log('Silent failure for action:', action);
-                return;
-            }
-            
-            // CRAFT BUG E: Delayed feedback for some actions
-            if (['sort', 'filter', 'chart'].includes(action)) {
-                setTimeout(() => {
-                    originalPerformAction(action);
-                }, 800);
-            } else {
-                originalPerformAction(action);
-            }
-        };
-        
-        // Expose Excel craft bug metrics
-        window.getExcelCraftBugMetrics = function() {
-            return window.excelCraftBugMetrics;
-        };
-        
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Excel Mock Application with Craft Bugs Loaded');
+            console.log('Excel Mock Application Loaded');
         });
     </script>
 </body>

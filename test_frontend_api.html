@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-result { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Frontend API Debug Test</h1>
+        <p>This tests what the frontend receives from the backend API</p>
+        
+        <button onclick="testBackendAPI()">Test Backend API (127.0.0.1:8000)</button>
+        <button onclick="testFrontendFetch()">Test Frontend API Call</button>
+        <button onclick="testReportData()">Test Report 67a67490</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        
+        function addResult(title, content, isSuccess = true) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+        
+        async function testBackendAPI() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/`);
+                const data = await response.text();
+                addResult('✅ Backend Health Check', `Status: ${response.status}\nResponse: ${data}`, response.ok);
+            } catch (error) {
+                addResult('❌ Backend Health Check Failed', error.message, false);
+            }
+        }
+        
+        async function testFrontendFetch() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/reports/67a67490`);
+                const data = await response.json();
+                
+                const summary = {
+                    status: data.status,
+                    overall_score: data.overall_score,
+                    total_issues: data.total_issues,
+                    module_results_keys: Object.keys(data.module_results || {}),
+                    module_results_count: Object.keys(data.module_results || {}).length,
+                    scenario_results_count: data.scenario_results?.length || 0,
+                    has_ux_issues: Array.isArray(data.ux_issues) && data.ux_issues.length > 0,
+                    ux_issues_count: data.ux_issues?.length || 0
+                };
+                
+                addResult('📊 API Response Summary', JSON.stringify(summary, null, 2));
+                addResult('📄 Full API Response', JSON.stringify(data, null, 2));
+            } catch (error) {
+                addResult('❌ Frontend API Test Failed', error.message, false);
+            }
+        }
+        
+        async function testReportData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/reports/67a67490`);
+                const rawData = await response.json();
+                
+                // Simulate the normalization function from ReportPage
+                const normalizeReport = (r) => {
+                    console.log('🔍 Normalizing report data:', r);
+                    
+                    const mr = r?.module_results && typeof r.module_results === 'object'
+                        ? r.module_results
+                        : {};
+
+                    let entries = Object.entries(mr);
+                    console.log('📊 Module results entries:', entries);
+                    
+                    const modules = entries.map(([key, v]) => ({
+                        key,
+                        title: v?.title ?? key.replace('_', ' '),
+                        score: typeof v?.score === 'number' ? v.score : undefined,
+                        findings: Array.isArray(v?.findings) ? v.findings : [],
+                        recommendations: Array.isArray(v?.recommendations) ? v.recommendations : []
+                    }));
+
+                    return {
+                        analysis_id: r?.analysis_id ?? '',
+                        status: r?.status ?? 'unknown',
+                        total_issues: Number.isFinite(r?.total_issues) ? r.total_issues : 
+                            modules.reduce((n, m) => n + m.findings.length, 0),
+                        modules,
+                        overall_score: r?.overall_score,
+                        ux_issues: Array.isArray(r?.ux_issues) ? r.ux_issues : []
+                    };
+                };
+                
+                const normalized = normalizeReport(rawData);
+                
+                const debugInfo = {
+                    raw_module_results: rawData.module_results ? Object.keys(rawData.module_results) : 'null',
+                    raw_total_issues: rawData.total_issues,
+                    raw_overall_score: rawData.overall_score,
+                    normalized_modules_count: normalized.modules.length,
+                    normalized_total_issues: normalized.total_issues,
+                    normalized_findings_count: normalized.modules.reduce((sum, m) => sum + m.findings.length, 0),
+                    modules_with_findings: normalized.modules.filter(m => m.findings.length > 0).map(m => ({
+                        key: m.key,
+                        findings_count: m.findings.length,
+                        sample_finding: m.findings[0]
+                    }))
+                };
+                
+                addResult('🔍 Report Normalization Debug', JSON.stringify(debugInfo, null, 2));
+                
+                if (normalized.modules.length === 0) {
+                    addResult('⚠️ ISSUE FOUND: No modules after normalization', 'This explains why "No issues found" appears in the frontend!', false);
+                } else {
+                    addResult('✅ Modules Successfully Normalized', `Found ${normalized.modules.length} modules with ${normalized.total_issues} total issues`);
+                }
+                
+            } catch (error) {
+                addResult('❌ Report Data Test Failed', error.message, false);
+            }
+        }
+    </script>
+</body>
+</html>

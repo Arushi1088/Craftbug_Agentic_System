@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/arushitandon/Desktop/analyzer/validation_test.py", line 10, in <module>
+    from utils.scenario_resolver import ScenarioResolver
+ImportError: cannot import name 'ScenarioResolver' from 'utils.scenario_resolver' (/Users/arushitandon/Desktop/analyzer/utils/scenario_resolver.py). Did you mean: 'scenario_resolver'?
+🔍 VALIDATION TEST STARTING
+========================================
+1. Testing imports...
+❌ ERROR: cannot import name 'ScenarioResolver' from 'utils.scenario_resolver' (/Users/arushitandon/Desktop/analyzer/utils/scenario_resolver.py)
+
+🏁 Test complete

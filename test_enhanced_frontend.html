@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Frontend Test - UX Analyzer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .button {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            transition: background 0.2s;
+        }
+        .button:hover {
+            background: #2563eb;
+        }
+        .button.secondary {
+            background: #6b7280;
+        }
+        .button.secondary:hover {
+            background: #4b5563;
+        }
+        .status {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 0.25rem 0;
+        }
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 0.5rem;
+        }
+        .expected {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Enhanced Frontend Analytics Display Test</h1>
+    
+    <div class="status success">
+        <strong>✅ Frontend enhancements completed!</strong> 
+        Debug tools and sample data are now available for testing the analytics module display.
+    </div>
+
+    <div class="card">
+        <h2>🚀 Quick Test Actions</h2>
+        <p>Use these buttons to quickly test the enhanced frontend:</p>
+        
+        <a href="http://localhost:5173/report/sample" target="_blank" class="button">
+            📊 View Enhanced Sample Report
+        </a>
+        
+        <a href="http://localhost:5173" target="_blank" class="button secondary">
+            🏠 Open Frontend Dashboard
+        </a>
+        
+        <a href="http://localhost:3000" target="_blank" class="button secondary">
+            🔧 Open Backend API (if running)
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>🎯 What You Should See</h2>
+        <div class="expected">
+            <strong>Expected Analytics Modules:</strong>
+            <ul class="checklist">
+                <li><strong>Accessibility</strong> - WCAG compliance, color contrast, alt text</li>
+                <li><strong>UX Heuristics</strong> - User control, system status, consistency</li>
+                <li><strong>Performance</strong> - Bundle size, loading metrics, optimization</li>
+                <li><strong>Keyboard Navigation</strong> - Focus indicators, tab order</li>
+                <li><strong>Best Practices</strong> - Mobile optimization, semantic HTML</li>
+                <li><strong>Health Alerts</strong> - Security monitoring, dependencies</li>
+                <li><strong>Craft Bug Detection</strong> - UX patterns, information architecture</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🛠️ Debug Features (Development Mode)</h2>
+        <div class="status info">
+            <strong>Debug Panel:</strong> Look for the yellow debug controls at the top of any report page
+        </div>
+        <ul class="checklist">
+            <li><strong>Use Sample Data</strong> - Toggle to enhanced sample report instantly</li>
+            <li><strong>Enable Debug Mode</strong> - Shows detailed module breakdown</li>
+            <li><strong>Live Stats</strong> - Report ID, module count, total issues</li>
+            <li><strong>Module Breakdown</strong> - Score and finding count per module</li>
+            <li><strong>Raw JSON Inspector</strong> - Complete data structure view</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>📋 Start Frontend Server</h2>
+        <p>If the frontend isn't running yet, use this command:</p>
+        <pre>cd /Users/arushitandon/Desktop/analyzer/web-ui
+npm run dev</pre>
+        <p>Then click the "View Enhanced Sample Report" button above.</p>
+    </div>
+
+    <div class="card">
+        <h2>🔍 Troubleshooting</h2>
+        <p><strong>If you still see git commands instead of analytics modules:</strong></p>
+        <ol>
+            <li>Open browser developer tools (F12)</li>
+            <li>Click "Use Sample Data" in the debug panel</li>
+            <li>Check the console for normalization logs</li>
+            <li>Verify module breakdown in debug section</li>
+            <li>Compare with raw JSON data</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>📊 Sample Report Data Structure</h2>
+        <p>The enhanced sample report includes:</p>
+        <ul>
+            <li><strong>7 Analytics Modules</strong> with scores and findings</li>
+            <li><strong>Multiple Finding Types</strong> (UX patterns, WCAG violations, performance issues)</li>
+            <li><strong>ADO Integration</strong> with work item metadata</li>
+            <li><strong>Recommendations</strong> for each module</li>
+            <li><strong>Severity Levels</strong> (critical, high, medium, low)</li>
+        </ul>
+    </div>
+
+    <script>
+        // Auto-refresh page status
+        setInterval(() => {
+            const timestamp = new Date().toLocaleTimeString();
+            document.title = `Enhanced Frontend Test - ${timestamp}`;
+        }, 1000);
+
+        // Test frontend connectivity
+        async function testFrontendConnection() {
+            try {
+                const response = await fetch('http://localhost:5173');
+                if (response.ok) {
+                    console.log('✅ Frontend server is running');
+                    return true;
+                }
+            } catch (error) {
+                console.log('❌ Frontend server not detected');
+                return false;
+            }
+        }
+
+        // Run connectivity test on page load
+        testFrontendConnection();
+    </script>
+</body>
+</html>

@@ -1,7 +1,364 @@
-pyenv: python: command not found
+⚠️ Enhanced actions not available: cannot import name 'test_navigation' from 'runner.extra_actions' (/Users/arushitandon/Desktop/analyzer/runner/extra_actions.py)
+INFO:     Will watch for changes in these directories: ['/Users/arushitandon/Desktop/analyzer']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [51154] using WatchFiles
+✅ Environment variables loaded
+✅ OpenAI API Key Loaded: sk-proj-... (truncated)
+Warning: Orchestrator directory or routes.py not found at /Users/arushitandon/Desktop/analyzer/orchestrator
+🚀 Starting Enhanced UX Analyzer FastAPI Server...
+⚠️ Enhanced actions not available: cannot import name 'test_navigation' from 'runner.extra_actions' (/Users/arushitandon/Desktop/analyzer/runner/extra_actions.py)
+INFO:     Started server process [51336]
+INFO:     Waiting for application startup.
+INFO:enhanced_fastapi_server:🚀 Enhanced UX Analyzer starting up...
+INFO:enhanced_fastapi_server:🔧 Running report schema migration...
+INFO:schema_normalizer:Found 173 report files for potential migration
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/23e6e580_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d498aead_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: _generate_fallback_report() takes 4 positional arguments but 5 were given
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/ac87b5cc_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/e4d2426e_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/535da107_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d2530521_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4173/mocks/word/basic-doc.html
+Call log:
+  - navigating to "http://localhost:4173/mocks/word/basic-doc.html", waiting until "domcontentloaded"
 
-The `python' command exists in these Python versions:
-  3.11.13
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/2de40680_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/f6555753_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/a00e8d4c_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/82a5a0fc_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario file not found: Scenario file not found: scenarios/word/1.2-comment-resolution.json
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4cb88faa_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/48c5c483_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario file not found: Scenario file not found: scenarios/word_scenarios.yaml#1.1
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d01a12e7_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/c38a1194_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/cbb23ae8_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4507b26f_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d88984df_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4173/mocks/word/basic-doc.html
+Call log:
+  - navigating to "http://localhost:4173/mocks/word/basic-doc.html", waiting until "domcontentloaded"
 
-Note: See 'pyenv help global' for tips on allowing both
-      python2 and python3 to be found.
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/434b034d_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/6eb46662_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/6a26ea32_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4ea13d22_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/ceed8ca3_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/20d67bad_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: [Errno 2] No such file or directory: 'basic_navigation'
+INFO:schema_normalizer:Schema migration complete: 0 files updated
+INFO:enhanced_fastapi_server:📊 Schema migration complete: 0 files updated
+INFO:enhanced_fastapi_server:📁 Required directories validated
+INFO:     Application startup complete.
+INFO:scenario_executor:Loaded 35 scenarios from 32 files
+✅ Environment variables loaded
+✅ OpenAI API Key Loaded: sk-proj-... (truncated)
+Warning: Orchestrator directory or routes.py not found at /Users/arushitandon/Desktop/analyzer/orchestrator
+✅ Environment variables loaded
+✅ OpenAI API Key Loaded: sk-proj-... (truncated)
+Warning: Orchestrator directory or routes.py not found at /Users/arushitandon/Desktop/analyzer/orchestrator
+INFO:     127.0.0.1:57950 - "GET /api/scenarios HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57975 - "HEAD /health HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:57982 - "GET /health HTTP/1.1" 200 OK
+INFO:scenario_executor:Loaded 35 scenarios from 32 files
+INFO:     127.0.0.1:58005 - "GET /api/scenarios HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58011 - "OPTIONS /api/analyze HTTP/1.1" 200 OK
+INFO:enhanced_fastapi_server:🚀 Running real analysis for URL: http://localhost:4174/word/basic-doc.html, scenario: 1.4
+INFO:scenario_executor:🚀 Starting REAL browser automation for scenario: 1.4 on http://localhost:4174/word/basic-doc.html
+INFO:scenario_executor:🚀 Executing REAL browser scenario 1.4 from scenarios/word_scenarios.yaml
+WARNING:scenario_executor:No mock URL found for app_type: 
+INFO:scenario_executor:🚀 REAL BROWSER AUTOMATION STARTING for scenario: Interactive Document Editing with Craft Bug Triggers
+INFO:scenario_executor:🔗 Target URL: http://localhost:4174/word/basic-doc.html
+INFO:scenario_executor:📋 Steps to execute: 0
+INFO:scenario_executor:🐛 Running craft bug detection for UX heuristics analysis...
+ERROR:scenario_executor:❌ Craft bug analysis failed: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4174/word/basic-doc.html
+Call log:
+  - navigating to "http://localhost:4174/word/basic-doc.html", waiting until "domcontentloaded"
+
+INFO:scenario_executor:🐛 Craft bug analysis completed - no bugs found
+INFO:scenario_executor:🐛 UX Heuristics module enabled - craft bugs will be detected during browser execution
+INFO:enhanced_report_handler:✅ Report saved: analysis_8f15e204_20250812_002408.json (6440 bytes, 0 craft bugs)
+INFO:enhanced_fastapi_server:✅ Real analysis completed for http://localhost:4174/word/basic-doc.html, analysis_id: 8f15e204
+🔍 Starting craft bug analysis for: http://localhost:4174/word/basic-doc.html
+INFO:     127.0.0.1:58011 - "POST /api/analyze HTTP/1.1" 200 OK
+INFO:watchfiles.main:4 changes detected
+INFO:     127.0.0.1:58011 - "GET /api/reports/8f15e204 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58028 - "GET /api/reports/8f15e204 HTTP/1.1" 200 OK
+INFO:scenario_executor:Loaded 35 scenarios from 32 files
+INFO:     127.0.0.1:58012 - "GET /api/scenarios HTTP/1.1" 200 OK
+INFO:enhanced_fastapi_server:🚀 Running real analysis for URL: http://localhost:4174/word/basic-doc.html, scenario: craft-1
+INFO:scenario_executor:🚀 Starting REAL browser automation for scenario: craft-1 on http://localhost:4174/word/basic-doc.html
+WARNING:scenario_executor:No scenario file found for ID craft-1, using fallback
+INFO:scenario_executor:🔄 Generating fallback report for 90f2e2ab
+INFO:enhanced_report_handler:✅ Report saved: analysis_9ca2283a_20250812_002423.json (8284 bytes, 0 craft bugs)
+INFO:enhanced_fastapi_server:✅ Real analysis completed for http://localhost:4174/word/basic-doc.html, analysis_id: 9ca2283a
+INFO:     127.0.0.1:58012 - "POST /api/analyze HTTP/1.1" 200 OK
+INFO:watchfiles.main:4 changes detected
+INFO:     127.0.0.1:58012 - "GET /api/reports/9ca2283a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58032 - "GET /api/reports/9ca2283a HTTP/1.1" 200 OK
+INFO:scenario_executor:Loaded 35 scenarios from 32 files
+INFO:     127.0.0.1:58091 - "GET /api/scenarios HTTP/1.1" 200 OK
+INFO:scenario_executor:Loaded 35 scenarios from 32 files
+INFO:     127.0.0.1:58096 - "GET /api/scenarios HTTP/1.1" 200 OK
+INFO:scenario_executor:Loaded 35 scenarios from 32 files
+INFO:     127.0.0.1:58107 - "GET /api/scenarios HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_browser_steps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:enhanced_fastapi_server:🛑 Enhanced UX Analyzer shutting down...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51336]
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_browser_steps.py'. Reloading...
+⚠️ Enhanced actions not available: cannot import name 'test_navigation' from 'runner.extra_actions' (/Users/arushitandon/Desktop/analyzer/runner/extra_actions.py)
+INFO:     Started server process [55326]
+INFO:     Waiting for application startup.
+INFO:enhanced_fastapi_server:🚀 Enhanced UX Analyzer starting up...
+INFO:enhanced_fastapi_server:🔧 Running report schema migration...
+INFO:schema_normalizer:Found 175 report files for potential migration
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/23e6e580_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d498aead_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: _generate_fallback_report() takes 4 positional arguments but 5 were given
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/ac87b5cc_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/e4d2426e_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/535da107_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d2530521_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4173/mocks/word/basic-doc.html
+Call log:
+  - navigating to "http://localhost:4173/mocks/word/basic-doc.html", waiting until "domcontentloaded"
+
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/2de40680_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/f6555753_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/a00e8d4c_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/82a5a0fc_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario file not found: Scenario file not found: scenarios/word/1.2-comment-resolution.json
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4cb88faa_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/48c5c483_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario file not found: Scenario file not found: scenarios/word_scenarios.yaml#1.1
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d01a12e7_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/c38a1194_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/cbb23ae8_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4507b26f_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d88984df_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4173/mocks/word/basic-doc.html
+Call log:
+  - navigating to "http://localhost:4173/mocks/word/basic-doc.html", waiting until "domcontentloaded"
+
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/434b034d_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/6eb46662_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/6a26ea32_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4ea13d22_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/ceed8ca3_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/20d67bad_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: [Errno 2] No such file or directory: 'basic_navigation'
+INFO:schema_normalizer:Schema migration complete: 0 files updated
+INFO:enhanced_fastapi_server:📊 Schema migration complete: 0 files updated
+INFO:enhanced_fastapi_server:📁 Required directories validated
+INFO:     Application startup complete.
+INFO:enhanced_fastapi_server:🚀 Running real analysis for URL: http://127.0.0.1:9000/mocks/word/basic-doc.html, scenario: 1.4
+INFO:scenario_executor:🚀 Starting REAL browser automation for scenario: 1.4 on http://127.0.0.1:9000/mocks/word/basic-doc.html
+INFO:scenario_executor:🚀 Executing REAL browser scenario 1.4 from scenarios/word_scenarios.yaml
+WARNING:scenario_executor:No mock URL found for app_type: 
+INFO:scenario_executor:🚀 REAL BROWSER AUTOMATION STARTING for scenario: Interactive Document Editing with Craft Bug Triggers
+INFO:scenario_executor:🔗 Target URL: http://127.0.0.1:9000/mocks/word/basic-doc.html
+INFO:scenario_executor:📋 Steps to execute: 0
+INFO:scenario_executor:🐛 Running craft bug detection for UX heuristics analysis...
+INFO:scenario_executor:🐛 Craft bug analysis completed: 0 bugs found
+INFO:scenario_executor:🐛 Craft bug analysis completed - no bugs found
+INFO:scenario_executor:🐛 UX Heuristics module enabled - craft bugs will be detected during browser execution
+INFO:enhanced_report_handler:✅ Report saved: analysis_dec0a770_20250812_002857.json (3040 bytes, 0 craft bugs)
+INFO:enhanced_fastapi_server:✅ Real analysis completed for http://127.0.0.1:9000/mocks/word/basic-doc.html, analysis_id: dec0a770
+✅ Environment variables loaded
+✅ OpenAI API Key Loaded: sk-proj-... (truncated)
+Warning: Orchestrator directory or routes.py not found at /Users/arushitandon/Desktop/analyzer/orchestrator
+✅ Environment variables loaded
+✅ OpenAI API Key Loaded: sk-proj-... (truncated)
+Warning: Orchestrator directory or routes.py not found at /Users/arushitandon/Desktop/analyzer/orchestrator
+🔍 Starting craft bug analysis for: http://127.0.0.1:9000/mocks/word/basic-doc.html
+Debug animation_metrics: {'layoutThrashCount': 0, 'animationConflicts': 0, 'judderEvents': 0, 'frameTimes': [], 'layoutShifts': [], 'animationConflictList': [], 'rawLayoutShiftsCount': 0, 'rawAnimationConflictsCount': 0}
+Debug layout_count: 0, threshold: 3
+❌ Layout thrash NOT detected: 0 < 3
+Debug conflicts: 0
+❌ Animation conflicts NOT detected: 0 <= 0
+Debug input_metrics: {'inputLagEvents': 0, 'delayedResponses': 0, 'textBoxLagEvents': 0, 'inputDelays': [], 'buttonResponseTimes': [], 'rawInputDelaysCount': 0, 'rawButtonResponseCount': 0}
+Debug input_lag_events: 0
+❌ Input lag NOT detected: 0 <= 0
+✅ Analysis complete: 0 craft bugs detected
+INFO:     127.0.0.1:58163 - "POST /api/analyze HTTP/1.1" 200 OK
+INFO:watchfiles.main:4 changes detected
+INFO:     127.0.0.1:58187 - "GET /api/reports/dec0a770 HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_scenario_loading.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:enhanced_fastapi_server:🛑 Enhanced UX Analyzer shutting down...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [55326]
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_scenario_loading.py'. Reloading...
+⚠️ Enhanced actions not available: cannot import name 'test_navigation' from 'runner.extra_actions' (/Users/arushitandon/Desktop/analyzer/runner/extra_actions.py)
+INFO:     Started server process [56801]
+INFO:     Waiting for application startup.
+INFO:enhanced_fastapi_server:🚀 Enhanced UX Analyzer starting up...
+INFO:enhanced_fastapi_server:🔧 Running report schema migration...
+INFO:schema_normalizer:Found 176 report files for potential migration
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/23e6e580_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d498aead_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: _generate_fallback_report() takes 4 positional arguments but 5 were given
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/ac87b5cc_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/e4d2426e_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/535da107_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d2530521_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4173/mocks/word/basic-doc.html
+Call log:
+  - navigating to "http://localhost:4173/mocks/word/basic-doc.html", waiting until "domcontentloaded"
+
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/2de40680_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/f6555753_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/a00e8d4c_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/82a5a0fc_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario file not found: Scenario file not found: scenarios/word/1.2-comment-resolution.json
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4cb88faa_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/48c5c483_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario file not found: Scenario file not found: scenarios/word_scenarios.yaml#1.1
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d01a12e7_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/c38a1194_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/cbb23ae8_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4507b26f_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/d88984df_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4173/mocks/word/basic-doc.html
+Call log:
+  - navigating to "http://localhost:4173/mocks/word/basic-doc.html", waiting until "domcontentloaded"
+
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/434b034d_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/6eb46662_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/6a26ea32_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/4ea13d22_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: 'NoneType' object has no attribute 'get'
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/ceed8ca3_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: Scenario execution failed: Unsupported scenario format or missing 'steps' in scenarios/custom/20d67bad_mock-scenario.yaml. Supported formats: direct steps, scenarios list, or tests format
+INFO:schema_normalizer:Normalizing failed report with error: [Errno 2] No such file or directory: 'basic_navigation'
+INFO:schema_normalizer:Schema migration complete: 0 files updated
+INFO:enhanced_fastapi_server:📊 Schema migration complete: 0 files updated
+INFO:enhanced_fastapi_server:📁 Required directories validated
+INFO:     Application startup complete.
+INFO:watchfiles.main:1 change detected
+INFO:enhanced_fastapi_server:🚀 Running real analysis for URL: http://127.0.0.1:9000/mocks/word/basic-doc.html, scenario: 1.4
+INFO:scenario_executor:🚀 Starting REAL browser automation for scenario: 1.4 on http://127.0.0.1:9000/mocks/word/basic-doc.html
+INFO:scenario_executor:🚀 Executing REAL browser scenario 1.4 from scenarios/word_scenarios.yaml
+WARNING:scenario_executor:No mock URL found for app_type: 
+INFO:scenario_executor:🚀 REAL BROWSER AUTOMATION STARTING for scenario: Interactive Document Editing with Craft Bug Triggers
+INFO:scenario_executor:🔗 Target URL: http://127.0.0.1:9000/mocks/word/basic-doc.html
+INFO:scenario_executor:📋 Steps to execute: 13
+ERROR:scenario_executor:Failed to collect performance metrics: Page.evaluate: Target page, context or browser has been closed
+ERROR:scenario_executor:Failed to check accessibility: Page.evaluate: Target page, context or browser has been closed
+INFO:scenario_executor:🐛 Running craft bug detection for UX heuristics analysis...
+ERROR:scenario_executor:❌ Craft bug analysis failed: Page.goto: Target page, context or browser has been closed
+INFO:scenario_executor:🐛 Craft bug analysis completed - no bugs found
+INFO:scenario_executor:🐛 UX Heuristics module enabled - craft bugs will be detected during browser execution
+INFO:enhanced_report_handler:✅ Report saved: analysis_bf9c8ec4_20250812_003148.json (12000 bytes, 0 craft bugs)
+INFO:enhanced_fastapi_server:✅ Real analysis completed for http://127.0.0.1:9000/mocks/word/basic-doc.html, analysis_id: bf9c8ec4
+INFO:watchfiles.main:4 changes detected
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_url_substitution.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:enhanced_fastapi_server:🛑 Enhanced UX Analyzer shutting down...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [56801]
+✅ Environment variables loaded
+✅ OpenAI API Key Loaded: sk-proj-... (truncated)
+Warning: Orchestrator directory or routes.py not found at /Users/arushitandon/Desktop/analyzer/orchestrator
+✅ Environment variables loaded
+✅ OpenAI API Key Loaded: sk-proj-... (truncated)
+Warning: Orchestrator directory or routes.py not found at /Users/arushitandon/Desktop/analyzer/orchestrator
+🔍 Starting craft bug analysis for: http://127.0.0.1:9000/mocks/word/basic-doc.html
+Fatal Python error: init_sys_streams: can't initialize sys standard streams
+Python runtime state: core initialized
+OSError: [Errno 9] Bad file descriptor
+
+Current thread 0x00007ff848c9cf80 (most recent call first):
+  <no Python frame>
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_url_substitution.py'. Reloading...
+Fatal Python error: init_sys_streams: can't initialize sys standard streams
+Python runtime state: core initialized
+OSError: [Errno 9] Bad file descriptor
+
+Current thread 0x00007ff848c9cf80 (most recent call first):
+  <no Python frame>
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'scenario_executor.py'. Reloading...
+Fatal Python error: init_sys_streams: can't initialize sys standard streams
+Python runtime state: core initialized
+OSError: [Errno 9] Bad file descriptor
+
+Current thread 0x00007ff848c9cf80 (most recent call first):
+  <no Python frame>
+INFO:watchfiles.main:3 changes detected
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_fast_craft_bugs.py'. Reloading...
+Fatal Python error: init_sys_streams: can't initialize sys standard streams
+Python runtime state: core initialized
+OSError: [Errno 9] Bad file descriptor
+
+Current thread 0x00007ff848c9cf80 (most recent call first):
+  <no Python frame>
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'test_fast_craft_bugs.py'. Reloading...
+Fatal Python error: init_sys_streams: can't initialize sys standard streams
+Python runtime state: core initialized
+OSError: [Errno 9] Bad file descriptor
+
+Current thread 0x00007ff848c9cf80 (most recent call first):
+  <no Python frame>
+INFO:     Stopping reloader process [51154]

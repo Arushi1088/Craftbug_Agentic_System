@@ -1,0 +1,240 @@
+{
+  "analysis_id": "a3bbd4ad",
+  "timestamp": "2025-08-11T23:32:37.883220",
+  "url": "http://localhost:8080/mocks/word/basic-doc.html",
+  "mode": "real_browser",
+  "overall_score": 95,
+  "modules": {
+    "performance": {
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "Implement lazy loading for images and components",
+        "Minimize and compress JavaScript and CSS files",
+        "Use CDN for static assets"
+      ],
+      "metrics": {
+        "response_time": 0,
+        "dom_content_loaded": 0,
+        "first_paint": 164,
+        "score_breakdown": {
+          "load_time": 100,
+          "resource_optimization": 100
+        }
+      }
+    },
+    "accessibility": {
+      "score": 85,
+      "findings": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "message": "Form input missing accessible label",
+          "element": "input",
+          "selector": "input:nth-of-type(1)"
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "message": "Form input missing accessible label",
+          "element": "input",
+          "selector": "input:nth-of-type(2)"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "message": "Potential color contrast issues detected",
+          "element": "page",
+          "selector": "body"
+        }
+      ],
+      "recommendations": [
+        "Add proper ARIA labels and roles",
+        "Ensure sufficient color contrast",
+        "Implement proper heading hierarchy"
+      ],
+      "metrics": {
+        "response_time": 100,
+        "issues_found": 3,
+        "score_breakdown": {
+          "alt_text": 85,
+          "form_labels": 85,
+          "color_contrast": 85
+        }
+      }
+    },
+    "ux_heuristics": {
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "Follow ux_heuristics best practices",
+        "Regularly audit ux_heuristics compliance",
+        "Implement ux_heuristics monitoring"
+      ],
+      "metrics": {
+        "response_time": 1870,
+        "steps_completed": 4,
+        "score_breakdown": {
+          "execution": 100,
+          "usability": 100
+        }
+      }
+    }
+  },
+  "status": "completed",
+  "module_results": {
+    "performance": {
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "Implement lazy loading for images and components",
+        "Minimize and compress JavaScript and CSS files",
+        "Use CDN for static assets"
+      ],
+      "metrics": {
+        "response_time": 0,
+        "dom_content_loaded": 0,
+        "first_paint": 164,
+        "score_breakdown": {
+          "load_time": 100,
+          "resource_optimization": 100
+        }
+      }
+    },
+    "accessibility": {
+      "score": 85,
+      "findings": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "message": "Form input missing accessible label",
+          "element": "input",
+          "selector": "input:nth-of-type(1)"
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "message": "Form input missing accessible label",
+          "element": "input",
+          "selector": "input:nth-of-type(2)"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "message": "Potential color contrast issues detected",
+          "element": "page",
+          "selector": "body"
+        }
+      ],
+      "recommendations": [
+        "Add proper ARIA labels and roles",
+        "Ensure sufficient color contrast",
+        "Implement proper heading hierarchy"
+      ],
+      "metrics": {
+        "response_time": 100,
+        "issues_found": 3,
+        "score_breakdown": {
+          "alt_text": 85,
+          "form_labels": 85,
+          "color_contrast": 85
+        }
+      }
+    },
+    "ux_heuristics": {
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "Follow ux_heuristics best practices",
+        "Regularly audit ux_heuristics compliance",
+        "Implement ux_heuristics monitoring"
+      ],
+      "metrics": {
+        "response_time": 1870,
+        "steps_completed": 4,
+        "score_breakdown": {
+          "execution": 100,
+          "usability": 100
+        }
+      }
+    }
+  },
+  "scenario_results": [
+    {
+      "step": 1,
+      "action": "navigate",
+      "target": "http://localhost:8080/mocks/word/basic-doc.html",
+      "status": "success",
+      "duration_ms": 215,
+      "description": "Navigated to http://localhost:8080/mocks/word/basic-doc.html"
+    },
+    {
+      "step": 2,
+      "action": "wait",
+      "duration_ms": 1005,
+      "status": "success",
+      "description": "Waited for 1.0s"
+    },
+    {
+      "step": 3,
+      "action": "click",
+      "target": "#comments-tab",
+      "status": "success",
+      "duration_ms": 144,
+      "description": "Clicked element #comments-tab"
+    },
+    {
+      "step": 4,
+      "action": "wait",
+      "duration_ms": 506,
+      "status": "success",
+      "description": "Waited for 0.5s"
+    }
+  ],
+  "total_issues": 3,
+  "ux_issues": [
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "message": "Form input missing accessible label",
+      "element": "input",
+      "selector": "input:nth-of-type(1)"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "message": "Form input missing accessible label",
+      "element": "input",
+      "selector": "input:nth-of-type(2)"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "message": "Potential color contrast issues detected",
+      "element": "page",
+      "selector": "body"
+    }
+  ],
+  "execution_time": 1.87,
+  "performance_metrics": {
+    "domContentLoaded": 0,
+    "loadComplete": 0,
+    "firstPaint": 164,
+    "firstContentfulPaint": 164,
+    "domNodes": 71,
+    "images": 0,
+    "scripts": 1,
+    "stylesheets": 0
+  },
+  "scenario_info": {
+    "name": "Basic Document Navigation",
+    "description": "Navigate and interact with Word interface elements",
+    "steps_total": 4,
+    "steps_successful": 4,
+    "steps_failed": 0,
+    "steps_warnings": 0
+  },
+  "requested_id": "a3bbd4ad",
+  "browser_automation": true,
+  "real_analysis": true
+}

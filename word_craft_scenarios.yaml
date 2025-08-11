@@ -1,0 +1,49 @@
+scenarios:
+  - id: "word.craft.1"
+    name: "Word Document with Craft Bug Detection"
+    description: "Complete end-to-end Word analysis with craft bug detection"
+    app: "word"
+    trigger_craft_bugs: true
+    interactive_analysis: true
+    steps:
+      - action: "navigate"
+        target: "http://localhost:8080/mocks/word/basic-doc.html"
+        description: "Open Word document mock"
+      - action: "wait"
+        duration: 1000
+        description: "Wait for page load"
+      - action: "click"
+        target: "#comments-tab"
+        description: "Click comments tab to trigger interactions"
+      - action: "wait"
+        duration: 500
+        description: "Wait for comments panel"
+      - action: "hover"
+        target: ".craft-bug-hover"
+        description: "Hover over craft bug element to trigger feedback issues"
+        craft_bug_trigger: "feedback_failure"
+      - action: "wait"
+        duration: 300
+        description: "Wait for hover metrics"
+      - action: "click"
+        target: ".share-button.craft-bug-hover"
+        description: "Click share button to trigger more craft bugs"
+        craft_bug_trigger: "feedback_failure"
+      - action: "wait"
+        duration: 500
+        description: "Wait for click response"
+      - action: "type"
+        target: "textarea"
+        text: "Testing input lag detection"
+        description: "Type in textarea to trigger input lag craft bugs"
+        craft_bug_trigger: "input_lag"
+      - action: "wait"
+        duration: 1000
+        description: "Wait for input lag metrics to accumulate"
+      - action: "click"
+        target: ".image-insert-btn.craft-bug-hover"
+        description: "Final interaction to complete craft bug collection"
+        craft_bug_trigger: "feedback_failure"
+      - action: "wait"
+        duration: 2000
+        description: "Final wait for all craft bug metrics"

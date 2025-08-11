@@ -19,5 +19,6 @@
       "findings": []
     }
   },
-  "total_issues": 0
+  "total_issues": 0,
+  "ui_error": "'NoneType' object has no attribute 'get'"
 }

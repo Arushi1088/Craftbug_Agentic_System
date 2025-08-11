@@ -1,0 +1,19 @@
+{
+  "url": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
+  "analysis_duration": 35.94625997543335,
+  "total_bugs_found": 0,
+  "bugs_by_category": {
+    "A": 0,
+    "B": 0,
+    "D": 0,
+    "E": 0
+  },
+  "findings": [],
+  "metrics_summary": {
+    "pageTitle": "Microsoft Word - Mock",
+    "metricsAvailable": false,
+    "performanceEntries": 7,
+    "craftBugMetrics": {}
+  },
+  "timestamp": 1754927528.3664289
+}
