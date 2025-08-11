@@ -983,6 +983,20 @@ class ScenarioExecutor:
                     "description": f"Typed '{text}' into {target}"
                 }
             
+            elif action == 'hover':
+                element = await page.wait_for_selector(target, timeout=5000)
+                await element.hover()
+                duration = (datetime.now() - start_time).total_seconds() * 1000
+                
+                return {
+                    "step": step_number,
+                    "action": action,
+                    "target": target,
+                    "status": "success",
+                    "duration_ms": int(duration),
+                    "description": f"Hovered over element {target}"
+                }
+            
             else:
                 # Unknown action - mark as warning
                 return {

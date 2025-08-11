@@ -343,6 +343,9 @@ class AnalysisResponse(BaseModel):
     status: str
     message: str
     execution_mode: Optional[str] = None
+    craft_bugs: Optional[List[dict]] = []
+    ux_issues: Optional[List[dict]] = []
+    total_issues: Optional[int] = 0
 
 class ReportSearchRequest(BaseModel):
     url: Optional[str] = None
@@ -1042,10 +1045,18 @@ async def analyze_url(request: AnalysisRequest):
         
         logger.info(f"✅ Real analysis completed for {request.url}, analysis_id: {analysis_id}")
         
+        # Extract craft bugs and UX issues for immediate response
+        craft_bugs = report_data.get('craft_bugs', [])
+        ux_issues = report_data.get('ux_issues', [])
+        total_issues = len(ux_issues)
+        
         return AnalysisResponse(
             analysis_id=analysis_id,
             status="completed",
-            message=f"Real analysis completed for {request.url}"
+            message=f"Real analysis completed for {request.url}",
+            craft_bugs=craft_bugs,
+            ux_issues=ux_issues,
+            total_issues=total_issues
         )
         
     except Exception as e:
