@@ -1592,34 +1592,81 @@ export function ReportPage() {
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Screenshots from scenario steps */}
-                    {report.scenario_results?.map((scenario, scenarioIndex) => 
-                      scenario.steps?.map((step, stepIndex) => 
-                        step.screenshot && (
-                          <div key={`${scenarioIndex}-${stepIndex}`} className="relative group">
-                            <img
-                              src={`http://127.0.0.1:8000/reports/${step.screenshot}`}
-                              alt={`Step ${stepIndex + 1}: ${step.action}`}
-                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
-                              onClick={() => window.open(`http://127.0.0.1:8000/reports/${step.screenshot}`, '_blank')}
-                              onError={(e) => {
-                                console.error('Failed to load screenshot:', step.screenshot);
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
-                              <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1 text-center">
-                              Step {stepIndex + 1}: {step.action}
-                            </div>
-                          </div>
-                        )
-                      )
+                    {/* Screenshots from enhanced report */}
+                    {report.enhanced_report?.media_attachments?.screenshots?.map((screenshot: any, index: number) => (
+                      <div key={`screenshot-${index}`} className="relative group">
+                        <img
+                          src={`http://127.0.0.1:8000/reports/${screenshot.file_path}`}
+                          alt={screenshot.description || `Screenshot ${index + 1}`}
+                          className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => window.open(`http://127.0.0.1:8000/reports/${screenshot.file_path}`, '_blank')}
+                          onError={(e) => {
+                            console.error('Failed to load screenshot:', screenshot.file_path);
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                          <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 text-center">
+                          {screenshot.description || `Screenshot ${index + 1}`}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Videos from enhanced report */}
+                    {report.enhanced_report?.media_attachments?.videos?.map((video: any, index: number) => (
+                      <div key={`video-${index}`} className="relative group">
+                        <video
+                          src={`http://127.0.0.1:8000/reports/${video.file_path}`}
+                          controls
+                          className="w-full h-32 object-cover rounded border"
+                          onError={(e) => {
+                            console.error('Failed to load video:', video.file_path);
+                            (e.target as HTMLVideoElement).style.display = 'none';
+                          }}
+                        />
+                        <div className="text-xs text-gray-500 mt-1 text-center">
+                          {video.description || `Video ${index + 1}`}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Fallback to scenario steps if no enhanced media */}
+                    {(!report.enhanced_report?.media_attachments?.screenshots || report.enhanced_report.media_attachments.screenshots.length === 0) && 
+                     (!report.enhanced_report?.media_attachments?.videos || report.enhanced_report.media_attachments.videos.length === 0) && (
+                      <>
+                        {report.scenario_results?.map((scenario, scenarioIndex) => 
+                          scenario.steps?.map((step, stepIndex) => 
+                            step.screenshot && (
+                              <div key={`${scenarioIndex}-${stepIndex}`} className="relative group">
+                                <img
+                                  src={`http://127.0.0.1:8000/reports/${step.screenshot}`}
+                                  alt={`Step ${stepIndex + 1}: ${step.action}`}
+                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                                  onClick={() => window.open(`http://127.0.0.1:8000/reports/${step.screenshot}`, '_blank')}
+                                  onError={(e) => {
+                                    console.error('Failed to load screenshot:', step.screenshot);
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                                  <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1 text-center">
+                                  Step {stepIndex + 1}: {step.action}
+                                </div>
+                              </div>
+                            )
+                          )
+                        )}
+                      </>
                     )}
                     
-                    {/* Placeholder for additional media */}
-                    {(!report.scenario_results || report.scenario_results.length === 0) && (
+                    {/* Placeholder for no media */}
+                    {(!report.enhanced_report?.media_attachments?.screenshots || report.enhanced_report.media_attachments.screenshots.length === 0) && 
+                     (!report.enhanced_report?.media_attachments?.videos || report.enhanced_report.media_attachments.videos.length === 0) &&
+                     (!report.scenario_results || report.scenario_results.length === 0) && (
                       <div className="col-span-full text-center py-8 text-gray-500">
                         <Eye className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                         <p>No media captured during this analysis</p>
