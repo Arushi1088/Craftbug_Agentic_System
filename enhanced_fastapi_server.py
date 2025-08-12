@@ -2349,7 +2349,7 @@ async def get_ado_issue_url(work_item_id: int):
             logger.warning("ADO configuration missing - using default organization")
             # Fallback to known working organization
             ado_organization = "nayararushi0668"
-            ado_project = "UX-Testing-Project"
+            ado_project = "CODER TEST"
         
         # Construct the work item URL
         url = f"https://dev.azure.com/{ado_organization}/{ado_project}/_workitems/edit/{work_item_id}"

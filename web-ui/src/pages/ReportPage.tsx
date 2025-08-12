@@ -480,13 +480,11 @@ interface ModuleFixNowButtonProps {
 
 function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixApplied }: ModuleFixNowButtonProps) {
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
-  const [adoWorkItemId, setAdoWorkItemId] = useState<string | null>(null);
-  const [showAdoButtons, setShowAdoButtons] = useState(false);
 
   // Generate unique issue ID from module and finding index
   const issueId = `${moduleKey}-${findingIndex}`;
 
-  const handleCreateAdoTicket = async () => {
+  const handleFixNow = async () => {
     setIsCreatingTicket(true);
     try {
       // Create ADO work item for this finding
@@ -512,9 +510,18 @@ function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixA
       
       if (result.status === 'success' && result.work_items && result.work_items.length > 0) {
         const workItem = result.work_items[0];
-        setAdoWorkItemId(workItem.work_item_id);
-        setShowAdoButtons(true);
-        console.log('ADO work item created:', workItem);
+        const workItemId = workItem.work_item_id;
+        
+        // Get the ADO URL and navigate directly
+        const urlResponse = await fetch(`/api/ado/issue-url/${workItemId}`);
+        const urlData = await urlResponse.json();
+        
+        if (urlData.url) {
+          window.open(urlData.url, '_blank');
+          console.log('ADO work item created and opened:', workItem);
+        } else {
+          console.error('No ADO URL returned');
+        }
       }
     } catch (error) {
       console.error('Failed to create ADO ticket:', error);
@@ -523,92 +530,29 @@ function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixA
     }
   };
 
-  const handleViewInADO = async () => {
-    if (!adoWorkItemId) return;
-    
-    try {
-      const response = await fetch(`/api/ado/issue-url/${adoWorkItemId}`);
-      const data = await response.json();
-      
-      if (data.url) {
-        window.open(data.url, '_blank');
-      } else {
-        console.error('No ADO URL returned');
-      }
-    } catch (error) {
-      console.error('Failed to get ADO URL:', error);
-    }
-  };
-
-  const handleTriggerFix = async () => {
-    if (!adoWorkItemId || !finding) return;
-    
-    try {
-      const response = await fetch('/api/ado/trigger-fix', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          work_item_id: adoWorkItemId,
-          file_path: finding.element || 'frontend/src/App.tsx',
-          instruction: `Fix: ${finding.message}`
-        })
-      });
-      
-      const result = await response.json();
-      console.log('Fix triggered:', result);
-      
-      // Show success notification
-      alert(`Fix triggered for Work Item #${adoWorkItemId}. Check ADO for updates.`);
-    } catch (error) {
-      console.error('Failed to trigger fix:', error);
-      alert('Failed to trigger automated fix. Please try again.');
-    }
-  };
-
   return (
     <div className="mt-2">
-      {!showAdoButtons ? (
-        <button
-          onClick={handleCreateAdoTicket}
-          disabled={isCreatingTicket}
-          className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            isCreatingTicket
-              ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          {isCreatingTicket ? (
-            <>
-              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              Creating Ticket...
-            </>
-          ) : (
-            <>
-              <Settings className="w-3 h-3 mr-1" />
-              Fix Now
-            </>
-          )}
-        </button>
-      ) : (
-        <div className="flex gap-2">
-          <button
-            onClick={handleViewInADO}
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-          >
-            <ExternalLink className="w-3 h-3 mr-1" />
-            View in ADO
-          </button>
-          
-          <button
-            onClick={handleTriggerFix}
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-            title="Trigger automated fix via Gemini CLI"
-          >
+      <button
+        onClick={handleFixNow}
+        disabled={isCreatingTicket}
+        className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+          isCreatingTicket
+            ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+      >
+        {isCreatingTicket ? (
+          <>
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Creating Ticket...
+          </>
+        ) : (
+          <>
             <Settings className="w-3 h-3 mr-1" />
-            Auto-Fix
-          </button>
-        </div>
-      )}
+            Fix Now
+          </>
+        )}
+      </button>
     </div>
   );
 }
