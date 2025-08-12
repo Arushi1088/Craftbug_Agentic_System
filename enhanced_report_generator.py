@@ -216,6 +216,10 @@ class EnhancedReportGenerator:
                                 video_data: Dict[str, Any] = None) -> Dict[str, Any]:
         """Generate enhanced report with screenshots and videos"""
         
+        # Associate media with findings first
+        if screenshots:
+            analysis_data = self._associate_media_with_findings(analysis_data, screenshots)
+        
         # Start with the original report structure
         enhanced_report = {
             "analysis_id": analysis_data.get("analysis_id"),
@@ -326,6 +330,58 @@ class EnhancedReportGenerator:
                 craft_bugs["by_module"][module_name] = len(module_craft_bugs)
         
         return craft_bugs
+    
+    def _associate_media_with_findings(self, analysis_data: Dict[str, Any], screenshots: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Associate screenshots and videos with specific findings"""
+        enhanced_data = analysis_data.copy()
+        
+        # Create a mapping of issue types to screenshots
+        screenshot_map = {}
+        for screenshot in screenshots:
+            filename = screenshot.get('filename', '')
+            # Extract issue type from filename (e.g., "analysis_id_issue_craft_bug_high_timestamp.png")
+            if 'issue_' in filename:
+                parts = filename.split('_')
+                for i, part in enumerate(parts):
+                    if part == 'issue' and i + 1 < len(parts):
+                        issue_type = parts[i + 1]
+                        if issue_type not in screenshot_map:
+                            screenshot_map[issue_type] = []
+                        screenshot_map[issue_type].append(screenshot)
+        
+        # Associate screenshots with findings
+        for module_name, module_data in enhanced_data.get('modules', {}).items():
+            findings = module_data.get('findings', [])
+            for finding in findings:
+                finding_type = finding.get('type', '').lower()
+                severity = finding.get('severity', 'medium')
+                
+                # Look for matching screenshots
+                matching_screenshots = []
+                for issue_type, screenshots_list in screenshot_map.items():
+                    if (issue_type in finding_type or 
+                        finding_type in issue_type or 
+                        (finding.get('craft_bug') and 'craft' in issue_type)):
+                        matching_screenshots.extend(screenshots_list)
+                
+                # Add the most relevant screenshot to the finding
+                if matching_screenshots:
+                    # Prefer screenshots with matching severity
+                    severity_matches = [s for s in matching_screenshots if severity in s.get('filename', '')]
+                    if severity_matches:
+                        best_match = severity_matches[0]
+                    else:
+                        best_match = matching_screenshots[0]
+                    
+                    finding['screenshot'] = best_match.get('file_path', '')
+                    finding['screenshot_base64'] = best_match.get('base64', '')
+                    
+                    # Also add video if available (for now, we'll add the main video to all findings)
+                    # In a more sophisticated implementation, you'd match videos by timestamp
+                    if 'video_data' in enhanced_data:
+                        finding['video'] = enhanced_data.get('video_data', {}).get('file_path', '')
+        
+        return enhanced_data
     
     def _generate_issue_timeline(self, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate timeline of issues detected during analysis"""
@@ -525,6 +581,32 @@ class EnhancedReportGenerator:
             color: #6c757d;
             min-width: 100px;
         }}
+        .finding-content {{
+            flex: 1;
+        }}
+        .finding-media {{
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }}
+        .finding-media h5 {{
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 0.9em;
+        }}
+        .media-item {{
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+            text-align: center;
+        }}
+        .media-caption {{
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+        }}
     </style>
 </head>
 <body>
@@ -583,9 +665,53 @@ class EnhancedReportGenerator:
                 html_content += f"""
                     <div class="finding-item">
                         <span class="severity-badge severity-{severity}">{severity}</span>
-                        <div>
+                        <div class="finding-content">
                             <strong>{finding.get('message', 'No message')}</strong><br>
                             <small>Element: {finding.get('element', 'Unknown')}</small>
+                """
+                
+                # Add screenshots and videos if available
+                if finding.get('screenshot') or finding.get('screenshot_base64'):
+                    html_content += """
+                            <div class="finding-media">
+                                <h5>📸 Visual Evidence:</h5>
+                    """
+                    
+                    # Screenshot from file
+                    if finding.get('screenshot'):
+                        html_content += f"""
+                                <div class="media-item">
+                                    <img src="file://{finding.get('screenshot')}" class="screenshot" alt="Issue Screenshot" style="max-width: 300px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <div class="media-caption">Screenshot</div>
+                                </div>
+                        """
+                    
+                    # Base64 screenshot
+                    if finding.get('screenshot_base64'):
+                        html_content += f"""
+                                <div class="media-item">
+                                    <img src="data:image/png;base64,{finding.get('screenshot_base64')}" class="screenshot" alt="Issue Screenshot" style="max-width: 300px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <div class="media-caption">Screenshot (Embedded)</div>
+                                </div>
+                        """
+                    
+                    # Video if available
+                    if finding.get('video'):
+                        html_content += f"""
+                                <div class="media-item">
+                                    <video controls style="max-width: 300px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <source src="file://{finding.get('video')}" type="video/webm">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                    <div class="media-caption">Video Recording</div>
+                                </div>
+                        """
+                    
+                    html_content += """
+                            </div>
+                    """
+                
+                html_content += """
                         </div>
                     </div>
                 """

@@ -37,6 +37,11 @@ type Finding = {
   fix_timestamp?: string;
   ado_status?: string;
   ado_created_date?: string;
+  // Media attachments for visual evidence
+  screenshot?: string;
+  video?: string;
+  screenshot_base64?: string;
+  video_base64?: string;
   [k: string]: any; 
 };
 
@@ -1421,6 +1426,82 @@ export function ReportPage() {
                                       Fixed on: {new Date(finding.fix_timestamp).toLocaleString()}
                                     </div>
                                   )}
+                                  
+                                  {/* 🖼️ Screenshots and Videos for this finding */}
+                                  {(finding.screenshot || finding.screenshot_base64 || finding.video) && (
+                                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <Eye className="w-4 h-4 text-gray-600" />
+                                        <span className="text-sm font-medium text-gray-700">Visual Evidence</span>
+                                      </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {/* Screenshot */}
+                                        {finding.screenshot && (
+                                          <div className="relative group">
+                                            <img
+                                              src={`http://127.0.0.1:8000/reports/${finding.screenshot}`}
+                                              alt={`Screenshot for ${finding.type || 'issue'}`}
+                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                                              onClick={() => window.open(`http://127.0.0.1:8000/reports/${finding.screenshot}`, '_blank')}
+                                              onError={(e) => {
+                                                console.error('Failed to load screenshot:', finding.screenshot);
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                              }}
+                                            />
+                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                                              <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1 text-center">Screenshot</div>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Video */}
+                                        {finding.video && (
+                                          <div className="relative group">
+                                            <video
+                                              src={`http://127.0.0.1:8000/reports/${finding.video}`}
+                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                                              controls
+                                              preload="metadata"
+                                              onError={(e) => {
+                                                console.error('Failed to load video:', finding.video);
+                                                (e.target as HTMLVideoElement).style.display = 'none';
+                                              }}
+                                            />
+                                            <div className="text-xs text-gray-500 mt-1 text-center">Video Recording</div>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Base64 Screenshot (if embedded) */}
+                                        {finding.screenshot_base64 && (
+                                          <div className="relative group">
+                                            <img
+                                              src={`data:image/png;base64,${finding.screenshot_base64}`}
+                                              alt={`Screenshot for ${finding.type || 'issue'}`}
+                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                                              onClick={() => {
+                                                const newWindow = window.open();
+                                                if (newWindow) {
+                                                  newWindow.document.write(`
+                                                    <html>
+                                                      <head><title>Screenshot - ${finding.type || 'issue'}</title></head>
+                                                      <body style="margin:0;background:#f0f0f0;display:flex;justify-content:center;align-items:center;min-height:100vh;">
+                                                        <img src="data:image/png;base64,${finding.screenshot_base64}" style="max-width:100%;max-height:100%;box-shadow:0 4px 20px rgba(0,0,0,0.3);" />
+                                                      </body>
+                                                    </html>
+                                                  `);
+                                                }
+                                              }}
+                                            />
+                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                                              <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1 text-center">Screenshot (Embedded)</div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="ml-4 text-right">
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(finding.severity || 'medium')}`}>
@@ -1461,6 +1542,60 @@ export function ReportPage() {
                   </>
                 );
               })()}
+            </div>
+          )}
+
+          {/* Media Gallery Section */}
+          {activeTab === 'overview' && report.has_screenshots && (
+            <div className="mt-8">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                    <Eye className="w-5 h-5 text-blue-600" />
+                    Media Gallery
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Screenshots and videos captured during analysis
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Screenshots from scenario steps */}
+                    {report.scenario_results?.map((scenario, scenarioIndex) => 
+                      scenario.steps?.map((step, stepIndex) => 
+                        step.screenshot && (
+                          <div key={`${scenarioIndex}-${stepIndex}`} className="relative group">
+                            <img
+                              src={`http://127.0.0.1:8000/reports/${step.screenshot}`}
+                              alt={`Step ${stepIndex + 1}: ${step.action}`}
+                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                              onClick={() => window.open(`http://127.0.0.1:8000/reports/${step.screenshot}`, '_blank')}
+                              onError={(e) => {
+                                console.error('Failed to load screenshot:', step.screenshot);
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                              <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 text-center">
+                              Step {stepIndex + 1}: {step.action}
+                            </div>
+                          </div>
+                        )
+                      )
+                    )}
+                    
+                    {/* Placeholder for additional media */}
+                    {(!report.scenario_results || report.scenario_results.length === 0) && (
+                      <div className="col-span-full text-center py-8 text-gray-500">
+                        <Eye className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>No media captured during this analysis</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
