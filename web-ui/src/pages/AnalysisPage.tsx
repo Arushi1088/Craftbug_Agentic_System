@@ -69,7 +69,7 @@ export function AnalysisPage() {
     
     // Update config and reset scenario selection
     setConfig(prev => {
-      const next: AnalysisConfig = { ...prev, app: selectedApp, scenarioFile: '' };
+      const next: AnalysisConfig = { ...prev, app: app, scenarioFile: '' };
       console.log('🔧 Updated config:', next);
       return next;
     });
