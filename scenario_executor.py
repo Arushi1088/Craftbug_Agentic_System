@@ -41,9 +41,9 @@ except ImportError:
 
 # Mock URLs for deterministic testing
 MOCK_URLS = {
-    "word": "http://127.0.0.1:9000/mocks/word/basic-doc.html",
-    "excel": "http://127.0.0.1:9000/mocks/excel/open-format.html", 
-    "powerpoint": "http://127.0.0.1:9000/mocks/powerpoint/basic-deck.html",
+    "word": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
+    "excel": "http://127.0.0.1:8080/mocks/excel/open-format.html", 
+    "powerpoint": "http://127.0.0.1:8080/mocks/powerpoint/basic-deck.html",
 }
 
 def substitute_mock_urls(scenario_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -97,6 +97,15 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ Enhanced actions not available: {e}")
     ENHANCED_ACTIONS_AVAILABLE = False
+
+# Import enhanced report generator for screenshots and videos
+try:
+    from enhanced_report_generator import EnhancedReportGenerator
+    ENHANCED_REPORTING_AVAILABLE = True
+    logger.info("✅ Enhanced report generator imported successfully")
+except ImportError as e:
+    logger.warning(f"⚠️ Enhanced report generator not available: {e}")
+    ENHANCED_REPORTING_AVAILABLE = False
 
 class ScenarioExecutor:
     def __init__(self, deterministic_mode=False, fixed_seed=12345):
@@ -812,9 +821,18 @@ class ScenarioExecutor:
         logger.info(f"🔗 Target URL: {url}")
         logger.info(f"📋 Steps to execute: {len(scenario_steps)}")
         
+        # Initialize enhanced reporting
+        enhanced_generator = None
+        screenshots = []
+        video_data = None
+        
+        if ENHANCED_REPORTING_AVAILABLE:
+            enhanced_generator = EnhancedReportGenerator()
+            logger.info("📸 Enhanced reporting enabled - screenshots and videos will be captured")
+        
         try:
             async with async_playwright() as p:
-                # Launch browser
+                # Launch browser with video recording
                 browser = await p.chromium.launch(
                     headless=False,  # Show browser window for real automation  
                     args=['--no-sandbox', '--disable-setuid-sandbox']
@@ -823,6 +841,19 @@ class ScenarioExecutor:
                 
                 # Set viewport
                 await page.set_viewport_size({"width": 1280, "height": 720})
+                
+                # Start video recording if enhanced reporting is available
+                if enhanced_generator:
+                    video_path = enhanced_generator.start_video_recording(page, analysis_id)
+                    logger.info("🎥 Video recording started")
+                
+                # Capture initial screenshot
+                if enhanced_generator:
+                    initial_screenshot = await enhanced_generator.capture_screenshot_async(
+                        page, analysis_id, "initial_load", "page_load"
+                    )
+                    if initial_screenshot:
+                        screenshots.append(initial_screenshot)
                 
                 # Execute scenario steps and collect real metrics
                 step_results = []
@@ -835,8 +866,24 @@ class ScenarioExecutor:
                         step_result = await self._execute_browser_step(page, step, i + 1)
                         step_results.append(step_result)
                         
+                        # Capture screenshot after each step if enhanced reporting is available
+                        if enhanced_generator:
+                            step_screenshot = await enhanced_generator.capture_screenshot_async(
+                                page, analysis_id, f"step_{i+1}", step.get('action', 'unknown')
+                            )
+                            if step_screenshot:
+                                screenshots.append(step_screenshot)
+                        
                         # Collect UX issues during step execution
                         if step_result.get('status') == 'error':
+                            # Capture error screenshot
+                            if enhanced_generator:
+                                error_screenshot = await enhanced_generator.capture_screenshot_async(
+                                    page, analysis_id, f"error_step_{i+1}", "error"
+                                )
+                                if error_screenshot:
+                                    screenshots.append(error_screenshot)
+                            
                             ux_issues.append({
                                 "type": "error",
                                 "message": f"Step {i+1} failed: {step_result.get('error', 'Unknown error')}",
@@ -873,6 +920,12 @@ class ScenarioExecutor:
                             if craft_bug_results and craft_bug_results.get('total_bugs_found', 0) > 0:
                                 craft_bugs = craft_bug_results.get('findings', [])
                                 for bug in craft_bugs:
+                                    # Capture screenshot for craft bug if enhanced reporting is available
+                                    if enhanced_generator:
+                                        bug_screenshot = await enhanced_generator.capture_issue_screenshot_async(page, analysis_id, bug)
+                                        if bug_screenshot:
+                                            screenshots.append(bug_screenshot)
+                                    
                                     ux_issues.append({
                                         "type": "craft_bug",
                                         "message": f"Craft Bug (Category {bug.get('category', 'General')}): {bug.get('description', 'UX interaction issue')}",
@@ -889,11 +942,25 @@ class ScenarioExecutor:
                         except Exception as e:
                             logger.warning(f"⚠️ Craft bug detection failed: {e}")
                     
+                    # Capture final screenshot
+                    if enhanced_generator:
+                        final_screenshot = await enhanced_generator.capture_screenshot_async(
+                            page, analysis_id, "final_state", "completion"
+                        )
+                        if final_screenshot:
+                            screenshots.append(final_screenshot)
+                    
                 finally:
+                    # Stop video recording if enhanced reporting is available
+                    if enhanced_generator:
+                        video_data = enhanced_generator.stop_video_recording(page)
+                        if video_data:
+                            logger.info("🎥 Video recording stopped")
+                    
                     await browser.close()
                 
                 # Generate comprehensive report based on real execution
-                return self._generate_real_analysis_report(
+                base_report = self._generate_real_analysis_report(
                     analysis_id=analysis_id,
                     url=url,
                     scenario_config=scenario_config,
@@ -902,6 +969,30 @@ class ScenarioExecutor:
                     performance_metrics=performance_metrics,
                     modules=modules
                 )
+                
+                # Generate enhanced report with screenshots and videos if available
+                if enhanced_generator and (screenshots or video_data):
+                    try:
+                        enhanced_report = enhanced_generator.generate_enhanced_report(
+                            base_report, screenshots, video_data
+                        )
+                        enhanced_filepath = enhanced_generator.save_enhanced_report(enhanced_report)
+                        html_filepath = enhanced_generator.generate_html_report(enhanced_report)
+                        
+                        logger.info(f"📊 Enhanced report generated: {enhanced_filepath}")
+                        logger.info(f"🌐 HTML report generated: {html_filepath}")
+                        
+                        # Add enhanced report info to base report
+                        base_report["enhanced_report"] = {
+                            "json_file": enhanced_filepath,
+                            "html_file": html_filepath,
+                            "screenshots_count": len(screenshots),
+                            "video_available": video_data is not None
+                        }
+                    except Exception as e:
+                        logger.warning(f"⚠️ Failed to generate enhanced report: {e}")
+                
+                return base_report
         
         except Exception as e:
             logger.error(f"❌ REAL BROWSER AUTOMATION FAILED: {str(e)}")
@@ -925,7 +1016,7 @@ class ScenarioExecutor:
                 url = step.get('target', step.get('url', ''))
                 # Replace mock URL placeholders
                 if '{mock_url}' in url:
-                    url = url.replace('{mock_url}', 'http://localhost:8080/mocks/word/basic-doc.html')
+                    url = url.replace('{mock_url}', 'http://localhost:5173/mocks/word/basic-doc.html')
                 
                 await page.goto(url, wait_until='domcontentloaded', timeout=10000)
                 duration = (datetime.now() - start_time).total_seconds() * 1000
@@ -940,19 +1031,46 @@ class ScenarioExecutor:
                 }
             
             elif action == 'click':
-                # Wait for element and click
-                element = await page.wait_for_selector(target, timeout=5000)
-                await element.click()
-                duration = (datetime.now() - start_time).total_seconds() * 1000
-                
-                return {
-                    "step": step_number,
-                    "action": action,
-                    "target": target,
-                    "status": "success", 
-                    "duration_ms": int(duration),
-                    "description": f"Clicked element {target}"
-                }
+                # Wait for element and click with better error handling
+                try:
+                    element = await page.wait_for_selector(target, timeout=10000)
+                    await element.click()
+                    duration = (datetime.now() - start_time).total_seconds() * 1000
+                    
+                    return {
+                        "step": step_number,
+                        "action": action,
+                        "target": target,
+                        "status": "success", 
+                        "duration_ms": int(duration),
+                        "description": f"Clicked element {target}"
+                    }
+                except PlaywrightTimeoutError:
+                    # Try alternative selectors or methods
+                    try:
+                        # Try clicking by text content
+                        await page.click(f"text={target}", timeout=5000)
+                        duration = (datetime.now() - start_time).total_seconds() * 1000
+                        return {
+                            "step": step_number,
+                            "action": action,
+                            "target": target,
+                            "status": "success",
+                            "duration_ms": int(duration),
+                            "description": f"Clicked element {target} by text content"
+                        }
+                    except:
+                        # If still fails, mark as warning but continue
+                        duration = (datetime.now() - start_time).total_seconds() * 1000
+                        return {
+                            "step": step_number,
+                            "action": action,
+                            "target": target,
+                            "status": "warning",
+                            "duration_ms": int(duration),
+                            "warning": f"Element {target} not found, but continuing",
+                            "description": f"Could not find element {target}, but scenario continues"
+                        }
             
             elif action == 'wait':
                 wait_time = step.get('duration', 1000) / 1000  # Convert to seconds
@@ -969,19 +1087,46 @@ class ScenarioExecutor:
             
             elif action == 'type':
                 text = step.get('text', '')
-                element = await page.wait_for_selector(target, timeout=5000) 
-                await element.fill(text)
-                duration = (datetime.now() - start_time).total_seconds() * 1000
-                
-                return {
-                    "step": step_number,
-                    "action": action,
-                    "target": target,
-                    "text": text,
-                    "status": "success",
-                    "duration_ms": int(duration),
-                    "description": f"Typed '{text}' into {target}"
-                }
+                try:
+                    element = await page.wait_for_selector(target, timeout=10000) 
+                    await element.fill(text)
+                    duration = (datetime.now() - start_time).total_seconds() * 1000
+                    
+                    return {
+                        "step": step_number,
+                        "action": action,
+                        "target": target,
+                        "text": text,
+                        "status": "success",
+                        "duration_ms": int(duration),
+                        "description": f"Typed '{text}' into {target}"
+                    }
+                except PlaywrightTimeoutError:
+                    # Try alternative methods
+                    try:
+                        await page.fill(target, text, timeout=5000)
+                        duration = (datetime.now() - start_time).total_seconds() * 1000
+                        return {
+                            "step": step_number,
+                            "action": action,
+                            "target": target,
+                            "text": text,
+                            "status": "success",
+                            "duration_ms": int(duration),
+                            "description": f"Typed '{text}' into {target} using alternative method"
+                        }
+                    except:
+                        duration = (datetime.now() - start_time).total_seconds() * 1000
+                        return {
+                            "step": step_number,
+                            "action": action,
+                            "target": target,
+                            "text": text,
+                            "status": "warning",
+                            "duration_ms": int(duration),
+                            "warning": f"Could not type into {target}, but continuing",
+                            "description": f"Could not find element {target} for typing, but scenario continues"
+                        }
             
             elif action == 'hover':
                 element = await page.wait_for_selector(target, timeout=5000)
@@ -1308,6 +1453,33 @@ class ScenarioExecutor:
                     }
                 }
             
+            elif module == 'ux_heuristics':
+                # Handle UX heuristics module specifically for craft bugs
+                score = max(0, min(100, base_score))
+                craft_bug_issues = [issue for issue in ux_issues if issue.get('type') == 'craft_bug']
+                other_ux_issues = [issue for issue in ux_issues if issue.get('type') != 'craft_bug' and issue.get('type') != 'accessibility']
+                
+                # Reduce score based on craft bugs found
+                if craft_bug_issues:
+                    score -= (len(craft_bug_issues) * 10)  # 10 point deduction per craft bug
+                
+                findings = craft_bug_issues + other_ux_issues[:3]  # Include craft bugs first
+                
+                module_results[module] = {
+                    "score": max(0, score),
+                    "findings": findings,
+                    "recommendations": self._generate_module_recommendations(module, score),
+                    "metrics": {
+                        "craft_bugs_found": len(craft_bug_issues),
+                        "ux_issues_found": len(other_ux_issues),
+                        "total_issues": len(findings),
+                        "score_breakdown": {
+                            "craft_bug_detection": score,
+                            "ux_heuristics": score
+                        }
+                    }
+                }
+            
             else:
                 # Other modules use base score with real step analysis
                 score = max(0, min(100, base_score))
@@ -1435,7 +1607,8 @@ class ScenarioExecutor:
             "1.": "scenarios/word_scenarios.yaml",
             "2.": "scenarios/excel_scenarios.yaml", 
             "3.": "scenarios/powerpoint_scenarios.yaml",
-            "4.": "scenarios/office_tests.yaml"
+            "4.": "scenarios/office_tests.yaml",
+            "craft-": "scenarios/word_craft_bug_scenarios.yaml"
         }
         
         try:

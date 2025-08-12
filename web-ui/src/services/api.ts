@@ -67,11 +67,11 @@ export const apiClient = {
   async startMockScenario(app_path: string, scenario_id: string, modules: ModulesPayload) {
     // Convert app_path to mock URL
     const mockUrls: Record<string, string> = {
-      'word': 'http://localhost:4174/word/basic-doc.html',
-      'excel': 'http://localhost:4174/excel/open-format.html', 
-      'powerpoint': 'http://localhost:4174/powerpoint/basic-deck.html'
+      'word': 'http://127.0.0.1:8080/mocks/word/basic-doc.html',
+      'excel': 'http://127.0.0.1:8080/mocks/excel/open-format.html', 
+      'powerpoint': 'http://127.0.0.1:8080/mocks/powerpoint/basic-deck.html'
     };
-    const url = mockUrls[app_path] || `http://localhost:4174/${app_path}`;
+    const url = mockUrls[app_path] || `http://127.0.0.1:8080/mocks/${app_path}`;
     
     const res = await fetch(`${BASE_URL}/api/analyze`, {
       method: 'POST',

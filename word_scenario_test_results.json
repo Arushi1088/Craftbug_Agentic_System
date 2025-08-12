@@ -1,0 +1,599 @@
+[
+  {
+    "scenario": {
+      "id": "1.1",
+      "name": "Basic Document Navigation"
+    },
+    "status": "completed",
+    "analysis_id": "4655a333",
+    "total_issues": 6,
+    "craft_bugs": 3,
+    "accessibility_issues": 3,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Conflicting animations: 1 conflicts",
+        "severity": "medium",
+        "element": "animation_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "layoutThrashCount": 0,
+          "animationConflicts": 1,
+          "judderEvents": 0,
+          "frameTimes": [],
+          "layoutShifts": [],
+          "animationConflictList": [
+            {
+              "timestamp": 2201.199999988079,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ],
+          "rawLayoutShiftsCount": 0,
+          "rawAnimationConflictsCount": 1
+        }
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Animation conflicts detected: 1 conflicts",
+        "severity": "medium",
+        "element": "animation_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "conflict_list": [
+            {
+              "timestamp": 2201.199999988079,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "id": "1.2",
+      "name": "Comment Resolution Workflow with Craft Bug Detection"
+    },
+    "status": "completed",
+    "analysis_id": "22f5aa3b",
+    "total_issues": 9,
+    "craft_bugs": 6,
+    "accessibility_issues": 3,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Conflicting animations: 1 conflicts",
+        "severity": "medium",
+        "element": "animation_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "layoutThrashCount": 0,
+          "animationConflicts": 1,
+          "judderEvents": 0,
+          "frameTimes": [],
+          "layoutShifts": [],
+          "animationConflictList": [
+            {
+              "timestamp": 2112.4000000059605,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ],
+          "rawLayoutShiftsCount": 0,
+          "rawAnimationConflictsCount": 1
+        }
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Animation conflicts detected: 1 conflicts",
+        "severity": "medium",
+        "element": "animation_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "conflict_list": [
+            {
+              "timestamp": 2112.4000000059605,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "id": "1.3",
+      "name": "Interactive Document Editing with Craft Bug Triggers"
+    },
+    "status": "completed",
+    "analysis_id": "858b01b6",
+    "total_issues": 12,
+    "craft_bugs": 7,
+    "accessibility_issues": 5,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "low",
+        "message": "Large image with empty alt text - consider adding description",
+        "element": "img",
+        "selector": "img[alt=\"\"]:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "low",
+        "message": "Large image with empty alt text - consider adding description",
+        "element": "img",
+        "selector": "img[alt=\"\"]:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "id": "1.4",
+      "name": "Comment Workflow with Animation Conflicts"
+    },
+    "status": "completed",
+    "analysis_id": "d83a6040",
+    "total_issues": 9,
+    "craft_bugs": 5,
+    "accessibility_issues": 4,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "low",
+        "message": "Large image with empty alt text - consider adding description",
+        "element": "img",
+        "selector": "img[alt=\"\"]:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Conflicting animations: 1 conflicts",
+        "severity": "medium",
+        "element": "animation_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "layoutThrashCount": 0,
+          "animationConflicts": 1,
+          "judderEvents": 0,
+          "frameTimes": [],
+          "layoutShifts": [],
+          "animationConflictList": [
+            {
+              "timestamp": 2179.2000000178814,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ],
+          "rawLayoutShiftsCount": 0,
+          "rawAnimationConflictsCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "id": "1.5",
+      "name": "Insert Image and Add Alt Text"
+    },
+    "status": "completed",
+    "analysis_id": "b37b0bf3",
+    "total_issues": 5,
+    "craft_bugs": 1,
+    "accessibility_issues": 4,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "low",
+        "message": "Large image with empty alt text - consider adding description",
+        "element": "img",
+        "selector": "img[alt=\"\"]:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category D): Input lag detected: 53ms response time",
+        "severity": "high",
+        "element": "input_element_0",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category D",
+        "craft_bug": true,
+        "metric_value": {
+          "response_time_ms": 52.60107421875
+        }
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "id": "1.6",
+      "name": "Performance-Heavy Interactive Text Editing"
+    },
+    "status": "completed",
+    "analysis_id": "09519e05",
+    "total_issues": 9,
+    "craft_bugs": 5,
+    "accessibility_issues": 4,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "low",
+        "message": "Large image with empty alt text - consider adding description",
+        "element": "img",
+        "selector": "img[alt=\"\"]:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Conflicting animations: 1 conflicts",
+        "severity": "medium",
+        "element": "animation_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "layoutThrashCount": 0,
+          "animationConflicts": 1,
+          "judderEvents": 0,
+          "frameTimes": [],
+          "layoutShifts": [],
+          "animationConflictList": [
+            {
+              "timestamp": 2113.199999988079,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ],
+          "rawLayoutShiftsCount": 0,
+          "rawAnimationConflictsCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "id": "craft-1",
+      "name": "Word Craft Bug Detection Test"
+    },
+    "status": "completed",
+    "analysis_id": "9a02a8f2",
+    "total_issues": 8,
+    "craft_bugs": 4,
+    "accessibility_issues": 4,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "low",
+        "message": "Large image with empty alt text - consider adding description",
+        "element": "img",
+        "selector": "img[alt=\"\"]:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Layout thrash detected: 10 events",
+        "severity": "high",
+        "element": "layout_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "layoutThrashCount": 10,
+          "animationConflicts": 1,
+          "judderEvents": 0,
+          "frameTimes": [],
+          "layoutShifts": [
+            {
+              "timestamp": 5019.200000017881,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5069.5,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5119.800000011921,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5169,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5219.800000011921,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5269,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5319.800000011921,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5369.0999999940395,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5419.700000017881,
+              "severity": "high"
+            },
+            {
+              "timestamp": 5469.300000011921,
+              "severity": "high"
+            }
+          ],
+          "animationConflictList": [
+            {
+              "timestamp": 2132.300000011921,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ],
+          "rawLayoutShiftsCount": 10,
+          "rawAnimationConflictsCount": 1
+        }
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "id": "craft-2",
+      "name": "Word Performance Stress Test with Craft Bugs"
+    },
+    "status": "completed",
+    "analysis_id": "7779d4c5",
+    "total_issues": 9,
+    "craft_bugs": 5,
+    "accessibility_issues": 4,
+    "other_issues": 0,
+    "element_not_found": 0,
+    "timeout_issues": 0,
+    "error_issues": 0,
+    "issues": [
+      {
+        "type": "accessibility",
+        "severity": "low",
+        "message": "Large image with empty alt text - consider adding description",
+        "element": "img",
+        "selector": "img[alt=\"\"]:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(1)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "high",
+        "message": "Form input missing accessible label",
+        "element": "input",
+        "selector": "input:nth-of-type(2)"
+      },
+      {
+        "type": "accessibility",
+        "severity": "medium",
+        "message": "Potential color contrast issues detected",
+        "element": "page",
+        "selector": "body"
+      },
+      {
+        "type": "craft_bug",
+        "message": "Craft Bug (Category B): Conflicting animations: 2 conflicts",
+        "severity": "medium",
+        "element": "animation_system",
+        "recommendation": "Fix craft bug interaction issue",
+        "category": "Craft Bug Category B",
+        "craft_bug": true,
+        "metric_value": {
+          "layoutThrashCount": 0,
+          "animationConflicts": 2,
+          "judderEvents": 0,
+          "frameTimes": [],
+          "layoutShifts": [],
+          "animationConflictList": [
+            {
+              "timestamp": 1117.5999999940395,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            },
+            {
+              "timestamp": 1429.699999988079,
+              "type": "conflicting_animations",
+              "severity": "medium"
+            }
+          ],
+          "rawLayoutShiftsCount": 0,
+          "rawAnimationConflictsCount": 2
+        }
+      }
+    ]
+  }
+]

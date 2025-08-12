@@ -154,9 +154,9 @@ logger = logging.getLogger(__name__)
 
 # Mock URLs for deterministic testing
 MOCK_URLS = {
-    "word": "http://localhost:8080/mocks/word/basic-doc.html",
-    "excel": "http://localhost:8080/mocks/excel/open-format.html", 
-    "powerpoint": "http://localhost:8080/mocks/powerpoint/basic-deck.html",
+    "word": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
+    "excel": "http://127.0.0.1:8080/mocks/excel/open-format.html", 
+    "powerpoint": "http://127.0.0.1:8080/mocks/powerpoint/basic-deck.html",
 }
 
 def substitute_mock_urls(scenario_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -269,7 +269,7 @@ app.add_middleware(
         "http://localhost:4174",  # Vite preview server (mocks)
         "http://localhost:4173",  # Vite preview server (mocks - backup)
         "http://localhost:5173",  # Vite dev server
-        "http://localhost:8080",  # Dashboard server
+        "http://127.0.0.1:8080",  # Dashboard server
         "http://127.0.0.1:8080",  # Dashboard server (127.0.0.1)
         "http://127.0.0.1:3000",  # Dashboard on 127.0.0.1:3000
         "http://127.0.0.1:5173",  # Vite dev server (127.0.0.1)
@@ -887,7 +887,7 @@ async def analyze_word_craft_bugs(request: AnalysisRequest):
         # Default to Word URL if not provided
         word_url = request.url
         if not word_url.endswith('word/basic-doc.html'):
-            word_url = "http://localhost:8080/mocks/word/basic-doc.html"
+            word_url = "http://127.0.0.1:8080/mocks/word/basic-doc.html"
         
         # Use craft bug scenario (craft-1 or craft-2)
         craft_scenario_id = request.scenario_id or "craft-1"
