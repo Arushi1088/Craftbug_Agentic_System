@@ -404,8 +404,12 @@ Generate the complete corrected HTML file:
             
             url = f"https://dev.azure.com/{self.ado_org}/{self.ado_project}/_apis/wit/workItems/{work_item_id}?api-version=7.0"
             
+            # Azure DevOps requires PAT to be base64 encoded with colon
+            import base64
+            pat_encoded = base64.b64encode(f":{self.ado_pat}".encode()).decode()
+            
             headers = {
-                'Authorization': f'Basic {self.ado_pat}'
+                'Authorization': f'Basic {pat_encoded}'
             }
             
             response = requests.get(url, headers=headers)

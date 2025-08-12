@@ -277,21 +277,21 @@ class AzureDevOpsClient:
         # Add the Fix with Agent section with a direct link
         description += f"""
 <h3>🤖 AI-Powered Fix</h3>
-<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; padding: 20px; margin: 20px 0; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 1px solid #90caf9; border-radius: 8px; padding: 20px; margin: 20px 0; color: #1565c0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
     <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center;">
         🤖 AI-Powered Code Fix
     </div>
-    <div style="margin-bottom: 15px; line-height: 1.5;">
+    <div style="margin-bottom: 15px; line-height: 1.5; color: #1976d2;">
         This UX issue can be automatically fixed using our Gemini AI agent. Click the link below to trigger the fix.
     </div>
     
     <a href="http://localhost:8000/fix-with-agent?work_item_id={work_item_id}&app_type={ux_issue.app_type}" 
        target="_blank" 
-       style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center; text-decoration: none;">
+       style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center; text-decoration: none; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);">
         🔧 Fix with Agent
     </a>
     
-    <div style="margin-top: 15px; font-size: 12px; opacity: 0.8;">
+    <div style="margin-top: 15px; font-size: 12px; opacity: 0.8; color: #1976d2;">
         <strong>Note:</strong> This will open a new tab with the AI fix interface. The fix will be applied to the mock application files.
     </div>
 </div>
