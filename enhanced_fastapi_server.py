@@ -2371,45 +2371,83 @@ async def get_ado_issue_url(work_item_id: int):
         )
 
 @app.post("/api/ado/trigger-fix")
-async def trigger_gemini_fix(
-    work_item_id: int,
-    file_path: str = None,
-    instruction: str = None
-):
-    """Trigger Gemini CLI auto-fix for an ADO work item"""
+async def trigger_gemini_fix(request: Dict[str, Any]):
+    """Trigger automated fix for ADO work item using Gemini AI Agent"""
     try:
-        if not file_path:
-            raise HTTPException(status_code=400, detail="file_path is required")
+        work_item_id = request.get("work_item_id")
+        file_path = request.get("file_path", "frontend/src/App.tsx")
+        instruction = request.get("instruction", "Fix the issue")
         
-        if not instruction:
-            instruction = f"Fix the bug described in Work Item #{work_item_id}"
+        logger.info(f"🤖 Triggering Gemini AI fix for work item {work_item_id}")
         
-        # Check if file exists
-        if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+        # Import and initialize the Gemini CLI Agent
+        from gemini_cli import GeminiCLIAgent
         
-        # Log the fix attempt
-        logger.info(f"Triggering Gemini fix for work item {work_item_id}")
-        logger.info(f"Target file: {file_path}")
-        logger.info(f"Instruction: {instruction}")
+        try:
+            agent = GeminiCLIAgent()
+            
+            # Get work item details from ADO
+            work_item_result = agent.get_work_item_details(str(work_item_id))
+            
+            if not work_item_result["success"]:
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": f"Failed to get work item details: {work_item_result['error']}"
+                })
+            
+            work_item = work_item_result["work_item"]
+            fields = work_item.get("fields", {})
+            
+            # Extract issue data
+            issue_data = {
+                "title": fields.get("System.Title", ""),
+                "description": fields.get("System.Description", ""),
+                "category": "general",
+                "app_type": "web-app",
+                "element": "unknown"
+            }
+            
+            # Extract tags for category and app_type
+            tags = fields.get("System.Tags", "")
+            if "UX-Analysis" in tags:
+                for tag in tags.split(";"):
+                    tag = tag.strip()
+                    if tag in ["word", "excel", "powerpoint"]:
+                        issue_data["app_type"] = tag
+                    elif tag in ["accessibility", "design", "interaction", "performance"]:
+                        issue_data["category"] = tag
+            
+            # Execute the fix
+            fix_result = agent.fix_issue(str(work_item_id), issue_data)
+            
+            if fix_result["success"]:
+                logger.info(f"✅ Gemini AI fix completed successfully for work item {work_item_id}")
+                return JSONResponse(content={
+                    "status": "success",
+                    "message": f"AI fix completed for work item {work_item_id}",
+                    "work_item_id": work_item_id,
+                    "fix_result": fix_result,
+                    "ai_used": fix_result.get("fix_result", {}).get("ai_used", False),
+                    "fix_method": fix_result.get("fix_result", {}).get("fix_method", "Unknown")
+                })
+            else:
+                logger.error(f"❌ Gemini AI fix failed for work item {work_item_id}: {fix_result['error']}")
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": f"AI fix failed: {fix_result['error']}",
+                    "work_item_id": work_item_id
+                })
+                
+        except Exception as agent_error:
+            logger.error(f"Error initializing Gemini agent: {agent_error}")
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Agent initialization failed: {str(agent_error)}"
+            })
         
-        # For now, return success - actual Gemini CLI integration would happen here
-        # In production, this would call: gemini edit <file> --instruction <instruction>
-        
-        return JSONResponse(content={
-            "status": "success",
-            "message": f"Fix triggered for Work Item #{work_item_id}",
-            "work_item_id": work_item_id,
-            "file_path": file_path,
-            "instruction": instruction,
-            "next_step": "Developer should run: git add . && git commit -m '🔧 Auto-fixed Work Item #{work_item_id} via Gemini CLI' && git push origin main"
-        })
-        
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error triggering Gemini fix: {e}")
-        raise HTTPException(status_code=500, detail=f"Fix trigger failed: {str(e)}")
+        logger.error(f"Error triggering ADO fix: {e}")
+        return JSONResponse(content={"status": "error", "message": str(e)})
 
 @app.get("/api/ado/status/{work_item_id}")
 async def get_ado_work_item_status(work_item_id: int):

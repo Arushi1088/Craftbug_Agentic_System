@@ -484,6 +484,9 @@ function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixA
   // Generate unique issue ID from module and finding index
   const issueId = `${moduleKey}-${findingIndex}`;
 
+  const [currentWorkItemId, setCurrentWorkItemId] = useState<string | null>(null);
+  const [isFixingWithAgent, setIsFixingWithAgent] = useState(false);
+
   const handleFixNow = async () => {
     setIsCreatingTicket(true);
     try {
@@ -511,6 +514,7 @@ function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixA
       if (result.status === 'success' && result.work_items && result.work_items.length > 0) {
         const workItem = result.work_items[0];
         const workItemId = workItem.work_item_id;
+        setCurrentWorkItemId(workItemId);
         
         // Get the ADO URL and navigate directly
         const urlResponse = await fetch(`/api/ado/issue-url/${workItemId}`);
@@ -530,8 +534,40 @@ function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixA
     }
   };
 
+  const handleFixWithAgent = async () => {
+    if (!currentWorkItemId) return;
+    
+    setIsFixingWithAgent(true);
+    try {
+      const response = await fetch('/api/ado/trigger-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          work_item_id: currentWorkItemId,
+          file_path: finding.element || 'web-ui/public/mocks/word/basic-doc.html',
+          instruction: `Fix: ${finding.message}`
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        console.log('AI fix completed:', result);
+        alert(`✅ AI Fix Completed!\n\nMethod: ${result.fix_method}\nAI Used: ${result.ai_used ? 'Yes' : 'No'}\n\nCheck the mock app to see the changes!`);
+      } else {
+        console.error('AI fix failed:', result);
+        alert(`❌ AI Fix Failed: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Failed to trigger AI fix:', error);
+      alert('Failed to trigger AI fix. Please try again.');
+    } finally {
+      setIsFixingWithAgent(false);
+    }
+  };
+
   return (
-    <div className="mt-2">
+    <div className="mt-2 space-y-2">
       <button
         onClick={handleFixNow}
         disabled={isCreatingTicket}
@@ -553,6 +589,30 @@ function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixA
           </>
         )}
       </button>
+      
+      {currentWorkItemId && (
+        <button
+          onClick={handleFixWithAgent}
+          disabled={isFixingWithAgent}
+          className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            isFixingWithAgent
+              ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          {isFixingWithAgent ? (
+            <>
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              AI Fixing...
+            </>
+          ) : (
+            <>
+              <Settings className="w-3 h-3 mr-1" />
+              Fix with Agent
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }
