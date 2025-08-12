@@ -136,6 +136,20 @@ class AzureDevOpsClient:
                 ux_issue.ado_url = work_item_url
                 ux_issue.ado_created_date = datetime.now().isoformat()
                 
+                # Update the work item description with the actual work item ID
+                updated_description = work_item_data[0]["value"].replace("{{WORK_ITEM_ID}}", work_item_id)
+                
+                # Update the work item with the corrected description
+                update_data = [
+                    {"op": "replace", "path": "/fields/System.Description", "value": updated_description}
+                ]
+                
+                update_url = f"{self.base_url}/wit/workItems/{work_item_id}?api-version={self.api_version}"
+                update_response = requests.patch(update_url, headers=self.headers, json=update_data)
+                
+                if update_response.status_code != 200:
+                    logger.warning(f"Failed to update work item description with ID: {update_response.status_code}")
+                
                 return {
                     "success": True,
                     "work_item_id": work_item_id,
@@ -215,7 +229,10 @@ class AzureDevOpsClient:
         return fields
     
     def _build_work_item_description(self, ux_issue: UXIssue) -> str:
-        """Build rich HTML description for work item"""
+        """Build rich HTML description for work item with Fix with Agent button"""
+        
+        # Get work item ID for the button (will be replaced with actual ID)
+        work_item_id = "{{WORK_ITEM_ID}}"  # Placeholder that will be replaced
         
         description = f"""
 <h3>UX Issue Analysis</h3>
@@ -245,6 +262,112 @@ class AzureDevOpsClient:
             for criterion in ux_issue.acceptance_criteria:
                 description += f"<li>{criterion}</li>\n"
             description += "</ul>\n"
+        
+        # Add the Fix with Agent button section
+        description += f"""
+<h3>🤖 AI-Powered Fix</h3>
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; padding: 20px; margin: 20px 0; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center;">
+        🤖 AI-Powered Code Fix
+    </div>
+    <div style="margin-bottom: 15px; line-height: 1.5;">
+        This UX issue can be automatically fixed using our Gemini AI agent. Click the button below to trigger the fix.
+    </div>
+    
+    <button onclick="triggerAIFix('{work_item_id}')" style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center;">
+        🔧 Fix with Agent
+    </button>
+    
+    <div id="loadingStatus" style="display: none; margin-top: 15px; text-align: center;">
+        <div style="border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px;"></div>
+        <span>AI Agent is fixing the code...</span>
+    </div>
+    
+    <div id="fixStatus" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
+</div>
+
+<style>
+@keyframes spin {{
+    0% {{ transform: rotate(0deg); }}
+    100% {{ transform: rotate(360deg); }}
+}}
+</style>
+
+<script>
+function triggerAIFix(workItemId) {{
+    const button = event.target;
+    const loadingStatus = document.getElementById('loadingStatus');
+    const fixStatus = document.getElementById('fixStatus');
+    
+    // Disable button and show loading
+    button.disabled = true;
+    button.textContent = 'Fixing...';
+    loadingStatus.style.display = 'block';
+    fixStatus.style.display = 'none';
+    
+    // Make API call to trigger fix
+    fetch('http://localhost:8000/api/ado/trigger-fix', {{
+        method: 'POST',
+        headers: {{
+            'Content-Type': 'application/json',
+        }},
+        body: JSON.stringify({{
+            work_item_id: workItemId,
+            file_path: 'web-ui/public/mocks/{ux_issue.app_type}/basic-doc.html',
+            instruction: 'Fix the UX issue described in this work item'
+        }})
+    }})
+    .then(response => response.json())
+    .then(data => {{
+        loadingStatus.style.display = 'none';
+        fixStatus.style.display = 'block';
+        
+        if (data.status === 'success') {{
+            fixStatus.style.background = '#d4edda';
+            fixStatus.style.color = '#155724';
+            fixStatus.style.border = '1px solid #c3e6cb';
+            fixStatus.innerHTML = `
+                <strong>✅ AI Fix Completed Successfully!</strong><br>
+                Method: ${{data.fix_method}}<br>
+                AI Used: ${{data.ai_used ? 'Yes' : 'No'}}<br>
+                Check the mock app to see the changes!
+            `;
+            
+            // Update button
+            button.textContent = 'Fix Applied ✅';
+            button.style.background = '#28a745';
+        }} else {{
+            fixStatus.style.background = '#f8d7da';
+            fixStatus.style.color = '#721c24';
+            fixStatus.style.border = '1px solid #f5c6cb';
+            fixStatus.innerHTML = `
+                <strong>❌ AI Fix Failed</strong><br>
+                Error: ${{data.message}}
+            `;
+            
+            // Re-enable button
+            button.disabled = false;
+            button.textContent = '🔧 Fix with Agent';
+        }}
+    }})
+    .catch(error => {{
+        loadingStatus.style.display = 'none';
+        fixStatus.style.display = 'block';
+        fixStatus.style.background = '#f8d7da';
+        fixStatus.style.color = '#721c24';
+        fixStatus.style.border = '1px solid #f5c6cb';
+        fixStatus.innerHTML = `
+            <strong>❌ Network Error</strong><br>
+            Error: ${{error.message}}
+        `;
+        
+        // Re-enable button
+        button.disabled = false;
+        button.textContent = '🔧 Fix with Agent';
+    }});
+}}
+</script>
+"""
         
         description += f"""
 <h3>Analysis Details</h3>
