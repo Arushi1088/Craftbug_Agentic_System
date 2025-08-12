@@ -2470,6 +2470,402 @@ async def get_ado_work_item_status(work_item_id: int):
         logger.error(f"Error checking ADO work item status: {e}")
         raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
 
+@app.get("/api/git/approve-commit")
+async def git_approval_interface(work_item_id: str):
+    """Serve the Git approval interface"""
+    try:
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Git Approval - Work Item {work_item_id}</title>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #FFE4B5 0%, #FFDAB9 100%);
+            min-height: 100vh;
+            color: #333;
+        }}
+        
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }}
+        
+        .header {{
+            text-align: center;
+            margin-bottom: 30px;
+        }}
+        
+        .header h1 {{
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }}
+        
+        .header p {{
+            font-size: 1.2em;
+            opacity: 0.9;
+        }}
+        
+        .approval-section {{
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }}
+        
+        .checkbox-group {{
+            margin: 20px 0;
+        }}
+        
+        .checkbox-item {{
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }}
+        
+        .checkbox-item input[type="checkbox"] {{
+            margin-right: 15px;
+            transform: scale(1.2);
+        }}
+        
+        .checkbox-item label {{
+            font-size: 16px;
+            cursor: pointer;
+        }}
+        
+        .approve-button {{
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+            margin: 20px 0;
+        }}
+        
+        .approve-button:hover {{
+            background: #218838;
+            transform: translateY(-2px);
+        }}
+        
+        .approve-button:disabled {{
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }}
+        
+        .status {{
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }}
+        
+        .status.success {{
+            background: rgba(40, 167, 69, 0.2);
+            border: 2px solid #28a745;
+        }}
+        
+        .status.error {{
+            background: rgba(220, 53, 69, 0.2);
+            border: 2px solid #dc3545;
+        }}
+        
+        .back-link {{
+            display: inline-block;
+            margin-top: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }}
+        
+        .back-link:hover {{
+            background: rgba(255, 255, 255, 0.3);
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Git Approval</h1>
+            <p>Approve and commit changes for Work Item #{work_item_id}</p>
+        </div>
+        
+        <div class="approval-section">
+            <h3>📋 Approval Checklist</h3>
+            <p>Please review and approve the following before committing changes:</p>
+            
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="aiFixApplied" required>
+                    <label for="aiFixApplied">✅ AI fix has been applied successfully</label>
+                </div>
+                
+                <div class="checkbox-item">
+                    <input type="checkbox" id="changesReviewed" required>
+                    <label for="changesReviewed">✅ Changes have been reviewed and tested</label>
+                </div>
+                
+                <div class="checkbox-item">
+                    <input type="checkbox" id="codeQuality" required>
+                    <label for="codeQuality">✅ Code quality meets standards</label>
+                </div>
+                
+                <div class="checkbox-item">
+                    <input type="checkbox" id="noBreakingChanges" required>
+                    <label for="noBreakingChanges">✅ No breaking changes introduced</label>
+                </div>
+            </div>
+            
+            <button class="approve-button" onclick="approveAndCommit()" id="approveButton">
+                🚀 Approve & Commit Changes
+            </button>
+        </div>
+        
+        <div class="status" id="approvalStatus"></div>
+        
+        <a href="javascript:window.close()" class="back-link">← Back to Work Item</a>
+    </div>
+
+    <script>
+        function approveAndCommit() {{
+            const checkboxes = [
+                document.getElementById('aiFixApplied'),
+                document.getElementById('changesReviewed'),
+                document.getElementById('codeQuality'),
+                document.getElementById('noBreakingChanges')
+            ];
+            
+            const allChecked = checkboxes.every(checkbox => checkbox.checked);
+            
+            if (!allChecked) {{
+                alert('Please check all approval boxes before proceeding.');
+                return;
+            }}
+            
+            const button = document.getElementById('approveButton');
+            const status = document.getElementById('approvalStatus');
+            
+            button.disabled = true;
+            button.textContent = 'Committing...';
+            
+            // Make API call to commit changes
+            fetch('/api/git/commit-changes', {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify({{
+                    work_item_id: '{work_item_id}',
+                    approval_given: true,
+                    changes_reviewed: true,
+                    changes_tested: true,
+                    code_quality_approved: true,
+                    no_breaking_changes: true
+                }})
+            }})
+            .then(response => response.json())
+            .then(data => {{
+                status.style.display = 'block';
+                
+                if (data.status === 'success') {{
+                    status.className = 'status success';
+                    status.innerHTML = `
+                        <h3>✅ Changes Committed Successfully!</h3>
+                        <p><strong>Commit Message:</strong> ${{data.commit_message}}</p>
+                        <p><strong>Work Item ID:</strong> ${{data.work_item_id}}</p>
+                        <p><strong>Status:</strong> Changes have been pushed to the repository</p>
+                    `;
+                    
+                    button.textContent = '✅ Committed Successfully';
+                    button.style.background = '#28a745';
+                }} else {{
+                    status.className = 'status error';
+                    status.innerHTML = `
+                        <h3>❌ Commit Failed</h3>
+                        <p><strong>Error:</strong> ${{data.message}}</p>
+                    `;
+                    
+                    button.disabled = false;
+                    button.textContent = '🚀 Approve & Commit Changes';
+                }}
+            }})
+            .catch(error => {{
+                status.style.display = 'block';
+                status.className = 'status error';
+                status.innerHTML = `
+                    <h3>❌ Network Error</h3>
+                    <p><strong>Error:</strong> ${{error.message}}</p>
+                `;
+                
+                button.disabled = false;
+                button.textContent = '🚀 Approve & Commit Changes';
+            }});
+        }}
+    </script>
+</body>
+</html>
+"""
+        return HTMLResponse(content=html_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Git approval interface failed: {str(e)}")
+
+@app.get("/api/git/status")
+async def get_git_status():
+    """Get current git status"""
+    try:
+        import subprocess
+        import os
+        
+        # Get git status
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            cwd=os.getcwd()
+        )
+        
+        # Get current branch
+        branch_result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            cwd=os.getcwd()
+        )
+        
+        # Get remote info
+        remote_result = subprocess.run(
+            ["git", "remote", "-v"],
+            capture_output=True,
+            text=True,
+            cwd=os.getcwd()
+        )
+        
+        return {
+            "status": "success",
+            "modified_files": result.stdout.strip().split('\n') if result.stdout.strip() else [],
+            "current_branch": branch_result.stdout.strip(),
+            "remotes": remote_result.stdout.strip().split('\n') if remote_result.stdout.strip() else [],
+            "has_changes": bool(result.stdout.strip())
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/api/git/commit-changes")
+async def commit_git_changes(request: dict):
+    """Commit and push changes with user approval"""
+    try:
+        work_item_id = request.get("work_item_id")
+        approval_given = request.get("approval_given", False)
+        changes_reviewed = request.get("changes_reviewed", False)
+        changes_tested = request.get("changes_tested", False)
+        
+        if not all([approval_given, changes_reviewed, changes_tested]):
+            return {
+                "status": "error",
+                "message": "All approval checkboxes must be checked"
+            }
+        
+        import subprocess
+        import os
+        from datetime import datetime
+        
+        # Get current directory
+        cwd = os.getcwd()
+        
+        # Add all changes
+        add_result = subprocess.run(
+            ["git", "add", "."],
+            capture_output=True,
+            text=True,
+            cwd=cwd
+        )
+        
+        if add_result.returncode != 0:
+            return {
+                "status": "error",
+                "message": f"Failed to add files: {add_result.stderr}"
+            }
+        
+        # Create commit message
+        commit_message = f"Fix UX issues for work item {work_item_id} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        
+        # Commit changes
+        commit_result = subprocess.run(
+            ["git", "commit", "-m", commit_message],
+            capture_output=True,
+            text=True,
+            cwd=cwd
+        )
+        
+        if commit_result.returncode != 0:
+            return {
+                "status": "error",
+                "message": f"Failed to commit: {commit_result.stderr}"
+            }
+        
+        # Push changes
+        push_result = subprocess.run(
+            ["git", "push"],
+            capture_output=True,
+            text=True,
+            cwd=cwd
+        )
+        
+        if push_result.returncode != 0:
+            return {
+                "status": "error",
+                "message": f"Failed to push: {push_result.stderr}"
+            }
+        
+        # Update ADO work item with git info
+        try:
+            ado_client = AzureDevOpsClient()
+            update_result = ado_client.update_work_item(work_item_id, {
+                "status": "Done",
+                "tags": "git-committed"
+            })
+            logger.info(f"✅ Updated ADO work item {work_item_id} after git commit")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to update ADO work item after git commit: {e}")
+        
+        return {
+            "status": "success",
+            "message": "Changes committed and pushed successfully",
+            "commit_message": commit_message,
+            "work_item_id": work_item_id
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Git commit failed: {e}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
 @app.get("/dashboard")
 async def serve_dashboard():
     """Serve the analytics dashboard HTML"""
@@ -2497,7 +2893,7 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
             min-height: 100vh;
             color: white;
         }}
@@ -2645,7 +3041,8 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
         
         <div class="status" id="fixStatus"></div>
         
-        <a href="javascript:history.back()" class="back-link">← Back to Work Item</a>
+        <a href="javascript:window.close()" class="back-link">← Back to Work Item</a>
+        <a href="https://dev.azure.com/nayararushi0668/CODER%20TEST/_workitems/recentlyupdated/" target="_blank" class="back-link" style="margin-left: 10px;">📋 View All Work Items</a>
     </div>
 
     <script>
@@ -2692,6 +3089,8 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
                             <li>Review the applied fixes</li>
                             <li>Test the improved functionality</li>
                         </ul>
+                        
+
                     `;
                     
                     // Update button
@@ -2725,6 +3124,8 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
                 button.textContent = '🔧 Fix with Agent';
             }});
         }}
+        
+
     </script>
 </body>
 </html>

@@ -295,6 +295,44 @@ class AzureDevOpsClient:
         <strong>Note:</strong> This will open a new tab with the AI fix interface. The fix will be applied to the mock application files.
     </div>
 </div>
+
+<h3>🚀 Git Approval Workflow</h3>
+<div style="background: linear-gradient(135deg, #FFE4B5 0%, #FFDAB9 100%); border: 1px solid #FFA500; border-radius: 8px; padding: 20px; margin: 20px 0; color: #e65100; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center;">
+        🚀 Git Integration & Approval
+    </div>
+    <div style="margin-bottom: 15px; line-height: 1.5; color: #f57c00;">
+        After the AI fix is applied, you can approve and commit the changes to your repository. This requires your explicit approval.
+    </div>
+    
+    <div style="background: #fff8e1; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #ff9800;">
+        <h4 style="margin-top: 0; color: #e65100;">📋 Approval Checklist:</h4>
+        <ul style="color: #f57c00; margin: 10px 0;">
+            <li>✅ AI fix has been applied successfully</li>
+            <li>✅ Changes have been reviewed and tested</li>
+            <li>✅ Code quality meets standards</li>
+            <li>✅ No breaking changes introduced</li>
+        </ul>
+    </div>
+    
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="http://localhost:8000/api/git/approve-commit?work_item_id={work_item_id}" 
+           target="_blank" 
+           style="background: #ff9800; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center; text-decoration: none; box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);">
+            📝 Request Git Approval
+        </a>
+        
+        <a href="http://localhost:8000/api/git/status" 
+           target="_blank" 
+           style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center; text-decoration: none; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);">
+            📊 View Git Status
+        </a>
+    </div>
+    
+    <div style="margin-top: 15px; font-size: 12px; opacity: 0.8; color: #f57c00;">
+        <strong>Security Note:</strong> Git operations require explicit user approval. Changes will only be committed after you approve them.
+    </div>
+</div>
 """
         
         description += f"""
@@ -428,9 +466,11 @@ class AzureDevOpsClient:
                         "value": value
                     })
             
+            # Use the correct authentication headers
+            credentials = base64.b64encode(f":{self.personal_access_token}".encode()).decode()
             headers = {
                 "Content-Type": "application/json-patch+json",
-                "Authorization": f"Basic {base64.b64encode(f'{self.username}:{self.pat}'.encode()).decode()}"
+                "Authorization": f"Basic {credentials}"
             }
             
             response = requests.patch(url, json=patch_data, headers=headers, timeout=30)

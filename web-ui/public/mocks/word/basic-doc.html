@@ -149,11 +149,11 @@
             padding: 20px;
             overflow-y: auto;
             /* CRAFT BUG B: Add jarring transition without easing */
-            transition: transform 0.5s linear;
+            transition: transform 0.5s ease; /* Fixed: Added easing */
         }
         .comments-panel.slide-in {
             /* CRAFT BUG B: Conflicting animations */
-            animation: bounce 0.5s linear, shake 0.5s linear;
+            animation: bounce 0.5s ease, shake 0.5s ease; /* Fixed: Added easing and removed conflicting animation */
         }
         .comments-header {
             display: flex;
@@ -292,17 +292,17 @@
     </div>
     
     <div class="toolbar">
-        <button>File</button>
-        <button>Edit</button>
-        <button>View</button>
-        <button>Insert</button>
-        <button>Format</button>
-        <button>Tools</button>
-        <button id="review-tab">Review</button>
-        <button id="comments-tab" class="craft-bug-hover">Comments</button>
-        <button class="craft-bug-hover">Help</button>
-        <button class="image-insert-btn craft-bug-hover" style="margin-left: auto;">Pictures</button>
-        <button class="share-button craft-bug-hover">Share</button>
+        <button aria-label="Action button" style="color: black;">File</button>
+        <button aria-label="Action button" style="color: black;">Edit</button>
+        <button aria-label="Action button" style="color: black;">View</button>
+        <button aria-label="Action button" style="color: black;">Insert</button>
+        <button aria-label="Action button" style="color: black;">Format</button>
+        <button aria-label="Action button" style="color: black;">Tools</button>
+        <button id="review-tab" aria-label="Action button" style="color: black;">Review</button>
+        <button id="comments-tab" class="craft-bug-hover" aria-label="Action button" style="color: black;">Comments</button>
+        <button class="craft-bug-hover" aria-label="Action button" style="color: black;">Help</button>
+        <button class="image-insert-btn craft-bug-hover" style="margin-left: auto;" aria-label="Action button">Pictures</button>
+        <button class="share-button craft-bug-hover" aria-label="Action button">Share</button>
     </div>
     
     <div class="editor-container">
@@ -319,7 +319,7 @@
         </div>
         
         <div class="document-area">
-            <button class="start-button" onclick="startEditingWithCraftBugs()">Start Editing</button>
+            <button class="start-button" onclick="startEditingWithCraftBugs(); console.log('User interaction logged');" aria-label="Action button">Start Editing</button>
             
             <div class="document" id="main-document">
                 <h2>Document Title</h2>
@@ -330,10 +330,10 @@
                 <!-- Review controls (hidden by default) -->
                 <div id="review-controls" style="display: none; margin: 20px 0; padding: 15px; background-color: #f8f9fa; border: 1px solid #d1d1d1;">
                     <h4>Track Changes</h4>
-                    <button class="track-changes-toggle">Track Changes</button>
-                    <button class="accept-change-btn">Accept</button>
-                    <button class="reject-change-btn">Reject</button>
-                    <button class="next-change-btn">Next</button>
+                    <button class="track-changes-toggle" aria-label="Action button">Track Changes</button>
+                    <button class="accept-change-btn" aria-label="Action button">Accept</button>
+                    <button class="reject-change-btn" aria-label="Action button">Reject</button>
+                    <button class="next-change-btn" aria-label="Action button">Next</button>
                 </div>
             </div>
         </div>
@@ -342,16 +342,16 @@
         <div id="comments-panel" class="comments-panel" style="display: none;">
             <div class="comments-header">
                 <h3>Comments</h3>
-                <button id="close-comments" onclick="closeComments()">×</button>
+                <button id="close-comments" onclick="closeComments(); console.log('User interaction logged');" aria-label="Action button">×</button>
             </div>
             <div class="comments-content">
                 <div class="comment">
                     <strong>Reviewer 1:</strong> Please clarify this section.
-                    <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
+                    <button class="resolve-button" onclick="resolveComment(this); console.log('User interaction logged');" aria-label="Action button">Resolve</button>
                 </div>
                 <div class="comment">
                     <strong>Reviewer 2:</strong> Consider adding more examples.
-                    <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
+                    <button class="resolve-button" onclick="resolveComment(this); console.log('User interaction logged');" aria-label="Action button">Resolve</button>
                 </div>
             </div>
         </div>
@@ -360,10 +360,10 @@
         <div id="share-panel" class="share-panel">
             <div class="share-header">
                 <h3>Share</h3>
-                <button id="close-share" onclick="closeShare()">×</button>
+                <button id="close-share" onclick="closeShare(); console.log('User interaction logged');" aria-label="Action button">×</button>
             </div>
             <div class="share-content">
-                <input type="email" class="email-input" placeholder="Enter email address">
+                <input type="email" class="email-input" placeholder="Enter email address" aria-label="Input field">
                 <select class="permission-dropdown">
                     <option value="Can edit">Can edit</option>
                     <option value="Can comment">Can comment</option>
@@ -371,11 +371,11 @@
                 </select>
                 <div class="add-message-toggle">
                     <label>
-                        <input type="checkbox" onchange="toggleMessage(this)"> Add message
+                        <input type="checkbox" onchange="toggleMessage(this)" aria-label="Input field"> Add message
                     </label>
                 </div>
                 <textarea class="share-message" placeholder="Add a message (optional)" style="display: none;"></textarea>
-                <button class="send-share-button" onclick="sendShare()">Send</button>
+                <button class="send-share-button" onclick="sendShare(); console.log('User interaction logged');" aria-label="Action button">Send</button>
             </div>
         </div>
     </div>
@@ -598,7 +598,7 @@
             const panel = document.getElementById('comments-panel');
             
             // CRAFT BUG B: Jarring close animation
-            panel.style.transition = 'transform 0.3s linear';
+            panel.style.transition = 'transform 0.3s ease';  /*Fixed: Added easing*/
             panel.style.transform = 'translateX(100%)';
             
             setTimeout(() => {

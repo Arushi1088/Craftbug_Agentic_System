@@ -92,7 +92,7 @@ class GeminiCLIAgent:
             
             if fix_result["success"]:
                 # Update ADO work item status
-                ado_result = self._update_ado_work_item(work_item_id, "Resolved", fix_result)
+                ado_result = self._update_ado_work_item(work_item_id, "Done", fix_result)
                 
                 return {
                     "success": True,
@@ -371,9 +371,13 @@ Generate the complete corrected HTML file:
                 }
             ]
             
+            # Azure DevOps requires PAT to be base64 encoded with colon
+            import base64
+            pat_encoded = base64.b64encode(f":{self.ado_pat}".encode()).decode()
+            
             headers = {
                 'Content-Type': 'application/json-patch+json',
-                'Authorization': f'Basic {self.ado_pat}'
+                'Authorization': f'Basic {pat_encoded}'
             }
             
             response = requests.patch(url, headers=headers, json=update_data)
