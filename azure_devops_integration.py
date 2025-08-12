@@ -263,7 +263,7 @@ class AzureDevOpsClient:
                 description += f"<li>{criterion}</li>\n"
             description += "</ul>\n"
         
-        # Add the Fix with Agent button section
+        # Add the Fix with Agent section with a direct link
         description += f"""
 <h3>🤖 AI-Powered Fix</h3>
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; padding: 20px; margin: 20px 0; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
@@ -271,102 +271,19 @@ class AzureDevOpsClient:
         🤖 AI-Powered Code Fix
     </div>
     <div style="margin-bottom: 15px; line-height: 1.5;">
-        This UX issue can be automatically fixed using our Gemini AI agent. Click the button below to trigger the fix.
+        This UX issue can be automatically fixed using our Gemini AI agent. Click the link below to trigger the fix.
     </div>
     
-    <button onclick="triggerAIFix('{work_item_id}')" style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center;">
+    <a href="http://localhost:8000/fix-with-agent?work_item_id={work_item_id}&app_type={ux_issue.app_type}" 
+       target="_blank" 
+       style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; display: inline-flex; align-items: center; text-decoration: none;">
         🔧 Fix with Agent
-    </button>
+    </a>
     
-    <div id="loadingStatus" style="display: none; margin-top: 15px; text-align: center;">
-        <div style="border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px;"></div>
-        <span>AI Agent is fixing the code...</span>
+    <div style="margin-top: 15px; font-size: 12px; opacity: 0.8;">
+        <strong>Note:</strong> This will open a new tab with the AI fix interface. The fix will be applied to the mock application files.
     </div>
-    
-    <div id="fixStatus" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
 </div>
-
-<style>
-@keyframes spin {{
-    0% {{ transform: rotate(0deg); }}
-    100% {{ transform: rotate(360deg); }}
-}}
-</style>
-
-<script>
-function triggerAIFix(workItemId) {{
-    const button = event.target;
-    const loadingStatus = document.getElementById('loadingStatus');
-    const fixStatus = document.getElementById('fixStatus');
-    
-    // Disable button and show loading
-    button.disabled = true;
-    button.textContent = 'Fixing...';
-    loadingStatus.style.display = 'block';
-    fixStatus.style.display = 'none';
-    
-    // Make API call to trigger fix
-    fetch('http://localhost:8000/api/ado/trigger-fix', {{
-        method: 'POST',
-        headers: {{
-            'Content-Type': 'application/json',
-        }},
-        body: JSON.stringify({{
-            work_item_id: workItemId,
-            file_path: 'web-ui/public/mocks/{ux_issue.app_type}/basic-doc.html',
-            instruction: 'Fix the UX issue described in this work item'
-        }})
-    }})
-    .then(response => response.json())
-    .then(data => {{
-        loadingStatus.style.display = 'none';
-        fixStatus.style.display = 'block';
-        
-        if (data.status === 'success') {{
-            fixStatus.style.background = '#d4edda';
-            fixStatus.style.color = '#155724';
-            fixStatus.style.border = '1px solid #c3e6cb';
-            fixStatus.innerHTML = `
-                <strong>✅ AI Fix Completed Successfully!</strong><br>
-                Method: ${{data.fix_method}}<br>
-                AI Used: ${{data.ai_used ? 'Yes' : 'No'}}<br>
-                Check the mock app to see the changes!
-            `;
-            
-            // Update button
-            button.textContent = 'Fix Applied ✅';
-            button.style.background = '#28a745';
-        }} else {{
-            fixStatus.style.background = '#f8d7da';
-            fixStatus.style.color = '#721c24';
-            fixStatus.style.border = '1px solid #f5c6cb';
-            fixStatus.innerHTML = `
-                <strong>❌ AI Fix Failed</strong><br>
-                Error: ${{data.message}}
-            `;
-            
-            // Re-enable button
-            button.disabled = false;
-            button.textContent = '🔧 Fix with Agent';
-        }}
-    }})
-    .catch(error => {{
-        loadingStatus.style.display = 'none';
-        fixStatus.style.display = 'block';
-        fixStatus.style.background = '#f8d7da';
-        fixStatus.style.color = '#721c24';
-        fixStatus.style.border = '1px solid #f5c6cb';
-        fixStatus.innerHTML = `
-            <strong>❌ Network Error</strong><br>
-            Error: ${{error.message}}
-        `;
-        
-        // Re-enable button
-        button.disabled = false;
-        button.textContent = '🔧 Fix with Agent';
-    }});
-}}
-</script>
 """
         
         description += f"""

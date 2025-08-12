@@ -2483,6 +2483,256 @@ async def serve_dashboard():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dashboard serving failed: {str(e)}")
 
+@app.get("/fix-with-agent")
+async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "word"):
+    """Serve the Fix with Agent interface"""
+    try:
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix with Agent - Work Item {work_item_id}</title>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }}
+        
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }}
+        
+        .header {{
+            text-align: center;
+            margin-bottom: 30px;
+        }}
+        
+        .header h1 {{
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }}
+        
+        .header p {{
+            font-size: 1.2em;
+            opacity: 0.9;
+        }}
+        
+        .fix-button {{
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+            margin: 20px 0;
+        }}
+        
+        .fix-button:hover {{
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }}
+        
+        .fix-button:disabled {{
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }}
+        
+        .status {{
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }}
+        
+        .status.success {{
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+        }}
+        
+        .status.error {{
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+        }}
+        
+        .loading {{
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }}
+        
+        .spinner {{
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }}
+        
+        @keyframes spin {{
+            0% {{ transform: rotate(0deg); }}
+            100% {{ transform: rotate(360deg); }}
+        }}
+        
+        .details {{
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }}
+        
+        .details h3 {{
+            margin-top: 0;
+        }}
+        
+        .back-link {{
+            display: inline-block;
+            margin-top: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }}
+        
+        .back-link:hover {{
+            background: rgba(255, 255, 255, 0.3);
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Fix with Agent</h1>
+            <p>AI-Powered Code Fix for Work Item #{work_item_id}</p>
+        </div>
+        
+        <div class="details">
+            <h3>📋 Work Item Details</h3>
+            <p><strong>Work Item ID:</strong> {work_item_id}</p>
+            <p><strong>Application Type:</strong> {app_type.title()}</p>
+            <p><strong>Target Files:</strong> web-ui/public/mocks/{app_type}/</p>
+        </div>
+        
+        <button class="fix-button" onclick="triggerAIFix()" id="fixButton">
+            🔧 Fix with Agent
+        </button>
+        
+        <div class="loading" id="loadingStatus">
+            <div class="spinner"></div>
+            <p>AI Agent is analyzing and fixing the code...</p>
+            <p>This may take a few moments.</p>
+        </div>
+        
+        <div class="status" id="fixStatus"></div>
+        
+        <a href="javascript:history.back()" class="back-link">← Back to Work Item</a>
+    </div>
+
+    <script>
+        function triggerAIFix() {{
+            const button = document.getElementById('fixButton');
+            const loadingStatus = document.getElementById('loadingStatus');
+            const fixStatus = document.getElementById('fixStatus');
+            
+            // Disable button and show loading
+            button.disabled = true;
+            button.textContent = 'Fixing...';
+            loadingStatus.style.display = 'block';
+            fixStatus.style.display = 'none';
+            
+            // Make API call to trigger fix
+            fetch('/api/ado/trigger-fix', {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify({{
+                    work_item_id: '{work_item_id}',
+                    file_path: 'web-ui/public/mocks/{app_type}/basic-doc.html',
+                    instruction: 'Fix the UX issue described in work item {work_item_id}'
+                }})
+            }})
+            .then(response => response.json())
+            .then(data => {{
+                loadingStatus.style.display = 'none';
+                fixStatus.style.display = 'block';
+                
+                if (data.status === 'success') {{
+                    fixStatus.className = 'status success';
+                    fixStatus.innerHTML = `
+                        <h3>✅ AI Fix Completed Successfully!</h3>
+                        <p><strong>Method:</strong> ${{data.fix_method}}</p>
+                        <p><strong>AI Used:</strong> ${{data.ai_used ? 'Yes' : 'No'}}</p>
+                        <p><strong>Target File:</strong> ${{data.fix_result?.file_modified || 'Unknown'}}</p>
+                        <p><strong>Backup Created:</strong> ${{data.fix_result?.backup_created || 'Yes'}}</p>
+                        <br>
+                        <p><strong>Next Steps:</strong></p>
+                        <ul>
+                            <li>Check the mock app to see the changes</li>
+                            <li>Review the applied fixes</li>
+                            <li>Test the improved functionality</li>
+                        </ul>
+                    `;
+                    
+                    // Update button
+                    button.textContent = 'Fix Applied ✅';
+                    button.style.background = '#28a745';
+                }} else {{
+                    fixStatus.className = 'status error';
+                    fixStatus.innerHTML = `
+                        <h3>❌ AI Fix Failed</h3>
+                        <p><strong>Error:</strong> ${{data.message}}</p>
+                        <p>Please try again or contact support if the issue persists.</p>
+                    `;
+                    
+                    // Re-enable button
+                    button.disabled = false;
+                    button.textContent = '🔧 Fix with Agent';
+                }}
+            }})
+            .catch(error => {{
+                loadingStatus.style.display = 'none';
+                fixStatus.style.display = 'block';
+                fixStatus.className = 'status error';
+                fixStatus.innerHTML = `
+                    <h3>❌ Network Error</h3>
+                    <p><strong>Error:</strong> ${{error.message}}</p>
+                    <p>Please check your connection and try again.</p>
+                `;
+                
+                // Re-enable button
+                button.disabled = false;
+                button.textContent = '🔧 Fix with Agent';
+            }});
+        }}
+    </script>
+</body>
+</html>
+"""
+        return HTMLResponse(content=html_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fix with Agent interface failed: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     print("🚀 Starting Enhanced UX Analyzer FastAPI Server...")
