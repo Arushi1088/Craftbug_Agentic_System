@@ -1596,10 +1596,10 @@ export function ReportPage() {
                     {report.enhanced_report?.media_attachments?.screenshots?.map((screenshot: any, index: number) => (
                       <div key={`screenshot-${index}`} className="relative group">
                         <img
-                          src={`http://127.0.0.1:8000/reports/${screenshot.file_path}`}
+                          src={`http://127.0.0.1:8000/${screenshot.file_path}`}
                           alt={screenshot.description || `Screenshot ${index + 1}`}
                           className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
-                          onClick={() => window.open(`http://127.0.0.1:8000/reports/${screenshot.file_path}`, '_blank')}
+                          onClick={() => window.open(`http://127.0.0.1:8000/${screenshot.file_path}`, '_blank')}
                           onError={(e) => {
                             console.error('Failed to load screenshot:', screenshot.file_path);
                             (e.target as HTMLImageElement).style.display = 'none';
@@ -1618,7 +1618,7 @@ export function ReportPage() {
                     {report.enhanced_report?.media_attachments?.videos?.map((video: any, index: number) => (
                       <div key={`video-${index}`} className="relative group">
                         <video
-                          src={`http://127.0.0.1:8000/reports/${video.file_path}`}
+                          src={`http://127.0.0.1:8000/${video.file_path}`}
                           controls
                           className="w-full h-32 object-cover rounded border"
                           onError={(e) => {
