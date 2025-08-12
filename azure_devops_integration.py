@@ -137,7 +137,18 @@ class AzureDevOpsClient:
                 ux_issue.ado_created_date = datetime.now().isoformat()
                 
                 # Update the work item description with the actual work item ID
-                updated_description = work_item_data[0]["value"].replace("{{WORK_ITEM_ID}}", work_item_id)
+                # Find the description field in work_item_data
+                description_field = None
+                for field in work_item_data:
+                    if field.get("path") == "/fields/System.Description":
+                        description_field = field
+                        break
+                
+                if description_field:
+                    updated_description = description_field["value"].replace("{{WORK_ITEM_ID}}", work_item_id)
+                else:
+                    # Fallback: get description from the original build
+                    updated_description = self._build_work_item_description(ux_issue).replace("{{WORK_ITEM_ID}}", work_item_id)
                 
                 # Update the work item with the corrected description
                 update_data = [
