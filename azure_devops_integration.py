@@ -142,7 +142,19 @@ class AzureDevOpsClient:
                     "work_item_url": work_item_url,
                     "work_item_state": work_item_state,
                     "title": ux_issue.title,
-                    "ux_issue": ux_issue  # Return updated UXIssue with ADO metadata
+                    "ux_issue": {
+                        "title": ux_issue.title,
+                        "description": ux_issue.description,
+                        "category": ux_issue.category,
+                        "severity": ux_issue.severity,
+                        "app_type": ux_issue.app_type,
+                        "scenario_id": ux_issue.scenario_id,
+                        "scenario_title": ux_issue.scenario_title,
+                        "ado_work_item_id": ux_issue.ado_work_item_id,
+                        "ado_status": ux_issue.ado_status,
+                        "ado_url": ux_issue.ado_url,
+                        "ado_created_date": ux_issue.ado_created_date
+                    }
                 }
             else:
                 return {
@@ -272,7 +284,19 @@ class AzureDevOpsClient:
             "title": ux_issue.title,
             "demo_mode": True,
             "note": "Demo mode - work item not actually created in Azure DevOps",
-            "ux_issue": ux_issue  # Return updated UXIssue with ADO metadata
+            "ux_issue": {
+                "title": ux_issue.title,
+                "description": ux_issue.description,
+                "category": ux_issue.category,
+                "severity": ux_issue.severity,
+                "app_type": ux_issue.app_type,
+                "scenario_id": ux_issue.scenario_id,
+                "scenario_title": ux_issue.scenario_title,
+                "ado_work_item_id": ux_issue.ado_work_item_id,
+                "ado_status": ux_issue.ado_status,
+                "ado_url": ux_issue.ado_url,
+                "ado_created_date": ux_issue.ado_created_date
+            }
         }
     
     def create_bulk_work_items(self, ux_issues: List[UXIssue], config: WorkItemConfig = None) -> Dict[str, Any]:
