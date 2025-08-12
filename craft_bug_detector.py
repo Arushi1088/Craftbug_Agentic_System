@@ -43,11 +43,11 @@ class CraftBugDetector:
     
     def __init__(self):
         self.detection_thresholds = {
-            'loading_delay': 2000,      # 2+ seconds = bug
-            'input_lag': 100,           # 100+ ms = bug  
+            'loading_delay': 500,       # 0.5+ seconds = bug (very sensitive)
+            'input_lag': 30,            # 30+ ms = bug (very sensitive)
             'animation_judder': 16,     # 16+ ms frame time = bug
-            'layout_thrash': 3,         # 3+ reflows = bug
-            'missing_feedback': 500,    # 500+ ms without feedback = bug
+            'layout_thrash': 1,         # 1+ reflow = bug (very sensitive)
+            'missing_feedback': 100,    # 100+ ms without feedback = bug (very sensitive)
         }
     
     async def analyze_craft_bugs(self, page: Page, url: str) -> CraftBugReport:
@@ -240,6 +240,20 @@ class CraftBugDetector:
             else:
                 print(f"❌ Animation conflicts NOT detected: {conflicts} <= 0")
             
+            # Check for any animation conflicts in the list
+            animation_conflict_list = animation_metrics.get('animationConflictList', [])
+            if isinstance(animation_conflict_list, list) and len(animation_conflict_list) > 0:
+                print(f"✅ CREATING animation conflicts from list: {len(animation_conflict_list)} conflicts!")
+                findings.append(CraftBugFinding(
+                    category='B',
+                    bug_type='animation_conflicts',
+                    severity='medium',
+                    description=f"Animation conflicts detected: {len(animation_conflict_list)} conflicts",
+                    location='animation_system',
+                    metrics={'conflict_list': animation_conflict_list},
+                    timestamp=time.time()
+                ))
+            
             # Detect slide judder (PowerPoint specific)
             judder = animation_metrics.get('judderEvents', 0)
             if isinstance(judder, (list, tuple)):
@@ -269,6 +283,34 @@ class CraftBugDetector:
                         metrics={'slow_frames_count': len(slow_frames), 'max_frame_time': max(slow_frames)},
                         timestamp=time.time()
                     ))
+            
+            # Check for loading delays (Category A)
+            loading_delay = animation_metrics.get('loadingDelay', 0)
+            if loading_delay >= self.detection_thresholds['loading_delay']:
+                print(f"✅ CREATING loading delay finding: {loading_delay}ms!")
+                findings.append(CraftBugFinding(
+                    category='A',
+                    bug_type='loading_delay',
+                    severity='high',
+                    description=f"Loading delay detected: {loading_delay}ms",
+                    location='page_load',
+                    metrics={'loading_delay': loading_delay},
+                    timestamp=time.time()
+                ))
+            
+            # Check for feedback failures (Category E)
+            feedback_failures = animation_metrics.get('feedbackFailures', [])
+            if isinstance(feedback_failures, list) and len(feedback_failures) > 0:
+                print(f"✅ CREATING feedback failure finding: {len(feedback_failures)} failures!")
+                findings.append(CraftBugFinding(
+                    category='E',
+                    bug_type='feedback_failure',
+                    severity='medium',
+                    description=f"Feedback failures detected: {len(feedback_failures)} issues",
+                    location='user_interaction',
+                    metrics={'feedback_failures': feedback_failures},
+                    timestamp=time.time()
+                ))
                 
         except Exception as e:
             print(f"Error in animation detection: {e}")

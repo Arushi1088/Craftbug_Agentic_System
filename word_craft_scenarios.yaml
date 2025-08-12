@@ -7,7 +7,7 @@ scenarios:
     interactive_analysis: true
     steps:
       - action: "navigate"
-        target: "http://localhost:8080/mocks/word/basic-doc.html"
+        target: "http://127.0.0.1:8080/mocks/word/basic-doc.html"
         description: "Open Word document mock"
       - action: "wait"
         duration: 1000

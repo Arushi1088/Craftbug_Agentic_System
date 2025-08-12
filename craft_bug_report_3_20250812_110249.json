@@ -1,0 +1,62 @@
+{
+  "test_case": "PowerPoint Mock with Craft Bugs",
+  "url": "http://localhost:5173/public/mocks/powerpoint/basic-deck.html",
+  "timestamp": "2025-08-12T11:02:49.260953",
+  "load_time": 0.2583181858062744,
+  "craft_bug_metrics": {
+    "craftBugMetrics": null,
+    "excelCraftBugMetrics": null,
+    "pptCraftBugMetrics": {
+      "slideTransitionTimes": [],
+      "textBoxDelays": [],
+      "animationStutters": [],
+      "templateLoadTimes": []
+    },
+    "performance": {
+      "timeOrigin": 1754976767300.3,
+      "timing": {
+        "connectStart": 1754976767324,
+        "secureConnectionStart": 0,
+        "unloadEventEnd": 0,
+        "domainLookupStart": 1754976767324,
+        "domainLookupEnd": 1754976767324,
+        "responseStart": 1754976767358,
+        "connectEnd": 1754976767324,
+        "responseEnd": 1754976767358,
+        "requestStart": 1754976767336,
+        "domLoading": 1754976767361,
+        "redirectStart": 0,
+        "loadEventEnd": 1754976767393,
+        "domComplete": 1754976767393,
+        "navigationStart": 1754976767300,
+        "loadEventStart": 1754976767393,
+        "domContentLoadedEventEnd": 1754976767393,
+        "unloadEventStart": 0,
+        "redirectEnd": 0,
+        "domInteractive": 1754976767379,
+        "fetchStart": 1754976767324,
+        "domContentLoadedEventStart": 1754976767392
+      },
+      "navigation": {
+        "type": 0,
+        "redirectCount": 0
+      }
+    },
+    "readyState": "complete",
+    "loadMetrics": {
+      "domContentLoaded": 0.30000001192092896,
+      "loadComplete": 0,
+      "totalLoadTime": 68.2999999821186
+    }
+  },
+  "interactive_elements": {
+    "buttons": 12,
+    "inputs": 1,
+    "links": 0
+  },
+  "detected_issues": {
+    "layout_shifts": 0,
+    "animation_conflicts": 0,
+    "slow_responses": false
+  }
+}

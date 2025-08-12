@@ -17,21 +17,21 @@ TEST_SCENARIOS = [
         "app": "word",
         "scenario_id": "1.1",
         "name": "Basic Document Navigation",
-        "url": "http://localhost:8080/mocks/word/basic-doc.html",
+        "url": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
         "expected_issues": ["navigation", "accessibility", "craft_bugs"]
     },
     {
         "app": "word", 
         "scenario_id": "1.2",
-        "name": "Comment Resolution Workflow",
-        "url": "http://localhost:8080/mocks/word/basic-doc.html",
-        "expected_issues": ["workflow", "comments", "craft_bugs"]
+        "name": "Comment Resolution Workflow with Craft Bug Detection",
+        "url": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
+        "expected_issues": ["workflow", "comments", "craft_bugs", "animation_conflicts", "feedback_failure"]
     },
     {
         "app": "word",
         "scenario_id": "1.3", 
         "name": "Document Editing and Formatting",
-        "url": "http://localhost:8080/mocks/word/basic-doc.html",
+        "url": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
         "expected_issues": ["editing", "formatting", "craft_bugs"]
     },
     

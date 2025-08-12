@@ -1,0 +1,156 @@
+# Enhanced Word Application Scenario Testing - FIXED VERSION
+# Deep analysis scenarios for comprehensive UX evaluation
+
+scenarios:
+  # Basic scenarios (1.1 - 1.3)
+  - id: "1.1"
+    name: "Basic Document Navigation"
+    description: "Navigate and interact with Word interface elements"
+    task_goal: "Successfully navigate Word application and open basic functions"
+    app_type: "word"
+    steps:
+      - action: "navigate"
+        target: "{mock_url}"
+        description: "Open Word application"
+        expected_outcome: "Word interface loads completely"
+      - action: "wait"
+        duration: 2000
+        description: "Allow page to fully load"
+      - action: "click"
+        target: "#comments-tab"
+        description: "Click Comments tab to open comments panel"
+        expected_outcome: "Comments panel becomes visible"
+      - action: "wait"
+        duration: 1000
+        description: "Allow panel animation to complete"
+
+  # Craft Bug Detection Scenarios (1.4 - 1.7)
+  - id: "1.4" 
+    name: "Interactive Document Editing with Craft Bug Triggers"
+    description: "Intensive text editing session that triggers input lag and layout thrash craft bugs"
+    task_goal: "Edit document content while system detects intentional UX issues"
+    app_type: "word"
+    trigger_craft_bugs: true
+    interactive_analysis: true
+    steps:
+      - action: "navigate"
+        target: "{mock_url}"
+        description: "Open Word application"
+        expected_outcome: "Word interface loads with enhanced craft bugs"
+      - action: "wait"
+        duration: 2000
+        description: "Allow page to load completely"
+      - action: "click"
+        target: "#comments-tab"
+        description: "Click Comments tab to trigger craft bugs"
+        expected_outcome: "Comments tab clicked, craft bugs may be triggered"
+      - action: "wait"
+        duration: 1000
+        description: "Wait for interactions to register"
+      - action: "click"
+        target: ".image-insert-btn"
+        description: "Click Pictures button to trigger layout shifts"
+        expected_outcome: "Pictures button clicked, layout shifts may occur"
+      - action: "wait"
+        duration: 1000
+        description: "Allow layout shifts to be detected"
+      - action: "click"
+        target: ".share-button"
+        description: "Click Share button to trigger feedback issues"
+        expected_outcome: "Share button clicked, feedback issues may be detected"
+      - action: "wait"
+        duration: 1000
+        description: "Allow all craft bug metrics to finalize"
+
+  - id: "1.5"
+    name: "Comment Workflow with Animation Conflicts"
+    description: "Navigate comment system to trigger animation conflicts and feedback issues"
+    task_goal: "Use comment features while detecting animation and feedback craft bugs"
+    app_type: "word"
+    trigger_craft_bugs: true
+    interactive_analysis: true
+    steps:
+      - action: "navigate"
+        target: "{mock_url}"
+        description: "Open Word document"
+      - action: "wait"
+        duration: 2000
+        description: "Allow page to load"
+      - action: "click"
+        target: "#comments-tab"
+        description: "Open comments panel"
+        expected_outcome: "Comments panel opens with animation conflicts"
+        craft_bug_trigger: "animation_conflicts"
+      - action: "wait"
+        duration: 1200
+        description: "Allow conflicting animations to complete"
+      - action: "click"
+        target: ".image-insert-btn"
+        description: "Click Pictures button to trigger feedback issues"
+        craft_bug_trigger: "feedback_failure"
+      - action: "wait"
+        duration: 800
+        description: "Allow feedback detection"
+      - action: "click"
+        target: ".share-button"
+        description: "Click Share button for additional craft bug triggers"
+        craft_bug_trigger: "feedback_failure"
+      - action: "wait"
+        duration: 800
+        description: "Allow all metrics to finalize"
+
+  - id: "1.6"
+    name: "Insert Image and Add Alt Text"
+    description: "Insert an image into document and configure accessibility alt text"
+    task_goal: "Add image with proper accessibility attributes for screen readers"
+    app_type: "word"
+    steps:
+      - action: "navigate"
+        target: "{mock_url}"
+        description: "Open Word document for image insertion"
+      - action: "wait"
+        duration: 2000
+        description: "Allow page to load"
+      - action: "click"
+        target: ".image-insert-btn"
+        description: "Click Image insertion button"
+        expected_outcome: "Image insertion functionality triggered"
+      - action: "wait"
+        duration: 1000
+        description: "Allow image insertion to process"
+
+  - id: "1.7"
+    name: "Performance-Heavy Interactive Text Editing"
+    description: "Intensive text manipulation designed to trigger maximum craft bug detection"
+    task_goal: "Perform heavy text editing to trigger all craft bug categories"
+    app_type: "word"
+    trigger_craft_bugs: true
+    interactive_analysis: true
+    steps:
+      - action: "navigate"
+        target: "{mock_url}"
+        description: "Open Word application for intensive editing"
+      - action: "wait"
+        duration: 2000
+        description: "Allow page to load"
+      - action: "click"
+        target: "#comments-tab"
+        description: "Trigger comments panel (Category B: Animation conflicts)"
+        craft_bug_trigger: "animation_conflicts"
+      - action: "wait"
+        duration: 1000
+        description: "Allow animation conflicts to be detected"
+      - action: "click"
+        target: ".image-insert-btn"
+        description: "Trigger image insertion (Category A: Layout thrash)"
+        craft_bug_trigger: "layout_thrash"
+      - action: "wait"
+        duration: 1000
+        description: "Allow layout thrash to be detected"
+      - action: "click"
+        target: ".share-button"
+        description: "Trigger share functionality (Category E: Feedback failures)"
+        craft_bug_trigger: "feedback_failure"
+      - action: "wait"
+        duration: 1000
+        description: "Allow all craft bug metrics to finalize"

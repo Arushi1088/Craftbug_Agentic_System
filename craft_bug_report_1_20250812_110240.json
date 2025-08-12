@@ -1,0 +1,63 @@
+{
+  "test_case": "Word Mock with Craft Bugs",
+  "url": "http://localhost:5173/public/mocks/word/basic-doc.html",
+  "timestamp": "2025-08-12T11:02:40.052743",
+  "load_time": 0.4030020236968994,
+  "craft_bug_metrics": {
+    "craftBugMetrics": {
+      "buttonResponseTimes": [],
+      "layoutShifts": [],
+      "animationConflicts": [],
+      "inputDelays": [],
+      "feedbackFailures": []
+    },
+    "excelCraftBugMetrics": null,
+    "pptCraftBugMetrics": null,
+    "performance": {
+      "timeOrigin": 1754976757668.8,
+      "timing": {
+        "connectStart": 1754976757673,
+        "secureConnectionStart": 0,
+        "unloadEventEnd": 0,
+        "domainLookupStart": 1754976757673,
+        "domainLookupEnd": 1754976757673,
+        "responseStart": 1754976757715,
+        "connectEnd": 1754976757673,
+        "responseEnd": 1754976757716,
+        "requestStart": 1754976757689,
+        "domLoading": 1754976757722,
+        "redirectStart": 0,
+        "loadEventEnd": 1754976757860,
+        "domComplete": 1754976757860,
+        "navigationStart": 1754976757668,
+        "loadEventStart": 1754976757860,
+        "domContentLoadedEventEnd": 1754976757857,
+        "unloadEventStart": 0,
+        "redirectEnd": 0,
+        "domInteractive": 1754976757833,
+        "fetchStart": 1754976757673,
+        "domContentLoadedEventStart": 1754976757855
+      },
+      "navigation": {
+        "type": 0,
+        "redirectCount": 0
+      }
+    },
+    "readyState": "complete",
+    "loadMetrics": {
+      "domContentLoaded": 1.2999999821186066,
+      "loadComplete": 0,
+      "totalLoadTime": 187.40000000596046
+    }
+  },
+  "interactive_elements": {
+    "buttons": 21,
+    "inputs": 2,
+    "links": 0
+  },
+  "detected_issues": {
+    "layout_shifts": 0,
+    "animation_conflicts": 0,
+    "slow_responses": false
+  }
+}

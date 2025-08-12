@@ -1,0 +1,62 @@
+{
+  "test_case": "Excel Mock with Craft Bugs",
+  "url": "http://localhost:5173/public/mocks/excel/open-format.html",
+  "timestamp": "2025-08-12T11:02:44.892421",
+  "load_time": 0.25468897819519043,
+  "craft_bug_metrics": {
+    "craftBugMetrics": null,
+    "excelCraftBugMetrics": {
+      "cellSelectionTimes": [],
+      "scrollLagEvents": [],
+      "formulaBarDelays": [],
+      "layoutShifts": []
+    },
+    "pptCraftBugMetrics": null,
+    "performance": {
+      "timeOrigin": 1754976762567.5,
+      "timing": {
+        "connectStart": 1754976762567,
+        "secureConnectionStart": 0,
+        "unloadEventEnd": 0,
+        "domainLookupStart": 1754976762567,
+        "domainLookupEnd": 1754976762567,
+        "responseStart": 1754976762590,
+        "connectEnd": 1754976762567,
+        "responseEnd": 1754976762591,
+        "requestStart": 1754976762573,
+        "domLoading": 1754976762594,
+        "redirectStart": 0,
+        "loadEventEnd": 1754976762624,
+        "domComplete": 1754976762624,
+        "navigationStart": 1754976762567,
+        "loadEventStart": 1754976762624,
+        "domContentLoadedEventEnd": 1754976762624,
+        "unloadEventStart": 0,
+        "redirectEnd": 0,
+        "domInteractive": 1754976762608,
+        "fetchStart": 1754976762567,
+        "domContentLoadedEventStart": 1754976762623
+      },
+      "navigation": {
+        "type": 0,
+        "redirectCount": 0
+      }
+    },
+    "readyState": "complete",
+    "loadMetrics": {
+      "domContentLoaded": 0.5999999940395355,
+      "loadComplete": 0,
+      "totalLoadTime": 56.69999998807907
+    }
+  },
+  "interactive_elements": {
+    "buttons": 11,
+    "inputs": 1,
+    "links": 0
+  },
+  "detected_issues": {
+    "layout_shifts": 0,
+    "animation_conflicts": 0,
+    "slow_responses": false
+  }
+}

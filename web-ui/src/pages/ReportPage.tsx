@@ -598,10 +598,9 @@ export function ReportPage() {
           
           // Determine active tab based on available data
           if (normalized.modules.length > 0) {
-            setActiveTab(normalized.modules[0].key);
+            setActiveTab('overview'); // Always start with overview tab
           } else if (normalized.ux_issues && normalized.ux_issues.length > 0) {
-            const issueTypes = [...new Set(normalized.ux_issues.map(issue => issue.type))];
-            setActiveTab(issueTypes[0] || 'overview');
+            setActiveTab('overview'); // Start with overview even if there are issues
           } else {
             setActiveTab('overview');
           }
@@ -947,24 +946,26 @@ export function ReportPage() {
               </button>
             ))}
             
-            {/* Legacy issue type tabs */}
-            {Object.keys(issuesByType).map((type) => (
-              <button
-                key={type}
-                onClick={() => setActiveTab(type)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center ${
-                  activeTab === type
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {moduleIcons[type] || <AlertTriangle className="w-5 h-5" />}
-                <span className="ml-2 capitalize">{type.replace('_', ' ')}</span>
-                <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                  {issuesByType[type].length}
-                </span>
-              </button>
-            ))}
+            {/* Legacy issue type tabs - only show if not already in modules */}
+            {Object.keys(issuesByType)
+              .filter(type => !report.modules.some(module => module.key === type))
+              .map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setActiveTab(type)}
+                  className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center ${
+                    activeTab === type
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {moduleIcons[type] || <AlertTriangle className="w-5 h-5" />}
+                  <span className="ml-2 capitalize">{type.replace('_', ' ')}</span>
+                  <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                    {issuesByType[type].length}
+                  </span>
+                </button>
+              ))}
           </nav>
         </div>
 

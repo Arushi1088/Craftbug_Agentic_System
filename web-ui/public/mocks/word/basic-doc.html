@@ -221,6 +221,33 @@
             border-radius: 2px;
             cursor: pointer;
             font-size: 14px;
+            /* CRAFT BUG E: Missing hover feedback for some buttons */
+        }
+        
+        /* CRAFT BUG E: No hover state for craft-bug-hover buttons */
+        .craft-bug-hover:hover {
+            background-color: #0078d4 !important; /* Same color - no visual feedback */
+            color: white !important;
+        }
+        
+        /* CRAFT BUG B: Jarring animation without easing */
+        .jarring-animation {
+            animation: jarring-move 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes jarring-move {
+            0% { transform: translateX(0px); }
+            100% { transform: translateX(10px); }
+        }
+        
+        /* CRAFT BUG A: Layout thrash trigger */
+        .layout-thrash-trigger {
+            contain: none;
+            will-change: auto;
+        }
+        
+        /* CRAFT BUG D: Input lag simulation */
+        .input-lag-simulator {
+            transition: all 0.3s ease;
         }
         .share-panel {
             position: fixed;
@@ -388,7 +415,9 @@
             layoutShifts: [],
             animationConflicts: [],
             inputDelays: [],
-            feedbackFailures: []
+            feedbackFailures: [],
+            loadingDelay: 0,
+            animationConflictList: []
         };
         
         // CRAFT BUG A: Loading & Performance Issues
@@ -417,6 +446,15 @@
                 // CRAFT BUG A2: Layout thrash
                 causeLayoutThrash();
                 
+                // CRAFT BUG B: Trigger jarring animations
+                triggerJarringAnimations();
+                
+                // CRAFT BUG D: Simulate input lag
+                simulateInputLag(editor);
+                
+                // CRAFT BUG E: Trigger feedback issues
+                triggerFeedbackIssues();
+                
                 // Add sample text for testing
                 if (editor.value === '') {
                     editor.value = 'Welcome to Microsoft Word mock application with craft bugs.\n\nThis document contains intentional UX issues for detection and analysis.';
@@ -435,7 +473,66 @@
                 const responseTime = performance.now() - startTime;
                 window.craftBugMetrics.buttonResponseTimes.push(responseTime);
                 
+                // CRAFT BUG A: Record loading delay
+                window.craftBugMetrics.loadingDelay = responseTime;
+                
             }, CRAFT_BUGS.loading.startButtonDelay);
+        }
+        
+        // CRAFT BUG E: Feedback issues
+        function triggerFeedbackIssues() {
+            // Add elements with missing hover feedback
+            const buttons = document.querySelectorAll('.craft-bug-hover');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // CRAFT BUG E: No visual feedback on click
+                    setTimeout(() => {
+                        // Record feedback failure
+                        window.craftBugMetrics.feedbackFailures.push({
+                            timestamp: performance.now(),
+                            type: 'missing_click_feedback',
+                            element: button.textContent,
+                            severity: 'medium'
+                        });
+                    }, 100);
+                });
+            });
+        }
+        
+        // CRAFT BUG B: Jarring animations
+        function triggerJarringAnimations() {
+            const buttons = document.querySelectorAll('.toolbar button');
+            buttons.forEach((button, index) => {
+                setTimeout(() => {
+                    button.classList.add('jarring-animation');
+                    // Record animation conflict
+                    window.craftBugMetrics.animationConflicts.push({
+                        timestamp: performance.now(),
+                        type: 'conflicting_animations',
+                        severity: 'medium'
+                    });
+                }, index * 200);
+            });
+        }
+        
+        // CRAFT BUG D: Input lag simulation
+        function simulateInputLag(editor) {
+            let originalValue = '';
+            editor.addEventListener('input', function(e) {
+                const currentValue = e.target.value;
+                if (currentValue.length > originalValue.length) {
+                    // Simulate input lag
+                    setTimeout(() => {
+                        const lagTime = performance.now();
+                        window.craftBugMetrics.inputDelays.push({
+                            timestamp: lagTime,
+                            delay: 150, // 150ms lag
+                            type: 'text_input'
+                        });
+                    }, 50);
+                }
+                originalValue = currentValue;
+            });
         }
         
         // CRAFT BUG A2: Layout thrash function

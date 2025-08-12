@@ -1,0 +1,112 @@
+{
+  "analysis_id": "test_123",
+  "timestamp": "2025-08-12T13:08:12.531815",
+  "url": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
+  "mode": "real_browser",
+  "overall_score": 75,
+  "modules": {
+    "performance": {
+      "score": 90,
+      "findings": []
+    },
+    "accessibility": {
+      "score": 70,
+      "findings": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "message": "Form input missing accessible label",
+          "element": "input"
+        }
+      ]
+    },
+    "ux_heuristics": {
+      "score": 60,
+      "findings": [
+        {
+          "type": "craft_bug",
+          "severity": "high",
+          "message": "Craft Bug (Category B): Layout thrash detected: 10 events",
+          "element": "layout_system",
+          "craft_bug": true,
+          "category": "Craft Bug Category B"
+        }
+      ]
+    }
+  },
+  "execution_time": null,
+  "performance_metrics": null,
+  "scenario_info": null,
+  "requested_id": null,
+  "browser_automation": null,
+  "real_analysis": null,
+  "enhanced_features": {
+    "screenshots_captured": 0,
+    "video_recording": false,
+    "craft_bugs_detected": 1,
+    "issue_visualization": true
+  },
+  "media_attachments": {
+    "screenshots": [],
+    "video": null
+  },
+  "craft_bug_analysis": {
+    "total_count": 1,
+    "by_category": {
+      "Craft Bug Category B": 1
+    },
+    "by_severity": {
+      "high": 1,
+      "medium": 0,
+      "low": 0
+    },
+    "by_module": {
+      "ux_heuristics": 1
+    },
+    "detailed_analysis": [
+      {
+        "module": "ux_heuristics",
+        "category": "Craft Bug Category B",
+        "severity": "high",
+        "message": "Craft Bug (Category B): Layout thrash detected: 10 events",
+        "element": "layout_system",
+        "metric_value": null,
+        "recommendation": null
+      }
+    ]
+  },
+  "issue_timeline": [
+    {
+      "timestamp": null,
+      "module": "accessibility",
+      "type": "accessibility",
+      "severity": "high",
+      "message": "Form input missing accessible label",
+      "element": "input",
+      "category": null
+    },
+    {
+      "timestamp": null,
+      "module": "ux_heuristics",
+      "type": "craft_bug",
+      "severity": "high",
+      "message": "Craft Bug (Category B): Layout thrash detected: 10 events",
+      "element": "layout_system",
+      "category": "Craft Bug Category B"
+    }
+  ],
+  "storage_metadata": {
+    "analysis_id": "test_123",
+    "saved_timestamp": "2025-08-12T13:08:12.531860",
+    "file_path": "reports/enhanced/enhanced_test_123_20250812_130812.json",
+    "filename": "enhanced_test_123_20250812_130812.json",
+    "version": "3.0",
+    "file_size_bytes": 2797,
+    "enhanced_features": [
+      "screenshots",
+      "video_recording",
+      "craft_bug_analysis",
+      "issue_timeline"
+    ]
+  }
+}
