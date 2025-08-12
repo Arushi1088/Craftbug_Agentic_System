@@ -37,7 +37,7 @@ class UXIssue:
 @dataclass
 class WorkItemConfig:
     """Configuration for Azure DevOps work item creation"""
-    work_item_type: str = "Bug"  # Bug, User Story, Task, etc.
+    work_item_type: str = "Issue"  # Issue, Task, Bug, User Story, etc.
     area_path: str = ""
     iteration_path: str = ""
     assigned_to: str = ""
