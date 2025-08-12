@@ -1594,18 +1594,20 @@ export function ReportPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* Screenshots from enhanced report */}
                     {report.enhanced_report?.media_attachments?.screenshots?.map((screenshot: any, index: number) => (
-                      <div key={`screenshot-${index}`} className="relative group">
+                      <div key={`screenshot-${index}`} className="relative group cursor-pointer" onClick={() => window.open(`http://127.0.0.1:8000/${screenshot.file_path}`, '_blank')}>
                         <img
                           src={`http://127.0.0.1:8000/${screenshot.file_path}`}
                           alt={screenshot.description || `Screenshot ${index + 1}`}
-                          className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
-                          onClick={() => window.open(`http://127.0.0.1:8000/${screenshot.file_path}`, '_blank')}
+                          className="w-full h-32 object-cover rounded border hover:shadow-md transition-shadow"
                           onError={(e) => {
                             console.error('Failed to load screenshot:', screenshot.file_path);
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                        <div 
+                          className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center cursor-pointer"
+                          onClick={() => window.open(`http://127.0.0.1:8000/${screenshot.file_path}`, '_blank')}
+                        >
                           <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
                         </div>
                         <div className="text-xs text-gray-500 mt-1 text-center">
@@ -1639,18 +1641,20 @@ export function ReportPage() {
                         {report.scenario_results?.map((scenario, scenarioIndex) => 
                           scenario.steps?.map((step, stepIndex) => 
                             step.screenshot && (
-                              <div key={`${scenarioIndex}-${stepIndex}`} className="relative group">
+                              <div key={`${scenarioIndex}-${stepIndex}`} className="relative group cursor-pointer" onClick={() => window.open(`http://127.0.0.1:8000/reports/${step.screenshot}`, '_blank')}>
                                 <img
                                   src={`http://127.0.0.1:8000/reports/${step.screenshot}`}
                                   alt={`Step ${stepIndex + 1}: ${step.action}`}
-                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
-                                  onClick={() => window.open(`http://127.0.0.1:8000/reports/${step.screenshot}`, '_blank')}
+                                  className="w-full h-32 object-cover rounded border hover:shadow-md transition-shadow"
                                   onError={(e) => {
                                     console.error('Failed to load screenshot:', step.screenshot);
                                     (e.target as HTMLImageElement).style.display = 'none';
                                   }}
                                 />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                                <div 
+                                  className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center cursor-pointer"
+                                  onClick={() => window.open(`http://127.0.0.1:8000/reports/${step.screenshot}`, '_blank')}
+                                >
                                   <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1 text-center">
