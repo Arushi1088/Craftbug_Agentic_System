@@ -51,10 +51,9 @@ export function AnalysisPage() {
     setLoading(true);
     try {
       console.log(`🔍 Loading scenarios for app: ${appType}`);
-      const data = await apiClient.getScenarios();
-      const filtered = data?.filter((s: ScenarioDTO) => s.app_type === appType) || [];
-      console.log(`✅ Found ${filtered.length} scenarios for ${appType}:`, filtered);
-      setScenarios(filtered);
+      const data = await apiClient.getScenarios(appType);
+      console.log(`📊 Filtered scenarios received for ${appType}:`, data);
+      setScenarios(data || []);
     } catch (error) {
       console.error('❌ Failed to load scenarios:', error);
       setScenarios([]);
