@@ -478,63 +478,135 @@ interface ModuleFixNowButtonProps {
   onFixApplied: () => void;
 }
 
-function ModuleFixNowButton({ moduleKey, findingIndex, reportId, onFixApplied }: ModuleFixNowButtonProps) {
-  const { applyFix, isFixing, getFixResult } = useFixManager();
-  const [showSuggestions, setShowSuggestions] = useState(false);
+function ModuleFixNowButton({ finding, moduleKey, findingIndex, reportId, onFixApplied }: ModuleFixNowButtonProps) {
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
+  const [adoWorkItemId, setAdoWorkItemId] = useState<string | null>(null);
+  const [showAdoButtons, setShowAdoButtons] = useState(false);
 
   // Generate unique issue ID from module and finding index
   const issueId = `${moduleKey}-${findingIndex}`;
 
-  const handleFix = async () => {
+  const handleCreateAdoTicket = async () => {
+    setIsCreatingTicket(true);
     try {
-      // Use real backend API with constructed issue ID
-      await applyFix(issueId, reportId, moduleKey);
-      onFixApplied();
-      setShowSuggestions(true);
+      // Create ADO work item for this finding
+      const response = await fetch('/api/dashboard/create-ado-tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          report_id: reportId,
+          demo_mode: false,
+          issue_data: {
+            title: finding.title || `UX Issue: ${finding.message}`,
+            description: finding.message,
+            category: moduleKey,
+            severity: finding.severity || 'medium',
+            app_type: 'web-app',
+            scenario_id: issueId,
+            element: finding.element || 'unknown'
+          }
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.status === 'success' && result.work_items && result.work_items.length > 0) {
+        const workItem = result.work_items[0];
+        setAdoWorkItemId(workItem.work_item_id);
+        setShowAdoButtons(true);
+        console.log('ADO work item created:', workItem);
+      }
     } catch (error) {
-      console.error('Fix failed:', error);
+      console.error('Failed to create ADO ticket:', error);
+    } finally {
+      setIsCreatingTicket(false);
     }
   };
 
-  const fixResult = getFixResult();
-  const fixing = isFixing;
+  const handleViewInADO = async () => {
+    if (!adoWorkItemId) return;
+    
+    try {
+      const response = await fetch(`/api/ado/issue-url/${adoWorkItemId}`);
+      const data = await response.json();
+      
+      if (data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        console.error('No ADO URL returned');
+      }
+    } catch (error) {
+      console.error('Failed to get ADO URL:', error);
+    }
+  };
+
+  const handleTriggerFix = async () => {
+    if (!adoWorkItemId || !finding) return;
+    
+    try {
+      const response = await fetch('/api/ado/trigger-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          work_item_id: adoWorkItemId,
+          file_path: finding.element || 'frontend/src/App.tsx',
+          instruction: `Fix: ${finding.message}`
+        })
+      });
+      
+      const result = await response.json();
+      console.log('Fix triggered:', result);
+      
+      // Show success notification
+      alert(`Fix triggered for Work Item #${adoWorkItemId}. Check ADO for updates.`);
+    } catch (error) {
+      console.error('Failed to trigger fix:', error);
+      alert('Failed to trigger automated fix. Please try again.');
+    }
+  };
 
   return (
     <div className="mt-2">
-      <button
-        onClick={handleFix}
-        disabled={fixing}
-        className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-          fixing
-            ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
-            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-        }`}
-      >
-        {fixing ? (
-          <>
-            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-            Fixing...
-          </>
-        ) : (
-          <>
+      {!showAdoButtons ? (
+        <button
+          onClick={handleCreateAdoTicket}
+          disabled={isCreatingTicket}
+          className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            isCreatingTicket
+              ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {isCreatingTicket ? (
+            <>
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              Creating Ticket...
+            </>
+          ) : (
+            <>
+              <Settings className="w-3 h-3 mr-1" />
+              Fix Now
+            </>
+          )}
+        </button>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            onClick={handleViewInADO}
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            View in ADO
+          </button>
+          
+          <button
+            onClick={handleTriggerFix}
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+            title="Trigger automated fix via Gemini CLI"
+          >
             <Settings className="w-3 h-3 mr-1" />
-            Fix Now
-          </>
-        )}
-      </button>
-
-      {/* Show fix suggestions after applying */}
-      {showSuggestions && fixResult && (
-        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-          <h5 className="font-medium text-green-800 mb-2">Fix Suggestions Applied:</h5>
-          <ul className="text-sm text-green-700 space-y-1">
-            {fixResult.fix_suggestions.map((suggestion: string, index: number) => (
-              <li key={index} className="flex items-start">
-                <span className="mr-2">•</span>
-                {suggestion}
-              </li>
-            ))}
-          </ul>
+            Auto-Fix
+          </button>
         </div>
       )}
     </div>

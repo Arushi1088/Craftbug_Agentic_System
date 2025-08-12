@@ -967,6 +967,9 @@ async def analyze_word_craft_bugs(request: AnalysisRequest):
         MOCK_REPORTS[analysis_id] = report_data
         save_analysis_to_disk(analysis_id, report_data)
         
+        # Automatically create ADO work items for issues found
+        await auto_create_ado_work_items(report_data, analysis_id)
+        
         logger.info(f"✅ Word craft bug analysis completed: {analysis_id}")
         
         return AnalysisResponse(
@@ -1042,6 +1045,9 @@ async def analyze_url(request: AnalysisRequest):
         # Store report in memory and disk
         MOCK_REPORTS[analysis_id] = report_data
         save_analysis_to_disk(analysis_id, report_data)
+        
+        # Automatically create ADO work items for issues found
+        await auto_create_ado_work_items(report_data, analysis_id)
         
         logger.info(f"✅ Real analysis completed for {request.url}, analysis_id: {analysis_id}")
         
@@ -1801,37 +1807,46 @@ async def process_analysis_results_endpoint(report_id: str):
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.post("/api/dashboard/create-ado-tickets")
-async def create_ado_tickets(report_id: str, demo_mode: bool = True):
+async def create_ado_tickets(request: dict):
     """Create Azure DevOps tickets from analysis results"""
     if not DASHBOARD_AVAILABLE:
         raise HTTPException(status_code=503, detail="Dashboard components not available")
     
     try:
-        # Load the analysis results
-        analysis_data = load_analysis_from_disk(report_id)
-        if not analysis_data:
-            raise HTTPException(status_code=404, detail="Analysis report not found")
+        report_id = request.get("report_id")
+        demo_mode = request.get("demo_mode", True)
+        issue_data = request.get("issue_data")
         
         # Initialize ADO client
         ado_client = AzureDevOpsClient(demo_mode=demo_mode)
         
-        # Create work items for each issue
-        work_items = []
-        issues = analysis_data.get("issues", [])
-        
-        for i, issue in enumerate(issues):
-            ux_issue = {
-                "app_type": analysis_data.get("app_type", "unknown"),
-                "scenario_id": f"scenario_{i}",
-                "title": issue.get("title", f"UX Issue {i+1}"),
-                "description": issue.get("description", str(issue)),
-                "category": issue.get("category", "General"),
-                "severity": issue.get("severity", "medium")
-            }
+        if issue_data:
+            # Create single work item from provided issue data
+            work_item = ado_client.create_ux_work_item(issue_data)
+            work_items = [work_item] if work_item else []
+        else:
+            # Load the analysis results and create work items for all issues
+            analysis_data = load_analysis_from_disk(report_id)
+            if not analysis_data:
+                raise HTTPException(status_code=404, detail="Analysis report not found")
             
-            work_item = ado_client.create_ux_work_item(ux_issue)
-            if work_item:
-                work_items.append(work_item)
+            # Create work items for each issue
+            work_items = []
+            issues = analysis_data.get("issues", [])
+            
+            for i, issue in enumerate(issues):
+                ux_issue = {
+                    "app_type": analysis_data.get("app_type", "unknown"),
+                    "scenario_id": f"scenario_{i}",
+                    "title": issue.get("title", f"UX Issue {i+1}"),
+                    "description": issue.get("description", str(issue)),
+                    "category": issue.get("category", "General"),
+                    "severity": issue.get("severity", "medium")
+                }
+                
+                work_item = ado_client.create_ux_work_item(ux_issue)
+                if work_item:
+                    work_items.append(work_item)
         
         return JSONResponse(content={
             "status": "success", 
@@ -2249,6 +2264,78 @@ async def fix_now(
         raise HTTPException(status_code=500, detail=f"Fix operation failed: {str(e)}")
 
 # ===== AZURE DEVOPS INTEGRATION ENDPOINTS =====
+
+async def auto_create_ado_work_items(report_data: dict, analysis_id: str):
+    """Automatically create Azure DevOps work items for issues found in analysis"""
+    try:
+        # Check if ADO integration is enabled
+        ado_enabled = os.getenv('ADO_ENABLED', 'false').lower() == 'true'
+        if not ado_enabled:
+            logger.info("ADO integration disabled - skipping automatic work item creation")
+            return
+        
+        # Initialize ADO client
+        ado_client = AzureDevOpsClient(demo_mode=False)
+        
+        # Extract issues from report data
+        issues = []
+        
+        # Check for module findings
+        if "module_results" in report_data:
+            for module_key, module_data in report_data["module_results"].items():
+                if isinstance(module_data, dict) and "findings" in module_data:
+                    for finding in module_data["findings"]:
+                        if isinstance(finding, dict):
+                            issues.append({
+                                "title": finding.get("title", f"UX Issue: {finding.get('message', 'Unknown')}"),
+                                "description": finding.get("message", ""),
+                                "category": module_key,
+                                "severity": finding.get("severity", "medium"),
+                                "app_type": report_data.get("app_type", "web-app"),
+                                "scenario_id": f"{analysis_id}_{module_key}",
+                                "element": finding.get("element", "unknown")
+                            })
+        
+        # Check for legacy issues
+        if "issues" in report_data:
+            for i, issue in enumerate(report_data["issues"]):
+                if isinstance(issue, dict):
+                    issues.append({
+                        "title": issue.get("title", f"UX Issue {i+1}"),
+                        "description": issue.get("description", str(issue)),
+                        "category": issue.get("category", "General"),
+                        "severity": issue.get("severity", "medium"),
+                        "app_type": report_data.get("app_type", "web-app"),
+                        "scenario_id": f"{analysis_id}_legacy_{i}",
+                        "element": issue.get("element", "unknown")
+                    })
+        
+        # Create work items for each issue
+        work_items_created = []
+        for issue in issues:
+            try:
+                work_item = ado_client.create_ux_work_item(issue)
+                if work_item and work_item.get("success"):
+                    work_items_created.append(work_item)
+                    logger.info(f"Created ADO work item: {work_item.get('work_item_id')} for {issue['title']}")
+            except Exception as e:
+                logger.error(f"Failed to create ADO work item for {issue['title']}: {e}")
+        
+        # Update report data with ADO integration info
+        if work_items_created:
+            report_data["ado_integration"] = {
+                "work_items_created": len(work_items_created),
+                "work_items": work_items_created,
+                "sync_status": "completed",
+                "last_sync_date": datetime.now().isoformat(),
+                "organization": ado_client.organization,
+                "project": ado_client.project
+            }
+            logger.info(f"Created {len(work_items_created)} ADO work items for analysis {analysis_id}")
+        
+    except Exception as e:
+        logger.error(f"Auto ADO work item creation failed for analysis {analysis_id}: {e}")
+        # Don't fail the analysis if ADO integration fails
 
 @app.get("/api/ado/issue-url/{work_item_id}")
 async def get_ado_issue_url(work_item_id: int):
