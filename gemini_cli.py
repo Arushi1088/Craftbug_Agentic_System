@@ -38,12 +38,16 @@ class GeminiCLIAgent:
                 genai.configure(api_key=self.gemini_token)
                 self.model = genai.GenerativeModel('gemini-1.5-flash')
                 self.ai_available = True
-                logger.info("✅ Gemini AI configured successfully")
+                logger.info("✅ Gemini AI configured successfully - AI mode enabled")
             except Exception as e:
-                logger.warning(f"⚠️ Gemini AI configuration failed: {e}")
+                logger.error(f"❌ Gemini AI configuration failed: {e}")
+                logger.error("Please check your GEMINI_TOKEN and try again")
                 self.ai_available = False
         else:
-            logger.warning("⚠️ GEMINI_TOKEN not found, running in simulation mode")
+            logger.error("❌ GEMINI_TOKEN not found - AI mode disabled")
+            logger.error("To enable AI mode, set your Gemini API token:")
+            logger.error("export GEMINI_TOKEN='your-token-here'")
+            logger.error("Or run: ./set-gemini-token.sh")
             self.ai_available = False
     
     def fix_issue(self, work_item_id: str, issue_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -80,8 +84,10 @@ class GeminiCLIAgent:
             
             # Execute AI-powered fix
             if self.ai_available:
+                logger.info("🤖 Executing AI-powered fix with Gemini...")
                 fix_result = self._execute_ai_fix(target_file, instruction)
             else:
+                logger.warning("🎭 AI mode not available, falling back to simulation mode")
                 fix_result = self._execute_simulation_fix(target_file, instruction, title)
             
             if fix_result["success"]:
