@@ -71,6 +71,7 @@ type NormalizedReport = {
   ux_issues?: UXIssue[];
   isFailed?: boolean;
   ui_error?: string | null;
+  enhanced_report?: any; // Enhanced report data with media attachments
 };
 
 // Interface for module findings from real backend data
@@ -583,6 +584,21 @@ export function ReportPage() {
         console.log('🔍 Raw data total_issues:', rawData.total_issues);
         console.log('🔍 Raw data module_results:', rawData.module_results);
         
+        // Load enhanced report if available
+        let enhancedData = null;
+        if (rawData.enhanced_report?.json_file) {
+          try {
+            console.log('📸 Loading enhanced report:', rawData.enhanced_report.json_file);
+            const enhancedResponse = await fetch(`http://localhost:8000/reports/${rawData.enhanced_report.json_file}`);
+            if (enhancedResponse.ok) {
+              enhancedData = await enhancedResponse.json();
+              console.log('✅ Enhanced report loaded with media:', enhancedData?.media_attachments);
+            }
+          } catch (enhancedErr) {
+            console.warn('⚠️ Failed to load enhanced report:', enhancedErr);
+          }
+        }
+        
         if (!ignore) {
           const normalized = normalizeReport(rawData);
           console.log('✅ Normalized report:', normalized);
@@ -599,6 +615,22 @@ export function ReportPage() {
           console.log('REPORT RAW', rawData);
           console.log('MODULE KEYS', normalized.modules.map(m => m.key));
           console.log('TOTAL ISSUES', normalized.total_issues, 'computed:', normalized.modules.reduce((n,m)=>n+m.findings.length,0));
+          
+          // Merge enhanced report data with normalized report
+          if (enhancedData) {
+            console.log('🖼️ Merging enhanced report data with media attachments');
+            // Add enhanced report data to the normalized report
+            normalized.enhanced_report = enhancedData;
+            normalized.has_screenshots = true;
+            
+            // Merge media attachments with findings
+            if (enhancedData.media_attachments?.screenshots) {
+              console.log('📸 Found screenshots in enhanced report:', enhancedData.media_attachments.screenshots.length);
+              // The enhanced report generator already associates media with findings
+              // We just need to make sure the findings have the media data
+            }
+          }
+          
           setReport(normalized);
           
           // Determine active tab based on available data
