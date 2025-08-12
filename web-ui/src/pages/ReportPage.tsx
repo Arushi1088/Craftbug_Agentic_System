@@ -589,7 +589,7 @@ export function ReportPage() {
         if (rawData.enhanced_report?.json_file) {
           try {
             console.log('📸 Loading enhanced report:', rawData.enhanced_report.json_file);
-            const enhancedResponse = await fetch(`http://localhost:8000/reports/${rawData.enhanced_report.json_file}`);
+            const enhancedResponse = await fetch(`http://localhost:8000/${rawData.enhanced_report.json_file}`);
             if (enhancedResponse.ok) {
               enhancedData = await enhancedResponse.json();
               console.log('✅ Enhanced report loaded with media:', enhancedData?.media_attachments);
