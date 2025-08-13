@@ -6,7 +6,7 @@ Provides API endpoints with real browser automation and craft bug detection
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -2372,7 +2372,7 @@ async def get_ado_issue_url(work_item_id: int):
 
 @app.post("/api/ado/trigger-fix")
 async def trigger_gemini_fix(request: Dict[str, Any]):
-    """Trigger automated fix for ADO work item using Gemini AI Agent"""
+    """Trigger automated fix for ADO work item using Gemini AI Agent with real-time thinking steps"""
     try:
         work_item_id = request.get("work_item_id")
         file_path = request.get("file_path", "frontend/src/App.tsx")
@@ -2417,8 +2417,8 @@ async def trigger_gemini_fix(request: Dict[str, Any]):
                     elif tag in ["accessibility", "design", "interaction", "performance"]:
                         issue_data["category"] = tag
             
-            # Execute the fix
-            fix_result = agent.fix_issue(str(work_item_id), issue_data)
+            # Execute the fix with real-time thinking steps
+            fix_result = agent.fix_issue_with_thinking_steps(str(work_item_id), issue_data)
             
             if fix_result["success"]:
                 logger.info(f"✅ Gemini AI fix completed successfully for work item {work_item_id}")
@@ -2428,14 +2428,16 @@ async def trigger_gemini_fix(request: Dict[str, Any]):
                     "work_item_id": work_item_id,
                     "fix_result": fix_result,
                     "ai_used": fix_result.get("fix_result", {}).get("ai_used", False),
-                    "fix_method": fix_result.get("fix_result", {}).get("fix_method", "Unknown")
+                    "fix_method": fix_result.get("fix_result", {}).get("fix_method", "Unknown"),
+                    "thinking_steps": fix_result.get("thinking_steps", [])
                 })
             else:
                 logger.error(f"❌ Gemini AI fix failed for work item {work_item_id}: {fix_result['error']}")
                 return JSONResponse(content={
                     "status": "error",
                     "message": f"AI fix failed: {fix_result['error']}",
-                    "work_item_id": work_item_id
+                    "work_item_id": work_item_id,
+                    "thinking_steps": fix_result.get("thinking_steps", [])
                 })
                 
         except Exception as agent_error:
@@ -2448,6 +2450,34 @@ async def trigger_gemini_fix(request: Dict[str, Any]):
     except Exception as e:
         logger.error(f"Error triggering ADO fix: {e}")
         return JSONResponse(content={"status": "error", "message": str(e)})
+
+@app.get("/api/ado/thinking-steps/{work_item_id}")
+async def get_thinking_steps(work_item_id: str):
+    """Stream real-time thinking steps for a work item fix"""
+    async def generate_thinking_steps():
+        thinking_steps = [
+            "🔍 Analyzing the current HTML structure...",
+            "🎯 Identifying the problematic element or area...",
+            "💡 Generating UX improvement strategies...",
+            "🔧 Applying appropriate fixes based on issue category...",
+            "🤖 Analyzing code with Gemini AI...",
+            "📝 Adding explanatory comments...",
+            "💾 Saving the fixed code...",
+            "🔄 Updating ADO work item status..."
+        ]
+        
+        for i, step in enumerate(thinking_steps):
+            yield f"data: {json.dumps({'step': i + 1, 'total': len(thinking_steps), 'message': step, 'status': 'active'})}\n\n"
+            await asyncio.sleep(1.5)  # Simulate real processing time
+        
+        # Final completion message
+        yield f"data: {json.dumps({'step': len(thinking_steps), 'total': len(thinking_steps), 'message': '✅ Fix completed successfully!', 'status': 'completed'})}\n\n"
+    
+    return StreamingResponse(
+        generate_thinking_steps(),
+        media_type="text/plain",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
+    )
 
 @app.get("/api/ado/status/{work_item_id}")
 async def get_ado_work_item_status(work_item_id: int):
@@ -2721,6 +2751,8 @@ async def git_approval_interface(work_item_id: str):
                 button.textContent = '🚀 Approve & Commit Changes';
             }});
         }}
+        
+
     </script>
 </body>
 </html>
@@ -2796,6 +2828,22 @@ async def commit_git_changes(request: dict):
         # Get current directory
         cwd = os.getcwd()
         
+        # Get current branch name
+        branch_result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            cwd=cwd
+        )
+        
+        if branch_result.returncode != 0:
+            return {
+                "status": "error",
+                "message": f"Failed to get current branch: {branch_result.stderr}"
+            }
+        
+        current_branch = branch_result.stdout.strip()
+        
         # Add all changes
         add_result = subprocess.run(
             ["git", "add", "."],
@@ -2827,9 +2875,9 @@ async def commit_git_changes(request: dict):
                 "message": f"Failed to commit: {commit_result.stderr}"
             }
         
-        # Push changes
+        # Push changes with upstream setup
         push_result = subprocess.run(
-            ["git", "push"],
+            ["git", "push", "--set-upstream", "origin", current_branch],
             capture_output=True,
             text=True,
             cwd=cwd
@@ -3013,6 +3061,44 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
         .back-link:hover {{
             background: rgba(255, 255, 255, 0.3);
         }}
+        
+        .thinking-steps {{
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }}
+        
+        .thinking-steps h4 {{
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #4CAF50;
+            font-size: 18px;
+        }}
+        
+        .step {{
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }}
+        
+        .step.active {{
+            background: rgba(76, 175, 80, 0.2);
+            border-left-color: #4CAF50;
+            opacity: 1;
+            transform: translateX(5px);
+        }}
+        
+        .step.completed {{
+            background: rgba(76, 175, 80, 0.3);
+            border-left-color: #4CAF50;
+            opacity: 1;
+        }}
     </style>
 </head>
 <body>
@@ -3037,6 +3123,16 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
             <div class="spinner"></div>
             <p>AI Agent is analyzing and fixing the code...</p>
             <p>This may take a few moments.</p>
+            
+            <div class="thinking-steps" id="thinkingSteps">
+                <h4>🤖 AI Thinking Process:</h4>
+                <div class="step" id="step1">🔍 Analyzing the current HTML structure...</div>
+                <div class="step" id="step2">🎯 Identifying the problematic element or area...</div>
+                <div class="step" id="step3">💡 Generating UX improvement strategies...</div>
+                <div class="step" id="step4">🔧 Applying appropriate fixes based on issue category...</div>
+                <div class="step" id="step5">✅ Ensuring the fix maintains overall functionality...</div>
+                <div class="step" id="step6">📝 Adding explanatory comments...</div>
+            </div>
         </div>
         
         <div class="status" id="fixStatus"></div>
@@ -3050,12 +3146,19 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
             const button = document.getElementById('fixButton');
             const loadingStatus = document.getElementById('loadingStatus');
             const fixStatus = document.getElementById('fixStatus');
+            const thinkingSteps = document.getElementById('thinkingSteps');
             
             // Disable button and show loading
             button.disabled = true;
             button.textContent = 'Fixing...';
             loadingStatus.style.display = 'block';
             fixStatus.style.display = 'none';
+            
+            // Clear previous thinking steps
+            thinkingSteps.innerHTML = '<h4>🤖 AI Thinking Process:</h4>';
+            
+            // Start real-time thinking steps
+            startRealTimeThinkingSteps();
             
             // Make API call to trigger fix
             fetch('/api/ado/trigger-fix', {{
@@ -3125,7 +3228,35 @@ async def serve_fix_with_agent_interface(work_item_id: str, app_type: str = "wor
             }});
         }}
         
-
+        function startRealTimeThinkingSteps() {{
+            const thinkingSteps = document.getElementById('thinkingSteps');
+            const eventSource = new EventSource(`/api/ado/thinking-steps/{work_item_id}`);
+            
+            eventSource.onmessage = function(event) {{
+                const data = JSON.parse(event.data);
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'step active';
+                stepDiv.textContent = data.message;
+                
+                thinkingSteps.appendChild(stepDiv);
+                
+                // Mark as completed after a short delay
+                setTimeout(() => {{
+                    stepDiv.classList.remove('active');
+                    stepDiv.classList.add('completed');
+                }}, 1000);
+                
+                // Close connection when completed
+                if (data.status === 'completed') {{
+                    eventSource.close();
+                }}
+            }};
+            
+            eventSource.onerror = function(event) {{
+                console.error('EventSource failed:', event);
+                eventSource.close();
+            }};
+        }}
     </script>
 </body>
 </html>

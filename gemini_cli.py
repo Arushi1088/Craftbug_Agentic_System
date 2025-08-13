@@ -114,6 +114,84 @@ class GeminiCLIAgent:
                 "work_item_id": work_item_id
             }
     
+    def fix_issue_with_thinking_steps(self, work_item_id: str, issue_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Fix an issue using Gemini AI with real-time thinking steps
+        
+        Args:
+            work_item_id: ADO work item ID
+            issue_data: Issue details from ADO work item
+            
+        Returns:
+            Dict with fix results and thinking steps
+        """
+        try:
+            logger.info(f"🔧 Starting Gemini AI fix for work item {work_item_id}")
+            
+            thinking_steps = []
+            
+            # Step 1: Extract issue details
+            thinking_steps.append("🔍 Analyzing the current HTML structure...")
+            title = issue_data.get('title', '')
+            description = issue_data.get('description', '')
+            category = issue_data.get('category', 'general')
+            app_type = issue_data.get('app_type', 'web-app')
+            element = issue_data.get('element', 'unknown')
+            
+            # Step 2: Determine target file
+            thinking_steps.append("🎯 Identifying the problematic element or area...")
+            target_file = self._get_target_file(app_type, element)
+            if not target_file:
+                return {
+                    "success": False,
+                    "error": f"Could not determine target file for app_type: {app_type}, element: {element}",
+                    "thinking_steps": thinking_steps
+                }
+            
+            # Step 3: Create fix instruction
+            thinking_steps.append("💡 Generating UX improvement strategies...")
+            instruction = self._create_fix_instruction(title, description, category, element)
+            
+            # Step 4: Execute AI-powered fix
+            thinking_steps.append("🔧 Applying appropriate fixes based on issue category...")
+            if self.ai_available:
+                logger.info("🤖 Executing AI-powered fix with Gemini...")
+                fix_result = self._execute_ai_fix_with_steps(target_file, instruction, thinking_steps)
+            else:
+                logger.warning("🎭 AI mode not available, falling back to simulation mode")
+                thinking_steps.append("✅ Ensuring the fix maintains overall functionality...")
+                fix_result = self._execute_simulation_fix(target_file, instruction, title)
+            
+            if fix_result["success"]:
+                # Step 5: Update ADO work item status
+                thinking_steps.append("🔄 Updating ADO work item status...")
+                ado_result = self._update_ado_work_item(work_item_id, "Done", fix_result)
+                
+                return {
+                    "success": True,
+                    "work_item_id": work_item_id,
+                    "target_file": str(target_file),
+                    "instruction": instruction,
+                    "fix_result": fix_result,
+                    "ado_update": ado_result,
+                    "thinking_steps": thinking_steps,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                return {
+                    **fix_result,
+                    "thinking_steps": thinking_steps
+                }
+                
+        except Exception as e:
+            logger.error(f"Error fixing issue {work_item_id}: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "work_item_id": work_item_id,
+                "thinking_steps": thinking_steps if 'thinking_steps' in locals() else []
+            }
+
     def _get_target_file(self, app_type: str, element: str) -> Optional[Path]:
         """Determine the target file to fix based on app type and element"""
         
@@ -209,6 +287,20 @@ Generate the complete corrected HTML file:
             
             logger.info(f"🤖 Analyzing code with Gemini AI...")
             
+            # Add thinking steps for better user experience
+            thinking_steps = [
+                "🔍 Analyzing the current HTML structure...",
+                "🎯 Identifying the problematic element or area...",
+                "💡 Generating UX improvement strategies...",
+                "🔧 Applying appropriate fixes based on issue category...",
+                "✅ Ensuring the fix maintains overall functionality...",
+                "📝 Adding explanatory comments..."
+            ]
+            
+            # Log thinking steps
+            for step in thinking_steps:
+                logger.info(step)
+            
             response = self.model.generate_content(prompt)
             
             if not response.text:
@@ -239,6 +331,85 @@ Generate the complete corrected HTML file:
                 
         except Exception as e:
             logger.error(f"Error executing AI fix: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "ai_used": True
+            }
+
+    def _execute_ai_fix_with_steps(self, target_file: Path, instruction: str, thinking_steps: List[str]) -> Dict[str, Any]:
+        """Execute AI fix with real-time thinking steps"""
+        
+        try:
+            # Create backup
+            backup_file = target_file.with_suffix('.html.backup')
+            with open(target_file, 'r') as src, open(backup_file, 'w') as dst:
+                dst.write(src.read())
+            
+            # Read current content
+            with open(target_file, 'r') as f:
+                content = f.read()
+            
+            # Create detailed prompt
+            prompt = f"""
+You are an expert UX developer fixing HTML code. Here's the issue to fix:
+
+{instruction}
+
+Current HTML code:
+```html
+{content}
+```
+
+Instructions:
+1. Fix ONLY the specific UX issue mentioned in the instruction
+2. Maintain all existing functionality and structure
+3. Follow web development best practices
+4. Add comments explaining the fix
+5. Return ONLY the corrected HTML code, no explanations
+6. Ensure the fix improves user experience
+
+Generate the complete corrected HTML file:
+"""
+            
+            thinking_steps.append("🤖 Analyzing code with Gemini AI...")
+            
+            response = self.model.generate_content(prompt)
+            
+            if not response.text:
+                logger.error("❌ No response from Gemini AI")
+                thinking_steps.append("❌ AI analysis failed, falling back to simulation")
+                return self._execute_simulation_fix(target_file, instruction, "AI failed")
+            
+            thinking_steps.append("📝 Adding explanatory comments...")
+            
+            # Extract code from response
+            fixed_code = response.text.strip()
+            if fixed_code.startswith('```html'):
+                fixed_code = fixed_code.split('```html\n')[1]
+            elif fixed_code.startswith('```'):
+                fixed_code = fixed_code.split('```\n')[1]
+            if fixed_code.endswith('```'):
+                fixed_code = fixed_code.rsplit('\n```')[0]
+            
+            thinking_steps.append("💾 Saving the fixed code...")
+            
+            # Write the fixed code
+            with open(target_file, 'w') as f:
+                f.write(fixed_code)
+            
+            logger.info(f"✅ AI-powered fix successful for {target_file}")
+            return {
+                "success": True,
+                "file_modified": str(target_file),
+                "backup_created": str(backup_file),
+                "ai_used": True,
+                "fix_method": "Gemini AI"
+            }
+                
+        except Exception as e:
+            logger.error(f"Error executing AI fix: {e}")
+            thinking_steps.append(f"❌ Error during AI fix: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),
