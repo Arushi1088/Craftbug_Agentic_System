@@ -1,0 +1,354 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Enhanced UX Analysis Report</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 40px; line-height: 1.6; background: #f5f5f5; }
+                .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }
+                .score { font-size: 48px; font-weight: bold; color: white; text-align: center; margin: 20px 0; }
+                .craft-bugs { background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeaa7; }
+                .module { margin: 25px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; }
+                .module h3 { color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px; }
+                .finding-item { 
+                    display: flex; 
+                    align-items: flex-start; 
+                    gap: 20px; 
+                    padding: 20px; 
+                    border-bottom: 1px solid #e9ecef; 
+                    background: white; 
+                    border-radius: 8px; 
+                    margin: 15px 0;
+                }
+                .finding-content { flex: 1; min-width: 0; }
+                .finding-media-sidebar { flex-shrink: 0; width: 350px; max-width: 350px; }
+                .media-container { 
+                    background: #f8f9fa; 
+                    border: 1px solid #e9ecef; 
+                    border-radius: 6px; 
+                    padding: 15px; 
+                    margin-top: 10px; 
+                }
+                .media-container h5 { 
+                    margin: 0 0 10px 0; 
+                    color: #495057; 
+                    font-size: 0.9em; 
+                    font-weight: 600; 
+                }
+                .issue-screenshot { 
+                    max-width: 100%; 
+                    height: auto; 
+                    border: 1px solid #ddd; 
+                    border-radius: 4px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+                }
+                .issue-video { 
+                    max-width: 100%; 
+                    height: auto; 
+                    border: 1px solid #ddd; 
+                    border-radius: 4px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+                }
+                .media-caption { 
+                    font-size: 0.8em; 
+                    color: #6c757d; 
+                    margin-top: 8px; 
+                    text-align: center; 
+                }
+                .no-media-placeholder { 
+                    background: #e9ecef; 
+                    border: 2px dashed #adb5bd; 
+                    border-radius: 4px; 
+                    padding: 20px; 
+                    text-align: center; 
+                    color: #6c757d; 
+                    font-style: italic; 
+                }
+                .severity-badge { 
+                    padding: 4px 8px; 
+                    border-radius: 4px; 
+                    font-size: 0.8em; 
+                    font-weight: bold; 
+                    text-transform: uppercase; 
+                    color: white; 
+                }
+                .severity-high { background: #dc3545; }
+                .severity-medium { background: #ffc107; color: black; }
+                .severity-low { background: #28a745; }
+                .category-badge { 
+                    font-size: 0.8em; 
+                    color: #6c757d; 
+                    background: #e9ecef; 
+                    padding: 2px 6px; 
+                    border-radius: 3px; 
+                }
+                .steps { margin: 10px 0; }
+                .step { padding: 8px; margin: 5px 0; background: #f8f9fa; border-radius: 4px; }
+                .success { border-left: 4px solid #10b981; }
+                .warning { border-left: 4px solid #f59e0b; }
+                .error { border-left: 4px solid #ef4444; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎯 Enhanced UX Analysis Report</h1>
+                    <p><strong>Report ID:</strong> 89aa9a0a</p>
+                    <p><strong>Analysis Type:</strong> Unknown</p>
+                    <p><strong>Overall Score:</strong> <span class="score">87/100</span></p>
+                    <p><strong>Timestamp:</strong> 2025-08-13T11:20:09.863265</p>
+                </div>
+                
+                <div class="craft-bugs">
+                    <h2>🔍 Craft Bug Analysis</h2>
+                    <p><strong>Craft Bugs Detected:</strong> 0</p>
+                    <p><strong>Pattern Issues:</strong> 0</p>
+                </div>
+                
+                <h2>📊 Module Results</h2>
+        
+                <div class="module">
+                    <h3>Performance - Score: 100/100</h3>
+            
+                    <p style="color: #6c757d; font-style: italic;">No issues found in this module.</p>
+                
+                </div>
+            
+                <div class="module">
+                    <h3>Accessibility - Score: 85/100</h3>
+            
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-high">high</span>
+                                    <span class="category-badge">Functional</span>
+                                </div>
+                                <strong>Form input missing accessible label</strong><br>
+                                <small style="color: #6c757d;">Element: input</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-high">high</span>
+                                    <span class="category-badge">Functional</span>
+                                </div>
+                                <strong>Form input missing accessible label</strong><br>
+                                <small style="color: #6c757d;">Element: input</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-medium">medium</span>
+                                    <span class="category-badge">Visual</span>
+                                </div>
+                                <strong>Potential color contrast issues detected</strong><br>
+                                <small style="color: #6c757d;">Element: page</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                </div>
+            
+                <div class="module">
+                    <h3>Keyboard - Score: 100/100</h3>
+            
+                    <p style="color: #6c757d; font-style: italic;">No issues found in this module.</p>
+                
+                </div>
+            
+                <div class="module">
+                    <h3>Ux_Heuristics - Score: 40/100</h3>
+            
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-medium">medium</span>
+                                    <span class="category-badge">Performance</span>
+                                </div>
+                                <strong>Craft Bug (Category B): Conflicting animations: 1 conflicts</strong><br>
+                                <small style="color: #6c757d;">Element: animation_system</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-medium">medium</span>
+                                    <span class="category-badge">Performance</span>
+                                </div>
+                                <strong>Craft Bug (Category B): Animation conflicts detected: 1 conflicts</strong><br>
+                                <small style="color: #6c757d;">Element: animation_system</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-high">high</span>
+                                    <span class="category-badge">Performance</span>
+                                </div>
+                                <strong>Craft Bug (Category D): Input lag detected: 67ms response time</strong><br>
+                                <small style="color: #6c757d;">Element: input_element_0</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-high">high</span>
+                                    <span class="category-badge">Performance</span>
+                                </div>
+                                <strong>Craft Bug (Category D): Input lag detected: 69ms response time</strong><br>
+                                <small style="color: #6c757d;">Element: input_element_1</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-high">high</span>
+                                    <span class="category-badge">Performance</span>
+                                </div>
+                                <strong>Craft Bug (Category D): Input lag detected: 49ms response time</strong><br>
+                                <small style="color: #6c757d;">Element: input_element_2</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-medium">medium</span>
+                                    <span class="category-badge">Functional</span>
+                                </div>
+                                <strong>Craft Bug (Category E): Feedback failures detected: 1 instances</strong><br>
+                                <small style="color: #6c757d;">Element: feedback_system</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        
+                            </div>
+                        </div>
+                    
+                </div>
+            
+                <div class="module">
+                    <h3>Best_Practices - Score: 100/100</h3>
+            
+                    <p style="color: #6c757d; font-style: italic;">No issues found in this module.</p>
+                
+                </div>
+            
+                <div class="module">
+                    <h3>Health_Alerts - Score: 100/100</h3>
+            
+                    <p style="color: #6c757d; font-style: italic;">No issues found in this module.</p>
+                
+                </div>
+            
+                <h2>🎯 Scenario Steps</h2>
+                <div class="steps">
+        
+                </div>
+            </div>
+        </body>
+        </html>
+        

@@ -152,6 +152,29 @@ except ImportError as e:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def _categorize_issue(finding: Dict[str, Any]) -> str:
+    """Categorize issue to determine media type needed"""
+    message = finding.get('message', '').lower()
+    issue_type = finding.get('type', '').lower()
+    
+    # Visual issues - need screenshots
+    visual_keywords = ['contrast', 'spacing', 'alignment', 'color', 'layout', 'size', 'position', 'margin', 'padding']
+    if any(keyword in message for keyword in visual_keywords):
+        return 'visual'
+    
+    # Performance issues - need videos
+    performance_keywords = ['lag', 'slow', 'loading', 'responsive', 'delay', 'performance', 'animation', 'transition']
+    if any(keyword in message for keyword in performance_keywords):
+        return 'performance'
+    
+    # Functional issues - screenshots or videos depending on clarity
+    functional_keywords = ['broken', 'missing', 'error', 'fail', 'not working', 'click', 'interaction']
+    if any(keyword in message for keyword in functional_keywords):
+        return 'functional'
+    
+    # Default to visual for most issues
+    return 'visual'
+
 # Mock URLs for deterministic testing
 MOCK_URLS = {
     "word": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
@@ -1673,18 +1696,92 @@ async def download_report(report_id: str, format: str = "json"):
             )
     
     elif format == "html":
-        # Return a simple HTML version
+        # Return enhanced HTML version with contextual media
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <title>Enhanced UX Analysis Report</title>
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }}
-                .header {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }}
-                .score {{ font-size: 32px; font-weight: bold; color: #2563eb; }}
-                .craft-bugs {{ background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; }}
-                .module {{ margin: 20px 0; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; }}
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 40px; line-height: 1.6; background: #f5f5f5; }}
+                .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }}
+                .score {{ font-size: 48px; font-weight: bold; color: white; text-align: center; margin: 20px 0; }}
+                .craft-bugs {{ background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeaa7; }}
+                .module {{ margin: 25px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; }}
+                .module h3 {{ color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px; }}
+                .finding-item {{ 
+                    display: flex; 
+                    align-items: flex-start; 
+                    gap: 20px; 
+                    padding: 20px; 
+                    border-bottom: 1px solid #e9ecef; 
+                    background: white; 
+                    border-radius: 8px; 
+                    margin: 15px 0;
+                }}
+                .finding-content {{ flex: 1; min-width: 0; }}
+                .finding-media-sidebar {{ flex-shrink: 0; width: 350px; max-width: 350px; }}
+                .media-container {{ 
+                    background: #f8f9fa; 
+                    border: 1px solid #e9ecef; 
+                    border-radius: 6px; 
+                    padding: 15px; 
+                    margin-top: 10px; 
+                }}
+                .media-container h5 {{ 
+                    margin: 0 0 10px 0; 
+                    color: #495057; 
+                    font-size: 0.9em; 
+                    font-weight: 600; 
+                }}
+                .issue-screenshot {{ 
+                    max-width: 100%; 
+                    height: auto; 
+                    border: 1px solid #ddd; 
+                    border-radius: 4px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+                }}
+                .issue-video {{ 
+                    max-width: 100%; 
+                    height: auto; 
+                    border: 1px solid #ddd; 
+                    border-radius: 4px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+                }}
+                .media-caption {{ 
+                    font-size: 0.8em; 
+                    color: #6c757d; 
+                    margin-top: 8px; 
+                    text-align: center; 
+                }}
+                .no-media-placeholder {{ 
+                    background: #e9ecef; 
+                    border: 2px dashed #adb5bd; 
+                    border-radius: 4px; 
+                    padding: 20px; 
+                    text-align: center; 
+                    color: #6c757d; 
+                    font-style: italic; 
+                }}
+                .severity-badge {{ 
+                    padding: 4px 8px; 
+                    border-radius: 4px; 
+                    font-size: 0.8em; 
+                    font-weight: bold; 
+                    text-transform: uppercase; 
+                    color: white; 
+                }}
+                .severity-high {{ background: #dc3545; }}
+                .severity-medium {{ background: #ffc107; color: black; }}
+                .severity-low {{ background: #28a745; }}
+                .category-badge {{ 
+                    font-size: 0.8em; 
+                    color: #6c757d; 
+                    background: #e9ecef; 
+                    padding: 2px 6px; 
+                    border-radius: 3px; 
+                }}
                 .steps {{ margin: 10px 0; }}
                 .step {{ padding: 8px; margin: 5px 0; background: #f8f9fa; border-radius: 4px; }}
                 .success {{ border-left: 4px solid #10b981; }}
@@ -1693,26 +1790,132 @@ async def download_report(report_id: str, format: str = "json"):
             </style>
         </head>
         <body>
-            <div class="header">
-                <h1>Enhanced UX Analysis Report</h1>
-                <p><strong>Report ID:</strong> {report_id}</p>
-                <p><strong>Analysis Type:</strong> {report.get('type', 'Unknown')}</p>
-                <p><strong>Overall Score:</strong> <span class="score">{report.get('overall_score', 0)}/100</span></p>
-                <p><strong>Timestamp:</strong> {report.get('timestamp', 'Unknown')}</p>
-            </div>
+            <div class="container">
+                <div class="header">
+                    <h1>🎯 Enhanced UX Analysis Report</h1>
+                    <p><strong>Report ID:</strong> {report_id}</p>
+                    <p><strong>Analysis Type:</strong> {report.get('type', 'Unknown')}</p>
+                    <p><strong>Overall Score:</strong> <span class="score">{report.get('overall_score', 0)}/100</span></p>
+                    <p><strong>Timestamp:</strong> {report.get('timestamp', 'Unknown')}</p>
+                </div>
+                
+                <div class="craft-bugs">
+                    <h2>🔍 Craft Bug Analysis</h2>
+                    <p><strong>Craft Bugs Detected:</strong> {len(report.get('craft_bugs_detected', []))}</p>
+                    <p><strong>Pattern Issues:</strong> {len(report.get('pattern_issues', []))}</p>
+                </div>
+                
+                <h2>📊 Module Results</h2>
+        """
+        
+        # Add modules with contextual media
+        for module_name, module_data in report.get('modules', {}).items():
+            html_content += f"""
+                <div class="module">
+                    <h3>{module_name.title()} - Score: {module_data.get('score', 0)}/100</h3>
+            """
             
-            <div class="craft-bugs">
-                <h2>🔍 Craft Bug Analysis</h2>
-                <p><strong>Craft Bugs Detected:</strong> {len(report.get('craft_bugs_detected', []))}</p>
-                <p><strong>Pattern Issues:</strong> {len(report.get('pattern_issues', []))}</p>
-            </div>
+            # Add findings with contextual media
+            findings = module_data.get('findings', [])
+            if findings:
+                for finding in findings:
+                    severity = finding.get('severity', 'medium')
+                    issue_category = _categorize_issue(finding)
+                    
+                    html_content += f"""
+                        <div class="finding-item">
+                            <div class="finding-content">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span class="severity-badge severity-{severity}">{severity}</span>
+                                    <span class="category-badge">{issue_category.title()}</span>
+                                </div>
+                                <strong>{finding.get('message', 'No message')}</strong><br>
+                                <small style="color: #6c757d;">Element: {finding.get('element', 'Unknown')}</small>
+                            </div>
+                            
+                            <div class="finding-media-sidebar">
+                    """
+                    
+                    # Add contextual media based on issue category
+                    has_media = False
+                    
+                    # Screenshot for visual/functional issues
+                    if issue_category in ['visual', 'functional'] and (finding.get('screenshot') or finding.get('screenshot_base64')):
+                        has_media = True
+                        html_content += """
+                                <div class="media-container">
+                                    <h5>📸 Visual Evidence</h5>
+                        """
+                        
+                        # Screenshot from file
+                        if finding.get('screenshot'):
+                            html_content += f"""
+                                    <img src="file://{finding.get('screenshot')}" class="issue-screenshot" alt="Issue Screenshot">
+                            """
+                        
+                        # Base64 screenshot
+                        if finding.get('screenshot_base64'):
+                            html_content += f"""
+                                    <img src="data:image/png;base64,{finding.get('screenshot_base64')}" class="issue-screenshot" alt="Issue Screenshot">
+                            """
+                        
+                        html_content += """
+                                    <div class="media-caption">Contextual Screenshot</div>
+                                </div>
+                        """
+                    
+                    # Video for performance issues
+                    if issue_category in ['performance', 'functional'] and finding.get('video'):
+                        has_media = True
+                        html_content += """
+                                <div class="media-container">
+                                    <h5>🎥 Performance Evidence</h5>
+                                    <video class="issue-video" controls>
+                                        <source src="file://{finding.get('video')}" type="video/webm">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                    <div class="media-caption">Performance Recording</div>
+                                </div>
+                        """
+                    
+                    # Placeholder if no media available
+                    if not has_media:
+                        html_content += """
+                                <div class="media-container">
+                                    <div class="no-media-placeholder">
+                                        📷 No media captured<br>
+                                        <small>Media will be captured during analysis</small>
+                                    </div>
+                                </div>
+                        """
+                    
+                    html_content += """
+                            </div>
+                        </div>
+                    """
+            else:
+                html_content += """
+                    <p style="color: #6c757d; font-style: italic;">No issues found in this module.</p>
+                """
             
-            <h2>📊 Module Results</h2>
-            {"".join([f'<div class="module"><h3>{module.title()}</h3><p>Score: {data.get("score", 0)}/100</p></div>' for module, data in report.get('modules', {}).items()])}
-            
-            <h2>🎯 Scenario Steps</h2>
-            <div class="steps">
-                {"".join([f'<div class="step {step.get("status", "")}">{step.get("action", "Unknown")} - {step.get("status", "Unknown")} ({step.get("duration_ms", 0)}ms)</div>' for step in report.get('steps', [])])}
+            html_content += """
+                </div>
+            """
+        
+        html_content += """
+                <h2>🎯 Scenario Steps</h2>
+                <div class="steps">
+        """
+        
+        # Add scenario steps
+        for step in report.get('steps', []):
+            status_class = step.get('status', '')
+            html_content += f"""
+                    <div class="step {status_class}">{step.get('action', 'Unknown')} - {step.get('status', 'Unknown')} ({step.get('duration_ms', 0)}ms)</div>
+            """
+        
+        html_content += """
+                </div>
             </div>
         </body>
         </html>
