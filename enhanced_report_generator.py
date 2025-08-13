@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Enhanced Report Generator with Screenshots, Videos, and Craft Bug Capture
+Enhanced Report Generator with Contextual Screenshots, Videos, and Craft Bug Capture
 """
 
 import json
@@ -211,10 +211,96 @@ class EnhancedReportGenerator:
         
         return screenshot_data
     
+    def categorize_issue(self, finding: Dict[str, Any]) -> str:
+        """Categorize issue to determine media type needed"""
+        message = finding.get('message', '').lower()
+        issue_type = finding.get('type', '').lower()
+        
+        # Visual issues - need screenshots
+        visual_keywords = ['contrast', 'spacing', 'alignment', 'color', 'layout', 'size', 'position', 'margin', 'padding']
+        if any(keyword in message for keyword in visual_keywords):
+            return 'visual'
+        
+        # Performance issues - need videos
+        performance_keywords = ['lag', 'slow', 'loading', 'responsive', 'delay', 'performance', 'animation', 'transition']
+        if any(keyword in message for keyword in performance_keywords):
+            return 'performance'
+        
+        # Functional issues - screenshots or videos depending on clarity
+        functional_keywords = ['broken', 'missing', 'error', 'fail', 'not working', 'click', 'interaction']
+        if any(keyword in message for keyword in functional_keywords):
+            return 'functional'
+        
+        # Default to visual for most issues
+        return 'visual'
+    
+    async def capture_issue_specific_media(self, page, analysis_id: str, finding: Dict[str, Any], step_name: str = "issue_capture"):
+        """Capture issue-specific media based on issue category"""
+        try:
+            issue_category = self.categorize_issue(finding)
+            issue_id = f"{finding.get('type', 'issue')}_{finding.get('severity', 'medium')}_{int(time.time())}"
+            
+            media_data = {
+                "category": issue_category,
+                "timestamp": datetime.now().isoformat(),
+                "issue_id": issue_id
+            }
+            
+            if issue_category in ['visual', 'functional']:
+                # Capture screenshot for visual/functional issues
+                screenshot_data = await self.capture_screenshot_async(page, analysis_id, f"{step_name}_{issue_id}", "issue_specific")
+                if screenshot_data:
+                    media_data["screenshot"] = screenshot_data["file_path"]
+                    media_data["screenshot_base64"] = screenshot_data["base64"]
+                    media_data["screenshot_filename"] = screenshot_data["filename"]
+                    logger.info(f"📸 Issue-specific screenshot captured: {screenshot_data['filename']}")
+            
+            if issue_category in ['performance', 'functional']:
+                # Capture short video for performance issues
+                video_data = await self.capture_issue_video(page, analysis_id, issue_id, step_name)
+                if video_data:
+                    media_data["video"] = video_data["file_path"]
+                    media_data["video_filename"] = video_data["filename"]
+                    logger.info(f"🎥 Issue-specific video captured: {video_data['filename']}")
+            
+            return media_data
+            
+        except Exception as e:
+            logger.error(f"Failed to capture issue-specific media: {e}")
+            return None
+    
+    async def capture_issue_video(self, page, analysis_id: str, issue_id: str, step_name: str) -> Optional[Dict[str, Any]]:
+        """Capture a short video for performance issues"""
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{analysis_id}_{step_name}_{issue_id}_{timestamp}.webm"
+            filepath = self.videos_dir / filename
+            
+            # Start video recording
+            page.video.start(path=str(filepath))
+            
+            # Record for 3-5 seconds to capture the issue
+            await asyncio.sleep(3)
+            
+            # Stop recording
+            page.video.stop()
+            
+            logger.info(f"🎥 Issue-specific video captured: {filename}")
+            return {
+                "file_path": str(filepath),
+                "filename": filename,
+                "timestamp": timestamp,
+                "duration": 3
+            }
+        except Exception as e:
+            logger.error(f"Failed to capture issue video: {e}")
+            return None
+    
     def generate_enhanced_report(self, analysis_data: Dict[str, Any], 
                                 screenshots: List[Dict[str, Any]] = None,
-                                video_data: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Generate enhanced report with screenshots and videos"""
+                                video_data: Dict[str, Any] = None,
+                                contextual_media: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generate enhanced report with contextual screenshots, videos, and craft bug analysis"""
         
         # Associate media with findings first
         if screenshots:
@@ -240,13 +326,16 @@ class EnhancedReportGenerator:
                 "screenshots_captured": len(screenshots) if screenshots else 0,
                 "video_recording": video_data is not None,
                 "craft_bugs_detected": self._count_craft_bugs(analysis_data),
-                "issue_visualization": True
+                "issue_visualization": True,
+                "contextual_media": contextual_media is not None,
+                "contextual_media_count": len(contextual_media) if contextual_media else 0
             },
             
             # Media attachments
             "media_attachments": {
                 "screenshots": screenshots or [],
-                "video": video_data
+                "video": video_data,
+                "contextual_media": contextual_media or {}
             },
             
             # Enhanced craft bug analysis
@@ -254,18 +343,58 @@ class EnhancedReportGenerator:
             
             # Issue timeline
             "issue_timeline": self._generate_issue_timeline(analysis_data),
-            
-            # Storage metadata
-            "storage_metadata": {
-                "analysis_id": analysis_data.get("analysis_id"),
-                "saved_timestamp": datetime.now().isoformat(),
-                "file_path": f"reports/enhanced/enhanced_{analysis_data.get('analysis_id')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                "filename": f"enhanced_{analysis_data.get('analysis_id')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                "version": "3.0",
-                "file_size_bytes": 0,  # Will be calculated after saving
-                "enhanced_features": ["screenshots", "video_recording", "craft_bug_analysis", "issue_timeline"]
-            }
         }
+        
+        # Enhance findings with contextual media
+        enhanced_report = self._enhance_findings_with_contextual_media(enhanced_report, contextual_media)
+        
+        # Add storage metadata
+        enhanced_report["storage_metadata"] = {
+            "analysis_id": analysis_data.get("analysis_id"),
+            "saved_timestamp": datetime.now().isoformat(),
+            "file_path": f"reports/enhanced/enhanced_{analysis_data.get('analysis_id')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+            "filename": f"enhanced_{analysis_data.get('analysis_id')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+            "version": "3.1",
+            "file_size_bytes": 0,  # Will be calculated after saving
+            "enhanced_features": ["screenshots", "video_recording", "craft_bug_analysis", "issue_timeline", "contextual_media"]
+        }
+        
+        return enhanced_report
+    
+    def _enhance_findings_with_contextual_media(self, enhanced_report: Dict[str, Any], contextual_media: Dict[str, Any]) -> Dict[str, Any]:
+        """Enhance findings with contextual media data"""
+        if not contextual_media:
+            return enhanced_report
+        
+        modules = enhanced_report.get("modules", {})
+        
+        for module_name, module_data in modules.items():
+            findings = module_data.get("findings", [])
+            
+            for finding in findings:
+                # Find matching contextual media for this finding
+                finding_id = f"{finding.get('type', 'issue')}_{finding.get('severity', 'medium')}"
+                
+                # Look for matching media by issue characteristics
+                for media_id, media_data in contextual_media.items():
+                    if (media_data.get('issue_type') == finding.get('type') and 
+                        media_data.get('severity') == finding.get('severity')):
+                        
+                        # Add contextual media to finding
+                        if media_data.get('screenshot'):
+                            finding['screenshot'] = media_data['screenshot']
+                        if media_data.get('screenshot_base64'):
+                            finding['screenshot_base64'] = media_data['screenshot_base64']
+                        if media_data.get('video'):
+                            finding['video'] = media_data['video']
+                        
+                        # Add media metadata
+                        finding['contextual_media'] = {
+                            'category': media_data.get('category', 'unknown'),
+                            'timestamp': media_data.get('timestamp'),
+                            'media_id': media_id
+                        }
+                        break
         
         return enhanced_report
     
@@ -526,14 +655,65 @@ class EnhancedReportGenerator:
             border-radius: 0 0 8px 8px;
         }}
         .finding-item {{
-            padding: 15px 20px;
+            padding: 20px;
             border-bottom: 1px solid #e9ecef;
             display: flex;
-            align-items: center;
-            gap: 15px;
+            align-items: flex-start;
+            gap: 20px;
         }}
         .finding-item:last-child {{
             border-bottom: none;
+        }}
+        .finding-content {{
+            flex: 1;
+            min-width: 0;
+        }}
+        .finding-media-sidebar {{
+            flex-shrink: 0;
+            width: 350px;
+            max-width: 350px;
+        }}
+        .media-container {{
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+        }}
+        .media-container h5 {{
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 0.9em;
+            font-weight: 600;
+        }}
+        .issue-screenshot {{
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .issue-video {{
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .media-caption {{
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 8px;
+            text-align: center;
+        }}
+        .no-media-placeholder {{
+            background: #e9ecef;
+            border: 2px dashed #adb5bd;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
         }}
         .severity-badge {{
             padding: 4px 8px;
@@ -662,52 +842,72 @@ class EnhancedReportGenerator:
             findings = module_data.get('findings', [])
             for finding in findings:
                 severity = finding.get('severity', 'medium')
+                issue_category = self.categorize_issue(finding)
+                
                 html_content += f"""
                     <div class="finding-item">
-                        <span class="severity-badge severity-{severity}">{severity}</span>
                         <div class="finding-content">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <span class="severity-badge severity-{severity}">{severity}</span>
+                                <span style="font-size: 0.8em; color: #6c757d; background: #e9ecef; padding: 2px 6px; border-radius: 3px;">{issue_category.title()}</span>
+                            </div>
                             <strong>{finding.get('message', 'No message')}</strong><br>
-                            <small>Element: {finding.get('element', 'Unknown')}</small>
+                            <small style="color: #6c757d;">Element: {finding.get('element', 'Unknown')}</small>
+                        </div>
+                        
+                        <div class="finding-media-sidebar">
                 """
                 
-                # Add screenshots and videos if available
-                if finding.get('screenshot') or finding.get('screenshot_base64'):
+                # Add contextual media based on issue category
+                has_media = False
+                
+                # Screenshot for visual/functional issues
+                if issue_category in ['visual', 'functional'] and (finding.get('screenshot') or finding.get('screenshot_base64')):
+                    has_media = True
                     html_content += """
-                            <div class="finding-media">
-                                <h5>📸 Visual Evidence:</h5>
+                            <div class="media-container">
+                                <h5>📸 Visual Evidence</h5>
                     """
                     
                     # Screenshot from file
                     if finding.get('screenshot'):
                         html_content += f"""
-                                <div class="media-item">
-                                    <img src="file://{finding.get('screenshot')}" class="screenshot" alt="Issue Screenshot" style="max-width: 300px; border: 1px solid #ddd; border-radius: 4px;">
-                                    <div class="media-caption">Screenshot</div>
-                                </div>
+                                <img src="file://{finding.get('screenshot')}" class="issue-screenshot" alt="Issue Screenshot">
                         """
                     
                     # Base64 screenshot
                     if finding.get('screenshot_base64'):
                         html_content += f"""
-                                <div class="media-item">
-                                    <img src="data:image/png;base64,{finding.get('screenshot_base64')}" class="screenshot" alt="Issue Screenshot" style="max-width: 300px; border: 1px solid #ddd; border-radius: 4px;">
-                                    <div class="media-caption">Screenshot (Embedded)</div>
-                                </div>
-                        """
-                    
-                    # Video if available
-                    if finding.get('video'):
-                        html_content += f"""
-                                <div class="media-item">
-                                    <video controls style="max-width: 300px; border: 1px solid #ddd; border-radius: 4px;">
-                                        <source src="file://{finding.get('video')}" type="video/webm">
-                                        Your browser does not support the video tag.
-                                    </video>
-                                    <div class="media-caption">Video Recording</div>
-                                </div>
+                                <img src="data:image/png;base64,{finding.get('screenshot_base64')}" class="issue-screenshot" alt="Issue Screenshot">
                         """
                     
                     html_content += """
+                                <div class="media-caption">Contextual Screenshot</div>
+                            </div>
+                    """
+                
+                # Video for performance issues
+                if issue_category in ['performance', 'functional'] and finding.get('video'):
+                    has_media = True
+                    html_content += """
+                            <div class="media-container">
+                                <h5>🎥 Performance Evidence</h5>
+                                <video class="issue-video" controls>
+                                    <source src="file://{finding.get('video')}" type="video/webm">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div class="media-caption">Performance Recording</div>
+                            </div>
+                    """
+                
+                # Placeholder if no media available
+                if not has_media:
+                    html_content += """
+                            <div class="media-container">
+                                <div class="no-media-placeholder">
+                                    📷 No media captured<br>
+                                    <small>Media will be captured during analysis</small>
+                                </div>
                             </div>
                     """
                 
