@@ -590,7 +590,7 @@ export function ReportPage() {
         setLocalError(null);
         
         // Use direct fetch instead of hook to avoid dependency issues
-        const response = await fetch(`http://localhost:8000/api/reports/${reportId}`);
+        const response = await fetch(`/api/reports/${reportId}`);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
@@ -605,7 +605,7 @@ export function ReportPage() {
         if (rawData.enhanced_report?.json_file) {
           try {
             console.log('📸 Loading enhanced report:', rawData.enhanced_report.json_file);
-            const enhancedResponse = await fetch(`http://localhost:8000/${rawData.enhanced_report.json_file}`);
+            const enhancedResponse = await fetch(`/${rawData.enhanced_report.json_file}`);
             if (enhancedResponse.ok) {
               enhancedData = await enhancedResponse.json();
               console.log('✅ Enhanced report loaded with media:', enhancedData?.media_attachments);
@@ -639,11 +639,45 @@ export function ReportPage() {
             normalized.enhanced_report = enhancedData;
             normalized.has_screenshots = true;
             
-            // Merge media attachments with findings
-            if (enhancedData.media_attachments?.screenshots) {
-              console.log('📸 Found screenshots in enhanced report:', enhancedData.media_attachments.screenshots.length);
-              // The enhanced report generator already associates media with findings
-              // We just need to make sure the findings have the media data
+            // Merge enhanced findings with media data
+            if (enhancedData.modules) {
+              console.log('📸 Found enhanced modules with media:', Object.keys(enhancedData.modules));
+              
+              // Update each module's findings with enhanced data
+              normalized.modules.forEach(module => {
+                const enhancedModule = enhancedData.modules[module.key];
+                if (enhancedModule && enhancedModule.findings) {
+                  console.log(`🔄 Merging ${enhancedModule.findings.length} enhanced findings for module ${module.key}`);
+                  
+                  // Update each finding with enhanced data
+                  module.findings.forEach(finding => {
+                    // Find matching enhanced finding
+                    const enhancedFinding = enhancedModule.findings.find(ef => 
+                      ef.type === finding.type && 
+                      ef.severity === finding.severity &&
+                      ef.message === finding.message
+                    );
+                    
+                    if (enhancedFinding) {
+                      // Merge media data
+                      if (enhancedFinding.screenshot) {
+                        finding.screenshot = enhancedFinding.screenshot;
+                        console.log(`📸 Added screenshot to finding: ${finding.type}`);
+                      }
+                      if (enhancedFinding.screenshot_base64) {
+                        finding.screenshot_base64 = enhancedFinding.screenshot_base64;
+                      }
+                      if (enhancedFinding.video) {
+                        finding.video = enhancedFinding.video;
+                        console.log(`🎥 Added video to finding: ${finding.type}`);
+                      }
+                      if (enhancedFinding.contextual_media) {
+                        finding.contextual_media = enhancedFinding.contextual_media;
+                      }
+                    }
+                  });
+                }
+              });
             }
           }
           
@@ -697,6 +731,31 @@ export function ReportPage() {
       case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const categorizeIssue = (finding: Finding) => {
+    const message = (finding.message || '').toLowerCase();
+    
+    // Visual issues - need screenshots
+    const visualKeywords = ['contrast', 'spacing', 'alignment', 'color', 'layout', 'size', 'position', 'margin', 'padding'];
+    if (visualKeywords.some(keyword => message.includes(keyword))) {
+      return 'Visual';
+    }
+    
+    // Performance issues - need videos
+    const performanceKeywords = ['lag', 'slow', 'loading', 'responsive', 'delay', 'performance', 'animation', 'transition'];
+    if (performanceKeywords.some(keyword => message.includes(keyword))) {
+      return 'Performance';
+    }
+    
+    // Functional issues - screenshots or videos depending on clarity
+    const functionalKeywords = ['broken', 'missing', 'error', 'fail', 'not working', 'click', 'interaction'];
+    if (functionalKeywords.some(keyword => message.includes(keyword))) {
+      return 'Functional';
+    }
+    
+    // Default to visual for most issues
+    return 'Visual';
   };
 
   const handleDownload = async () => {
@@ -1286,7 +1345,7 @@ export function ReportPage() {
                                     <p className="text-xs text-gray-500 mt-1">Element: {finding.element}</p>
                                   )}
                                   {finding.fixed && finding.fix_timestamp && (
-                                    <div className="text-xs text-gray-500 mt-1">
+                                    <div className="text-xs text-gray-500 mt-2">
                                       Fixed on: {new Date(finding.fix_timestamp).toLocaleString()}
                                     </div>
                                   )}
@@ -1303,10 +1362,6 @@ export function ReportPage() {
                                         findingIndex={index}
                                         reportId={reportId!}
                                         onFixApplied={onFixApplied}
-                                      />
-                                      <ADOViewFixButton 
-                                        workItemId={finding.ado_work_item_id}
-                                        finding={finding}
                                       />
                                     </div>
                                   )}
@@ -1437,13 +1492,18 @@ export function ReportPage() {
                                 finding.fixed ? 'opacity-50 border-gray-300' : ''
                               }`}
                             >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                              <div className="flex items-start gap-4">
+                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between">
                                     <h4 className="font-medium text-gray-900">{finding.type || finding.title || 'Issue'}</h4>
-                                    {finding.fixed && (
-                                      <span className="text-green-600 text-sm font-semibold ml-2">✅ Fixed</span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                        {categorizeIssue(finding)}
+                                      </span>
+                                      {finding.fixed && (
+                                        <span className="text-green-600 text-sm font-semibold">✅ Fixed</span>
+                                      )}
+                                    </div>
                                   </div>
                                   <p className="text-sm text-gray-600 mt-1">{finding.message}</p>
                                   {finding.element && (
@@ -1474,30 +1534,54 @@ export function ReportPage() {
                                       Fixed on: {new Date(finding.fix_timestamp).toLocaleString()}
                                     </div>
                                   )}
-                                  
-                                  {/* 🖼️ Screenshots and Videos for this finding */}
-                                  {(finding.screenshot || finding.screenshot_base64 || finding.video) && (
-                                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                                </div>
+                                
+                                                                                                {/* 🖼️ Media Sidebar */}
+                                <div className="flex-shrink-0 w-80 p-3 bg-gray-50 rounded-lg border">
+                                  {(finding.screenshot || finding.screenshot_base64 || finding.video) ? (
+                                    <>
                                       <div className="flex items-center gap-2 mb-2">
                                         <Eye className="w-4 h-4 text-gray-600" />
                                         <span className="text-sm font-medium text-gray-700">Visual Evidence</span>
                                       </div>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      <div className="space-y-3">
                                         {/* Screenshot */}
                                         {finding.screenshot && (
                                           <div className="relative group">
                                             <img
-                                              src={`http://127.0.0.1:8000/reports/${finding.screenshot}`}
+                                              src={`http://127.0.0.1:8000/${finding.screenshot}`}
                                               alt={`Screenshot for ${finding.type || 'issue'}`}
-                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
-                                              onClick={() => window.open(`http://127.0.0.1:8000/reports/${finding.screenshot}`, '_blank')}
+                                              className="w-full h-48 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                console.log('Clicking screenshot:', finding.screenshot);
+                                                const url = `http://127.0.0.1:8000/${finding.screenshot}`;
+                                                console.log('Opening URL:', url);
+                                                const newWindow = window.open(url, '_blank');
+                                                if (!newWindow) {
+                                                  console.error('Popup blocked!');
+                                                  alert('Please allow popups for this site to view screenshots.');
+                                                }
+                                              }}
                                               onError={(e) => {
                                                 console.error('Failed to load screenshot:', finding.screenshot);
                                                 (e.target as HTMLImageElement).style.display = 'none';
                                               }}
                                             />
                                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
-                                              <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Click to enlarge</span>
+                                              <button 
+                                                className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium bg-blue-600 px-2 py-1 rounded hover:bg-blue-700"
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  e.stopPropagation();
+                                                  console.log('Button click - Opening screenshot:', finding.screenshot);
+                                                  const url = `http://127.0.0.1:8000/${finding.screenshot}`;
+                                                  window.open(url, '_blank');
+                                                }}
+                                              >
+                                                Click to enlarge
+                                              </button>
                                             </div>
                                             <div className="text-xs text-gray-500 mt-1 text-center">Screenshot</div>
                                           </div>
@@ -1507,26 +1591,38 @@ export function ReportPage() {
                                         {finding.video && (
                                           <div className="relative group">
                                             <video
-                                              src={`http://127.0.0.1:8000/reports/${finding.video}`}
-                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                                              src={`http://127.0.0.1:8000/${finding.video}`}
+                                              className="w-full h-48 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
                                               controls
                                               preload="metadata"
                                               onError={(e) => {
                                                 console.error('Failed to load video:', finding.video);
-                                                (e.target as HTMLVideoElement).style.display = 'none';
+                                                // Show a placeholder instead of hiding
+                                                const videoElement = e.target as HTMLVideoElement;
+                                                videoElement.style.display = 'none';
+                                                const placeholder = document.createElement('div');
+                                                placeholder.className = 'w-full h-48 bg-gray-200 rounded border flex items-center justify-center';
+                                                placeholder.innerHTML = `
+                                                  <div class="text-center">
+                                                    <div class="text-gray-500 mb-2">🎥</div>
+                                                    <div class="text-xs text-gray-500">Performance recording</div>
+                                                    <div class="text-xs text-gray-400">Feature coming soon</div>
+                                                  </div>
+                                                `;
+                                                videoElement.parentNode?.appendChild(placeholder);
                                               }}
                                             />
-                                            <div className="text-xs text-gray-500 mt-1 text-center">Video Recording</div>
+                                            <div className="text-xs text-gray-500 mt-1 text-center">Performance Recording</div>
                                           </div>
                                         )}
                                         
-                                        {/* Base64 Screenshot (if embedded) */}
-                                        {finding.screenshot_base64 && (
+                                        {/* Base64 Screenshot (if embedded) - Only show if no regular screenshot */}
+                                        {finding.screenshot_base64 && !finding.screenshot && (
                                           <div className="relative group">
                                             <img
                                               src={`data:image/png;base64,${finding.screenshot_base64}`}
                                               alt={`Screenshot for ${finding.type || 'issue'}`}
-                                              className="w-full h-32 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
+                                              className="w-full h-48 object-cover rounded border cursor-pointer hover:shadow-md transition-shadow"
                                               onClick={() => {
                                                 const newWindow = window.open();
                                                 if (newWindow) {
@@ -1548,6 +1644,12 @@ export function ReportPage() {
                                           </div>
                                         )}
                                       </div>
+                                    </>
+                                  ) : (
+                                    <div className="text-center py-8">
+                                      <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                      <p className="text-sm text-gray-500">No media captured</p>
+                                      <p className="text-xs text-gray-400">Media will be captured during analysis</p>
                                     </div>
                                   )}
                                 </div>

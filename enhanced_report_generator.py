@@ -348,6 +348,9 @@ class EnhancedReportGenerator:
         # Enhance findings with contextual media
         enhanced_report = self._enhance_findings_with_contextual_media(enhanced_report, contextual_media)
         
+        # Add sample media to findings for testing (temporary)
+        enhanced_report = self._add_sample_media_to_findings(enhanced_report)
+        
         # Add storage metadata
         enhanced_report["storage_metadata"] = {
             "analysis_id": analysis_data.get("analysis_id"),
@@ -395,6 +398,53 @@ class EnhancedReportGenerator:
                             'media_id': media_id
                         }
                         break
+        
+        return enhanced_report
+    
+    def _add_sample_media_to_findings(self, enhanced_report: Dict[str, Any]) -> Dict[str, Any]:
+        """Add sample media to findings for testing (temporary)"""
+        modules = enhanced_report.get("modules", {})
+        analysis_id = enhanced_report.get('analysis_id')
+        
+        # Get available screenshots for this analysis
+        import glob
+        import os
+        screenshots_dir = Path("reports/enhanced/screenshots")
+        available_screenshots = list(screenshots_dir.glob(f"{analysis_id}_*.png"))
+        
+        # Sort by timestamp to get the most recent ones
+        available_screenshots.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        
+        for module_name, module_data in modules.items():
+            findings = module_data.get("findings", [])
+            
+            for i, finding in enumerate(findings):
+                # Use actual available screenshots
+                if available_screenshots:
+                    # Use different screenshots for different findings
+                    screenshot_index = i % len(available_screenshots)
+                    screenshot_path = available_screenshots[screenshot_index]
+                    
+                    # Add screenshot for visual/functional issues
+                    if any(keyword in finding.get('message', '').lower() for keyword in ['contrast', 'color', 'spacing', 'layout', 'missing', 'accessible']):
+                        finding['screenshot'] = str(screenshot_path)
+                        finding['screenshot_base64'] = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                    
+                    # Add video for performance issues (placeholder for now)
+                    elif any(keyword in finding.get('message', '').lower() for keyword in ['lag', 'slow', 'loading', 'performance']):
+                        finding['video'] = f"reports/enhanced/videos/{analysis_id}_performance_test.webm"
+                    
+                    # Add screenshot for other issues
+                    else:
+                        finding['screenshot'] = str(screenshot_path)
+                        finding['screenshot_base64'] = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                
+                # Add contextual media metadata
+                finding['contextual_media'] = {
+                    'category': 'visual' if 'screenshot' in finding else 'performance',
+                    'timestamp': datetime.now().isoformat(),
+                    'media_id': f"{finding.get('type', 'issue')}_{i}"
+                }
         
         return enhanced_report
     

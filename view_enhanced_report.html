@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Contextual Media Report Viewer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px;
+        }
+        .report-frame {
+            width: 100%;
+            height: 800px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-list li:before {
+            content: "✅ ";
+            color: #4caf50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Enhanced Contextual Media Report</h1>
+            <p>Side-by-Side Layout with Smart Media Placement</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-box">
+                <h3>🚀 New Features in This Report:</h3>
+                <ul class="feature-list">
+                    <li><strong>Smart Issue Categorization:</strong> Visual, Performance, and Functional issues automatically categorized</li>
+                    <li><strong>Contextual Media:</strong> Screenshots and videos placed next to relevant issues</li>
+                    <li><strong>Side-by-Side Layout:</strong> Issue description on left, media evidence on right</li>
+                    <li><strong>Professional Design:</strong> Clean, responsive layout with proper spacing</li>
+                    <li><strong>ADO Compatible:</strong> WebM videos and base64 images work with Azure DevOps</li>
+                </ul>
+            </div>
+            
+            <h2>📊 Enhanced Report View</h2>
+            <iframe 
+                src="reports/enhanced/enhanced_test_contextual_123_20250813_111719.html" 
+                class="report-frame"
+                title="Enhanced Contextual Media Report">
+            </iframe>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <p><strong>Report ID:</strong> test_contextual_123</p>
+                <p><strong>Generated:</strong> 2024-01-15T10:30:00Z</p>
+                <p><strong>Features:</strong> Contextual Media, Side-by-Side Layout, Smart Categorization</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

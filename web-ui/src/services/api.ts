@@ -1,5 +1,5 @@
 // web-ui/src/services/api.ts
-const BASE_URL = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:8000';
+const BASE_URL = import.meta.env.VITE_API_BASE ?? '/api';
 
 type ModulesPayload = {
   performance: boolean;
@@ -33,7 +33,7 @@ async function json<T>(res: Response): Promise<T> {
 
 export const apiClient = {
   async getScenarios(app?: string): Promise<ScenarioDTO[]> {
-    const res = await fetch(`${BASE_URL}/api/scenarios`, { method: 'GET' });
+    const res = await fetch(`${BASE_URL}/scenarios`, { method: 'GET' });
     const data = await json<{ scenarios: ScenarioDTO[] }>(res);
     const allScenarios = data.scenarios ?? [];
     
@@ -48,14 +48,14 @@ export const apiClient = {
   async getModules(): Promise<
     { key: string; name: string; description: string; enabled: boolean }[]
   > {
-    const res = await fetch(`${BASE_URL}/api/modules`);
+    const res = await fetch(`${BASE_URL}/modules`);
     const data = await json<{ modules: any[] }>(res);
     return data.modules ?? [];
   },
 
   // MOCK: URL + Scenario - use main analyze endpoint
   async startUrlScenario(url: string, scenario_id: string, modules: ModulesPayload) {
-    const res = await fetch(`${BASE_URL}/api/analyze`, {
+    const res = await fetch(`${BASE_URL}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, scenario_id, use_real_browser: false }),
@@ -73,7 +73,7 @@ export const apiClient = {
     };
     const url = mockUrls[app_path] || `http://127.0.0.1:8080/mocks/${app_path}`;
     
-    const res = await fetch(`${BASE_URL}/api/analyze`, {
+    const res = await fetch(`${BASE_URL}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, scenario_id, use_real_browser: false }),
@@ -83,7 +83,7 @@ export const apiClient = {
 
   // REAL: Playwright
   async startEnhanced(url: string, scenario_path: string, modules: ModulesPayload, headless = true) {
-    const res = await fetch(`${BASE_URL}/api/analyze/enhanced`, {
+    const res = await fetch(`${BASE_URL}/analyze/enhanced`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -98,17 +98,17 @@ export const apiClient = {
   },
 
   async getReport(id: string) {
-    const res = await fetch(`${BASE_URL}/api/reports/${id}`);
+    const res = await fetch(`${BASE_URL}/reports/${id}`);
     return json<any>(res);
   },
 
   async getAnalysisStatus(id: string) {
-    const res = await fetch(`${BASE_URL}/api/analysis/${id}/status`);
+    const res = await fetch(`${BASE_URL}/analysis/${id}/status`);
     return json<any>(res);
   },
 
   async downloadReport(id: string): Promise<Blob> {
-    const res = await fetch(`${BASE_URL}/api/reports/${id}/download`);
+    const res = await fetch(`${BASE_URL}/reports/${id}/download`);
     if (!res.ok) throw new Error(`Download failed: ${res.statusText}`);
     return res.blob();
   },

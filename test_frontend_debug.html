@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Frontend Debug Test</h1>
+    
+    <div class="test-section info">
+        <h3>📊 API Connection Test</h3>
+        <button onclick="testAPIConnection()">Test API Connection</button>
+        <div id="api-result"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>📱 Scenario Loading Test</h3>
+        <button onclick="testScenarioLoading()">Test All Scenarios</button>
+        <button onclick="testWordScenarios()">Test Word Scenarios</button>
+        <button onclick="testExcelScenarios()">Test Excel Scenarios</button>
+        <button onclick="testPowerPointScenarios()">Test PowerPoint Scenarios</button>
+        <div id="scenario-result"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>🔧 Frontend Filtering Test</h3>
+        <button onclick="testFrontendFiltering()">Test Frontend Filtering Logic</button>
+        <div id="filtering-result"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8000';
+        
+        async function testAPIConnection() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p>🔄 Testing API connection...</p>';
+            
+            try {
+                const response = await fetch(`${BASE_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ API Connection Successful</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ API Connection Failed</h4>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testScenarioLoading() {
+            const resultDiv = document.getElementById('scenario-result');
+            resultDiv.innerHTML = '<p>🔄 Loading all scenarios...</p>';
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/scenarios`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const scenarios = data.scenarios || [];
+                    const wordScenarios = scenarios.filter(s => s.app_type === 'word');
+                    const excelScenarios = scenarios.filter(s => s.app_type === 'excel');
+                    const powerpointScenarios = scenarios.filter(s => s.app_type === 'powerpoint');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Scenarios Loaded Successfully</h4>
+                            <p><strong>Total scenarios:</strong> ${scenarios.length}</p>
+                            <p><strong>Word scenarios:</strong> ${wordScenarios.length}</p>
+                            <p><strong>Excel scenarios:</strong> ${excelScenarios.length}</p>
+                            <p><strong>PowerPoint scenarios:</strong> ${powerpointScenarios.length}</p>
+                            <details>
+                                <summary>View all scenarios</summary>
+                                <pre>${JSON.stringify(scenarios, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Scenario Loading Failed</h4>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testWordScenarios() {
+            await testSpecificAppType('word', 'Word');
+        }
+        
+        async function testExcelScenarios() {
+            await testSpecificAppType('excel', 'Excel');
+        }
+        
+        async function testPowerPointScenarios() {
+            await testSpecificAppType('powerpoint', 'PowerPoint');
+        }
+        
+        async function testSpecificAppType(appType, appName) {
+            const resultDiv = document.getElementById('scenario-result');
+            resultDiv.innerHTML = `<p>🔄 Loading ${appName} scenarios...</p>`;
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/scenarios`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const allScenarios = data.scenarios || [];
+                    const filteredScenarios = allScenarios.filter(s => s.app_type === appType);
+                    
+                    if (filteredScenarios.length > 0) {
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <h4>✅ ${appName} Scenarios Found (${filteredScenarios.length})</h4>
+                                <ul>
+                                    ${filteredScenarios.map(s => `<li><strong>${s.name}</strong> (ID: ${s.id})</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="error">
+                                <h4>❌ No ${appName} Scenarios Found</h4>
+                                <p>Available app types: ${[...new Set(allScenarios.map(s => s.app_type))].join(', ')}</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ ${appName} Scenario Loading Failed</h4>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testFrontendFiltering() {
+            const resultDiv = document.getElementById('filtering-result');
+            resultDiv.innerHTML = '<p>🔄 Testing frontend filtering logic...</p>';
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/scenarios`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const allScenarios = data.scenarios || [];
+                    
+                    // Simulate frontend filtering logic
+                    const wordScenarios = allScenarios.filter(scenario => scenario.app_type === 'word');
+                    const excelScenarios = allScenarios.filter(scenario => scenario.app_type === 'excel');
+                    const powerpointScenarios = allScenarios.filter(scenario => scenario.app_type === 'powerpoint');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Frontend Filtering Test Results</h4>
+                            <p><strong>Word scenarios:</strong> ${wordScenarios.length}</p>
+                            <p><strong>Excel scenarios:</strong> ${excelScenarios.length}</p>
+                            <p><strong>PowerPoint scenarios:</strong> ${powerpointScenarios.length}</p>
+                            <p><strong>Total scenarios:</strong> ${allScenarios.length}</p>
+                            <details>
+                                <summary>Filtering Logic Test</summary>
+                                <pre>// Frontend filtering logic:
+const filteredScenarios = allScenarios.filter(scenario => scenario.app_type === '${appType}');
+// This should work correctly for all app types</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Frontend Filtering Test Failed</h4>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

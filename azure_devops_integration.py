@@ -136,6 +136,9 @@ class AzureDevOpsClient:
                 ux_issue.ado_url = work_item_url
                 ux_issue.ado_created_date = datetime.now().isoformat()
                 
+                # Update the work item description to include the Fix with Agent button
+                self._update_work_item_with_fix_button(work_item_id)
+                
                 return {
                     "success": True,
                     "work_item_id": work_item_id,
@@ -217,6 +220,9 @@ class AzureDevOpsClient:
     def _build_work_item_description(self, ux_issue: UXIssue) -> str:
         """Build rich HTML description for work item"""
         
+        # Get the base URL for the fix-with-agent interface
+        base_url = os.getenv('BASE_URL', 'http://localhost:8000')
+        
         description = f"""
 <h3>UX Issue Analysis</h3>
 <p><strong>Application:</strong> {ux_issue.app_type.title()}</p>
@@ -251,6 +257,44 @@ class AzureDevOpsClient:
 <p><strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
 <p><strong>Scenario ID:</strong> {ux_issue.scenario_id}</p>
 <p><strong>Source:</strong> Automated UX Analysis System</p>
+
+<div style="background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%); padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+    <h3 style="color: white; margin: 0 0 15px 0;">🤖 AI-Powered Fix Available</h3>
+    <p style="color: white; margin: 0 0 20px 0;">Click the button below to automatically fix this issue using AI</p>
+    <a href="{base_url}/fix-with-agent?workItemId=WORK_ITEM_ID_PLACEHOLDER" target="_blank" style="display: inline-block; background: #4A90E2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; transition: all 0.3s ease;">
+        🚀 Fix with Agent
+    </a>
+    <p style="color: white; margin: 15px 0 0 0; font-size: 0.9em;">Opens in new window - AI will analyze and fix the code automatically</p>
+</div>
+
+<div style="background: linear-gradient(135deg, #FFE4B5 0%, #FFDAB9 100%); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF8C00;">
+    <h3 style="color: #333; margin: 0 0 15px 0;">🚀 Git Integration & Approval</h3>
+    <p style="color: #333; margin: 0 0 15px 0;">After the AI fix is applied, you can approve and commit the changes to your repository. This requires your explicit approval.</p>
+    
+    <div style="background: white; padding: 15px; border-radius: 6px; margin: 15px 0;">
+        <h4 style="color: #333; margin: 0 0 10px 0;">📋 Approval Checklist</h4>
+        <p style="color: #666; margin: 0 0 10px 0; font-size: 0.9em;">Please review and approve the following before committing changes:</p>
+        <ul style="color: #333; margin: 0; padding-left: 20px;">
+            <li>✅ AI fix has been applied successfully</li>
+            <li>✅ Changes have been reviewed and tested</li>
+            <li>✅ Code quality meets standards</li>
+            <li>✅ No breaking changes introduced</li>
+        </ul>
+    </div>
+    
+    <div style="text-align: center; margin-top: 15px;">
+        <a href="{base_url}/api/git/approve-commit?workItemId=WORK_ITEM_ID_PLACEHOLDER" target="_blank" style="display: inline-block; background: #FF8C00; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 0 10px; transition: all 0.3s ease;">
+            📝 Request Git Approval
+        </a>
+        <a href="{base_url}/api/git/status?workItemId=WORK_ITEM_ID_PLACEHOLDER" target="_blank" style="display: inline-block; background: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 0 10px; transition: all 0.3s ease;">
+            📊 View Git Status
+        </a>
+    </div>
+    
+    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin-top: 15px;">
+        <p style="color: #856404; margin: 0; font-size: 0.9em;"><strong>🔒 Security Note:</strong> Git operations require explicit user approval. Changes will only be committed after you approve them.</p>
+    </div>
+</div>
 """
         
         return description
@@ -298,6 +342,50 @@ class AzureDevOpsClient:
                 "ado_created_date": ux_issue.ado_created_date
             }
         }
+    
+    def _update_work_item_with_fix_button(self, work_item_id: str) -> bool:
+        """Update work item description to include the Fix with Agent button"""
+        try:
+            # Get the current work item
+            url = f"{self.base_url}/wit/workitems/{work_item_id}?api-version={self.api_version}"
+            response = requests.get(url, headers=self.headers, timeout=10)
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to get work item {work_item_id}: {response.status_code}")
+                return False
+            
+            work_item_data = response.json()
+            current_description = work_item_data.get('fields', {}).get('System.Description', '')
+            
+            # Replace placeholder with actual work item ID
+            base_url = os.getenv('BASE_URL', 'http://localhost:8000')
+            updated_description = current_description.replace(
+                'WORK_ITEM_ID_PLACEHOLDER',
+                str(work_item_id)
+            )
+            
+            # Update the work item with the corrected description
+            update_url = f"{self.base_url}/wit/workitems/{work_item_id}?api-version={self.api_version}"
+            update_data = [
+                {
+                    "op": "replace",
+                    "path": "/fields/System.Description",
+                    "value": updated_description
+                }
+            ]
+            
+            update_response = requests.patch(update_url, headers=self.headers, json=update_data, timeout=10)
+            
+            if update_response.status_code == 200:
+                logger.info(f"Successfully updated work item {work_item_id} with Fix with Agent button")
+                return True
+            else:
+                logger.error(f"Failed to update work item {work_item_id}: {update_response.status_code}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error updating work item {work_item_id} with fix button: {e}")
+            return False
     
     def create_bulk_work_items(self, ux_issues: List[UXIssue], config: WorkItemConfig = None) -> Dict[str, Any]:
         """Create multiple work items from UX issues"""
