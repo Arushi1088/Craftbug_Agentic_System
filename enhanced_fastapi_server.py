@@ -3262,7 +3262,7 @@ async def serve_fix_with_agent():
             </div>
             
             <div class="status idle" id="status">
-                🤖 Ready to start AI-powered code fix
+                🤖 Ready to start AI-powered code fix - Click the button below to begin
             </div>
             
             <div class="thinking-steps" id="thinkingSteps" style="display: none;">
@@ -3309,10 +3309,15 @@ async def serve_fix_with_agent():
             workItemId = getWorkItemId();
             if (workItemId) {
                 document.getElementById('workItemId').textContent = workItemId;
-                // Don't auto-start thinking steps - wait for button click
+                // Ensure button is enabled and ready for click
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = '🔧 Fix with Agent';
+                document.getElementById('startBtn').className = 'btn btn-primary';
+                updateStatus('🤖 Ready to start AI-powered code fix', 'idle');
             } else {
                 document.getElementById('status').textContent = '❌ Error: No work item ID provided';
                 document.getElementById('status').className = 'status error';
+                document.getElementById('startBtn').disabled = true;
             }
         }
         
