@@ -3,180 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Microsoft Word - Mock (Accessibility Enhanced)</title>
+    <title>Microsoft Word - Mock</title>
     <style>
-        /* ... (Existing styles) ... */
-
-        /* Accessibility improvements */
-        .start-button.loading::after {
-            content: "Loading..."; /* Remove unnecessary parentheses */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f2f1;
         }
-        .comments-panel.slide-in {
-            animation: slideIn 0.5s ease-in-out forwards; /* Smooth animation */
+        .ribbon {
+            background-color: #0078d4;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        @keyframes slideIn {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
+        .ribbon h1 {
+            margin: 0;
+            font-size: 18px;
         }
-        .jarring-animation {
-            animation: smoothMove 0.5s ease-in-out infinite alternate; /* Smooth animation */
+        .toolbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #d1d1d1;
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
-        @keyframes smoothMove {
-            0% { transform: translateX(0px); }
-            100% { transform: translateX(10px); }
+        .toolbar button {
+            background-color: #ffffff;
+            border: 1px solid #d1d1d1;
+            padding: 8px 16px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 14px;
         }
-        /* Improve color contrast for buttons */
-        .resolve-button, .image-insert-btn, .share-button {
-            background-color: #005a9e; /* Darker blue for better contrast */
+        .toolbar button:hover {
+            background-color: #f8f9fa;
         }
-        .resolve-button:hover, .image-insert-btn:hover, .share-button:hover {
-            background-color: #004275; /* Darker hover color */
+        .editor-container {
+            display: flex;
+            height: calc(100vh - 120px);
         }
-
-
+        .sidebar {
+            width: 200px;
+            background-color: #faf9f8;
+            border-right: 1px solid #d1d1d1;
+            padding: 20px;
+        }
+        .document-area {
+            flex: 1;
+            background-color: #ffffff;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        .document {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 60px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            border: none;
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+        }
+        .start-button {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .start-button:hover {
+            background-color: #106ebe;
+        }
+        
+        /* Comments Panel Styles */
+        .comments-panel {
+            display: none;
+            position: fixed;
+            right: 0;
+            top: 120px;
+            width: 300px;
+            height: calc(100vh - 120px);
+            background-color: #faf9f8;
+            border-left: 1px solid #d1d1d1;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .comments-panel.visible {
+            display: block;
+        }
+        
+        .comment-thread {
+            background-color: white;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .comment-header {
+            font-weight: bold;
+            color: #0078d4;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .comment-text {
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .resolve-button {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .resolve-button:hover {
+            background-color: #106ebe;
+        }
+        
+        .resolved {
+            color: #107c10;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .resolved::before {
+            content: "✓ ";
+        }
+        
+        #comments-tab {
+            background-color: #ffffff;
+            border: 1px solid #d1d1d1;
+            padding: 8px 16px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        #comments-tab:hover {
+            background-color: #f8f9fa;
+        }
+        
+        #comments-tab.active {
+            background-color: #0078d4;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <div class="ribbon" role="banner">
-        <h1><span aria-label="Document icon">📄</span> Microsoft Word</h1>
-        <div>Mock Office Application with Improved Accessibility</div>
+    <div class="ribbon">
+        <h1>📄 Microsoft Word</h1>
+        <div>Mock Office Application for UX Testing</div>
     </div>
-
-    <nav class="toolbar" role="navigation" aria-label="Main Toolbar">
+    
+    <div class="toolbar">
         <button>File</button>
         <button>Edit</button>
         <button>View</button>
         <button>Insert</button>
         <button>Format</button>
         <button>Tools</button>
-        <button id="review-tab" aria-controls="review-controls">Review</button>
-        <button id="comments-tab" aria-controls="comments-panel" aria-expanded="false">Comments</button>
+        <button id="comments-tab" onclick="toggleComments()">Comments</button>
         <button>Help</button>
-        <button class="image-insert-btn" aria-label="Insert Picture">Pictures</button>
-        <button class="share-button" aria-controls="share-panel" aria-expanded="false">Share</button>
-    </nav>
-
+    </div>
+    
     <div class="editor-container">
-        <aside class="sidebar" role="complementary">
+        <div class="sidebar">
             <h3>Navigation</h3>
-            <nav aria-label="Sidebar Navigation">
-                <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Insert</a></li>
-                    <li><a href="#">Layout</a></li>
-                    <li><a href="#">References</a></li>
-                    <li><a href="#">Review</a></li>
-                    <li><a href="#">View</a></li>
-                </ul>
-            </nav>
-        </aside>
-
-        <main class="document-area" role="main">
+            <ul>
+                <li>Home</li>
+                <li>Insert</li>
+                <li>Layout</li>
+                <li>References</li>
+                <li>Review</li>
+                <li>View</li>
+            </ul>
+        </div>
+        
+        <div class="document-area">
             <button class="start-button" onclick="startEditing()">Start Editing</button>
-
-            <div class="document" id="main-document">
+            
+            <div class="document">
                 <h2>Document Title</h2>
-                <div id="editor-content">
-                    <label for="editor" hidden>Document Editor</label>
-                    <textarea id="editor" placeholder="Start typing your document here..." aria-label="Document content"></textarea>
-                </div>
-
-                <div id="review-controls" style="display: none; margin: 20px 0; padding: 15px; background-color: #f8f9fa; border: 1px solid #d1d1d1;" aria-hidden="true">
-                    <h4>Track Changes</h4>
-                    <button class="track-changes-toggle" aria-pressed="false">Track Changes</button>
-                    <button class="accept-change-btn">Accept</button>
-                    <button class="reject-change-btn">Reject</button>
-                    <button class="next-change-btn">Next</button>
-                </div>
-            </div>
-        </main>
-
-        <aside id="comments-panel" class="comments-panel" role="complementary" aria-labelledby="comments-panel-title" style="display: none;" aria-hidden="true">
-            <div class="comments-header">
-                <h3 id="comments-panel-title">Comments</h3>
-                <button id="close-comments" onclick="closeComments()" aria-label="Close Comments">×</button>
-            </div>
-            <div class="comments-content">
-                <!-- Comments will be inserted here -->
-            </div>
-        </aside>
-
-        <div id="share-panel" class="share-panel" role="dialog" aria-labelledby="share-dialog-title" aria-modal="true" style="display: none;" aria-hidden="true">
-            <div class="share-header">
-                <h3 id="share-dialog-title">Share</h3>
-                <button id="close-share" onclick="closeShare()" aria-label="Close Share Dialog">×</button>
-            </div>
-            <div class="share-content">
-                <label for="email-input">Email Address:</label>
-                <input type="email" id="email-input" class="email-input" placeholder="Enter email address">
-                <label for="permission-dropdown">Permissions:</label>
-                <select id="permission-dropdown" class="permission-dropdown">
-                    <option value="Can edit">Can edit</option>
-                    <option value="Can comment">Can comment</option>
-                    <option value="Can view">Can view</option>
-                </select>
-
-                <div class="add-message-toggle">
-                    <input type="checkbox" id="add-message-checkbox" onchange="toggleMessage()">
-                    <label for="add-message-checkbox">Add message</label>
-                </div>
-
-                <label for="share-message" id="share-message-label" style="display: none;">Message:</label>
-                <textarea id="share-message" class="share-message" placeholder="Add a message (optional)" style="display: none;" aria-labelledby="share-message-label"></textarea>
-                <button class="send-share-button" onclick="sendShare()">Send</button>
+                <textarea id="editor" placeholder="Start typing your document here..."></textarea>
             </div>
         </div>
     </div>
 
-    <script>
-// ... (Existing JavaScript code with accessibility improvements) ...
+    <!-- Comments Panel -->
+    <div class="comments-panel" id="comments-panel">
+        <h3>Comments</h3>
+        
+        <div class="comment-thread">
+            <div class="comment-header">John Smith</div>
+            <div class="comment-text">Please fix the title formatting. It should be centered and use Arial font.</div>
+            <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
+        </div>
+        
+        <div class="comment-thread">
+            <div class="comment-header">Sarah Johnson</div>
+            <div class="comment-text">The introduction paragraph needs more details about the project scope.</div>
+            <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
+        </div>
+        
+        <div class="comment-thread">
+            <div class="comment-header">Mike Brown</div>
+            <div class="comment-text">Consider adding a table of contents for better navigation.</div>
+            <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
+        </div>
+    </div>
 
-       function toggleMessage() {
-            const checkbox = document.getElementById('add-message-checkbox');
-            const message = document.getElementById('share-message');
-             const messageLabel = document.getElementById('share-message-label');
-            message.style.display = checkbox.checked ? 'block' : 'none';
-            messageLabel.style.display = checkbox.checked ? 'block' : 'none';
+    <script>
+        function startEditing() {
+            const editor = document.getElementById('editor');
+            editor.focus();
+            
+            // Add some sample text for testing
+            if (editor.value === '') {
+                editor.value = 'Welcome to Microsoft Word mock application.\n\nThis is a test document for UX analysis.\n\nPlease review the comments on the right panel for feedback.';
+            }
+            
+            // Hide the start button
+            document.querySelector('.start-button').style.display = 'none';
         }
         
-        function showCommentsWithCraftBugs() {
-           // ... (Existing code)
+        function toggleComments() {
+            const commentsPanel = document.getElementById('comments-panel');
             const commentsTab = document.getElementById('comments-tab');
-            commentsTab.setAttribute('aria-expanded', 'true');
-            document.getElementById('comments-panel').setAttribute('aria-hidden', 'false');
-
+            
+            if (commentsPanel.classList.contains('visible')) {
+                commentsPanel.classList.remove('visible');
+                commentsTab.classList.remove('active');
+            } else {
+                commentsPanel.classList.add('visible');
+                commentsTab.classList.add('active');
+            }
         }
-
-        function closeCommentsWithCraftBugs() {
-            // ... (Existing code)
+        
+        function resolveComment(button) {
+            const commentThread = button.closest('.comment-thread');
+            
+            // Replace the resolve button with resolved status
+            button.outerHTML = '<span class="resolved" role="status">Resolved</span>';
+            
+            // Add resolved class to the comment thread for styling
+            commentThread.classList.add('resolved-comment');
+            
+            // Fade out the comment slightly
+            commentThread.style.opacity = '0.7';
+            
+            console.log('Comment resolved successfully');
+        }
+        
+        // Add some interactive behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.toolbar button:not(#comments-tab)');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    alert('Feature: ' + this.textContent + ' clicked!');
+                });
+            });
+            
+            // Add accessibility attributes
             const commentsTab = document.getElementById('comments-tab');
+            commentsTab.setAttribute('aria-label', 'Toggle comments panel');
             commentsTab.setAttribute('aria-expanded', 'false');
-            document.getElementById('comments-panel').setAttribute('aria-hidden', 'true');
-
-        }
-
-        function showShare() {
-            // ... existing code
-            const shareButton = document.querySelector('.share-button');
-            shareButton.setAttribute('aria-expanded', 'true');
-            document.getElementById('share-panel').setAttribute('aria-hidden', 'false');
-        }
-
-        function closeShare() {
-            // ... existing code
-           const shareButton = document.querySelector('.share-button');
-            shareButton.setAttribute('aria-expanded', 'false');
-            document.getElementById('share-panel').setAttribute('aria-hidden', 'true');
-        }
-
-        function showReview() {
-            // ... existing code
-            const reviewTab = document.getElementById('review-tab');
-            document.getElementById('review-controls').setAttribute('aria-hidden', 'false');
-        }
-
-
-</script>
-
+            
+            // Update aria-expanded when comments are toggled
+            const originalToggle = window.toggleComments;
+            window.toggleComments = function() {
+                originalToggle();
+                const isVisible = document.getElementById('comments-panel').classList.contains('visible');
+                commentsTab.setAttribute('aria-expanded', isVisible.toString());
+            };
+        });
+    </script>
 </body>
 </html>
