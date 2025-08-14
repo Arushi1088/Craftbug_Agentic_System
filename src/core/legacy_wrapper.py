@@ -132,7 +132,7 @@ class LegacySystemWrapper:
             from gemini_cli import GeminiCLI
             
             gemini = GeminiCLI()
-            result = await gemini.fix_issue_with_thinking_steps(
+            result = gemini.fix_issue_with_thinking_steps(
                 work_item_id=work_item_id,
                 file_path=file_path,
                 instruction=instruction

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ado", tags=["ado"])
 
 @router.post("/trigger-fix")
-async def trigger_fix(work_item_id: int, file_path: str, instruction: str):
+async def trigger_fix(work_item_id: int = Form(...), file_path: str = Form(...), instruction: str = Form(...)):
     """
     Trigger fix with agent using legacy fallback.
     This endpoint maintains compatibility with existing frontend.
