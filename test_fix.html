@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Test Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        label, button {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Document</h1>
+    <img src="test.jpg" alt="Descriptive alt text for the image">
+
+    <form id="myForm" onsubmit="submit(); return false;">
+        <label for="name">Name: <span class="sr-only">(required)</span></label>
+        <input type="text" id="name" name="name" required aria-describedby="name-desc">
+        <span id="name-desc" class="sr-only">Please enter your name.</span>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        function submit() {
+            // Placeholder for form submission logic
+            console.log("Form submitted!");
+            alert("Form submitted!");
+         }
+    </script>
+</body>
+</html>
+
+```

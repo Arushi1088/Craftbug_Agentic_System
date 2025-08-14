@@ -467,7 +467,7 @@ class AzureDevOpsClient:
             
             headers = {
                 "Content-Type": "application/json-patch+json",
-                "Authorization": f"Basic {base64.b64encode(f'{self.username}:{self.pat}'.encode()).decode()}"
+                "Authorization": f"Basic {base64.b64encode(f':{self.personal_access_token}'.encode()).decode()}"
             }
             
             response = requests.patch(url, json=patch_data, headers=headers, timeout=30)
@@ -503,7 +503,7 @@ class AzureDevOpsClient:
             
             headers = {
                 "Content-Type": "application/octet-stream",
-                "Authorization": f"Basic {base64.b64encode(f'{self.username}:{self.pat}'.encode()).decode()}"
+                "Authorization": f"Basic {base64.b64encode(f':{self.personal_access_token}'.encode()).decode()}"
             }
             
             with open(screenshot_path, 'rb') as file:
@@ -530,7 +530,7 @@ class AzureDevOpsClient:
             
             headers = {
                 "Content-Type": "application/json-patch+json",
-                "Authorization": f"Basic {base64.b64encode(f'{self.username}:{self.pat}'.encode()).decode()}"
+                "Authorization": f"Basic {base64.b64encode(f':{self.personal_access_token}'.encode()).decode()}"
             }
             
             link_response = requests.patch(link_url, json=patch_data, headers=headers, timeout=30)

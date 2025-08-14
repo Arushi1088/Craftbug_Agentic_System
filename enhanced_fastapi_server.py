@@ -3079,7 +3079,7 @@ async def serve_fix_with_agent():
             font-size: 1.1em;
         }
         .content {
-            padding: 40px;
+            padding: 30px;
         }
         .thinking-steps {
             background: #f8f9fa;
@@ -3087,7 +3087,7 @@ async def serve_fix_with_agent():
             padding: 20px;
             margin: 20px 0;
             border-left: 4px solid #4A90E2;
-            height: 300px;
+            height: 120px;
             overflow: hidden;
             position: relative;
         }
@@ -3106,6 +3106,24 @@ async def serve_fix_with_agent():
             transform: translateY(10px);
             animation: fadeInUp 0.5s ease forwards;
             min-height: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4A90E2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         .step.error {
             border-left-color: #dc3545;
@@ -3142,7 +3160,7 @@ async def serve_fix_with_agent():
         }
         .buttons {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 20px;
         }
         .btn {
             display: inline-block;
@@ -3181,8 +3199,8 @@ async def serve_fix_with_agent():
         .work-item-info {
             background: #e3f2fd;
             border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+            padding: 15px;
+            margin: 15px 0;
             border-left: 4px solid #2196f3;
         }
         .work-item-info h3 {
@@ -3334,7 +3352,17 @@ async def serve_fix_with_agent():
             
             const stepElement = document.createElement('div');
             stepElement.className = `step ${type}`;
-            stepElement.textContent = step;
+            
+            // Add loader for processing steps
+            if (type === 'info' || type === 'processing') {
+                const loader = document.createElement('div');
+                loader.className = 'loader';
+                stepElement.appendChild(loader);
+            }
+            
+            const stepText = document.createElement('span');
+            stepText.textContent = step;
+            stepElement.appendChild(stepText);
             
             // Add fade-in animation
             stepElement.style.opacity = '0';

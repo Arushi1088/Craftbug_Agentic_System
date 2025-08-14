@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix with Agent - Preview</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .content {
+            padding: 30px;
+        }
+        .thinking-steps {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4A90E2;
+            height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+        .thinking-steps h3 {
+            margin: 0 0 15px 0;
+            color: #4A90E2;
+        }
+        .step {
+            background: white;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 3px solid #28a745;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.5s ease forwards;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4A90E2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .step.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .step.warning {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        .step.info {
+            border-left-color: #17a2b8;
+            background: #f0f8ff;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .status {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        .status.success {
+            color: #28a745;
+        }
+        .status.error {
+            color: #dc3545;
+        }
+        .status.processing {
+            color: #17a2b8;
+        }
+        .buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #4A90E2;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #357ABD;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .work-item-info {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+        .work-item-info h3 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        .work-item-info p {
+            margin: 5px 0;
+            color: #424242;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4A90E2, #28a745);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .git-approval {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .git-approval h3 {
+            color: #856404;
+            margin: 0 0 15px 0;
+        }
+        .git-approval p {
+            color: #856404;
+            margin: 5px 0;
+        }
+        .git-approval .btn {
+            margin: 10px 5px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Fix with Agent</h1>
+            <p>AI-powered code fixing in progress...</p>
+        </div>
+        
+        <div class="content">
+            <div class="work-item-info">
+                <h3>📋 Work Item Information</h3>
+                <p><strong>Work Item ID:</strong> <span id="workItemId">307</span></p>
+                <p><strong>Current Status:</strong> <span id="workItemStatus" style="color: #ffc107; font-weight: bold;">Active</span></p>
+                <p><strong>Application Type:</strong> <span id="appType">Word</span></p>
+                <p><strong>Target Files:</strong> <span id="targetFiles">web-ui/public/mocks/word/basic-doc.html</span></p>
+            </div>
+            
+            <div class="status processing" id="status">
+                🚀 Starting AI fix process...
+            </div>
+            
+            <div class="thinking-steps" id="thinkingSteps" style="display: block;">
+                <h3>🧠 AI Thinking Steps</h3>
+                <div id="thinkingStepsContent">
+                    <div class="step info" style="opacity: 1; transform: translateY(0);">
+                        <div class="loader"></div>
+                        <span>🔍 Analyzing work item details...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-bar" id="progressBar" style="display: block;">
+                <div class="progress-fill" id="progressFill" style="width: 25%;"></div>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-success" id="startBtn" disabled>✅ Fix Completed</button>
+                <button class="btn btn-secondary" onclick="window.close()">← Back to Work Item</button>
+                <a href="https://dev.azure.com" target="_blank" class="btn btn-secondary">📋 View All Work Items</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo: Show different thinking steps
+        let stepIndex = 0;
+        const steps = [
+            "🔍 Analyzing work item details...",
+            "📋 Reading issue description and context...",
+            "🤖 Initializing Gemini AI agent...",
+            "🔧 Identifying code files to modify...",
+            "💡 Generating AI-powered code fixes...",
+            "🔍 Analyzing code structure...",
+            "✏️ Writing code improvements...",
+            "✅ Applying AI-powered fixes to codebase...",
+            "📝 Updating work item status...",
+            "🎉 Fix completed successfully!"
+        ];
+        
+        function showNextStep() {
+            const stepsContainer = document.getElementById('thinkingStepsContent');
+            const stepElement = document.createElement('div');
+            stepElement.className = 'step info';
+            
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            stepElement.appendChild(loader);
+            
+            const stepText = document.createElement('span');
+            stepText.textContent = steps[stepIndex];
+            stepElement.appendChild(stepText);
+            
+            stepsContainer.innerHTML = '';
+            stepsContainer.appendChild(stepElement);
+            
+            stepIndex = (stepIndex + 1) % steps.length;
+        }
+        
+        // Demo: Update progress
+        let progress = 25;
+        function updateProgress() {
+            progress += 8;
+            if (progress > 100) progress = 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        // Demo: Cycle through steps
+        setInterval(showNextStep, 2000);
+        setInterval(updateProgress, 2000);
+    </script>
+</body>
+</html>
