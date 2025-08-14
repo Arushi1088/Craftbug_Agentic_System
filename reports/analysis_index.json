@@ -8131,10 +8131,72 @@
         "health_alerts"
       ],
       "step_success_rate": 1.0
+    },
+    "301d8407": {
+      "analysis_id": "301d8407",
+      "file_path": "reports/analysis/analysis_301d8407_20250814_124945.json",
+      "filename": "analysis_301d8407_20250814_124945.json",
+      "created_at": "2025-08-14T12:49:45.557937",
+      "file_size": 29385,
+      "analysis_type": "unknown",
+      "scenario_type": "unknown",
+      "url": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
+      "scenario_path": null,
+      "app_path": null,
+      "overall_score": 70,
+      "status": "completed",
+      "craft_bugs_count": 0,
+      "pattern_issues_count": 0,
+      "total_issues": 0,
+      "total_duration_ms": 0,
+      "successful_steps": 5,
+      "total_steps": 9,
+      "has_screenshots": false,
+      "browser_automation": false,
+      "modules_analyzed": [
+        "performance",
+        "accessibility",
+        "keyboard",
+        "ux_heuristics",
+        "best_practices",
+        "health_alerts"
+      ],
+      "step_success_rate": 0.5555555555555556
+    },
+    "7dfa659a": {
+      "analysis_id": "7dfa659a",
+      "file_path": "reports/analysis/analysis_7dfa659a_20250814_125512.json",
+      "filename": "analysis_7dfa659a_20250814_125512.json",
+      "created_at": "2025-08-14T12:55:12.942628",
+      "file_size": 29389,
+      "analysis_type": "unknown",
+      "scenario_type": "unknown",
+      "url": "http://127.0.0.1:8080/mocks/word/basic-doc.html",
+      "scenario_path": null,
+      "app_path": null,
+      "overall_score": 70,
+      "status": "completed",
+      "craft_bugs_count": 0,
+      "pattern_issues_count": 0,
+      "total_issues": 0,
+      "total_duration_ms": 0,
+      "successful_steps": 5,
+      "total_steps": 9,
+      "has_screenshots": false,
+      "browser_automation": false,
+      "modules_analyzed": [
+        "performance",
+        "accessibility",
+        "keyboard",
+        "ux_heuristics",
+        "best_practices",
+        "health_alerts"
+      ],
+      "step_success_rate": 0.5555555555555556
     }
   },
   "statistics": {
-    "total_reports": 302,
+    "total_reports": 304,
     "total_craft_bugs": 0,
     "total_pattern_issues": 0,
     "total_issues": 0,
@@ -8142,14 +8204,14 @@
     "min_score": 0,
     "max_score": 100,
     "analysis_type_distribution": {
-      "unknown": 243,
+      "unknown": 245,
       "url_scenario": 38,
       "mock_scenario": 15,
       "craft_bug_analysis": 6
     },
-    "recent_reports_count": 302,
+    "recent_reports_count": 304,
     "last_cleanup": null,
-    "total_file_size_mb": 2.51
+    "total_file_size_mb": 2.57
   },
-  "last_updated": "2025-08-14T08:09:07.721669"
+  "last_updated": "2025-08-14T12:55:12.948745"
 }

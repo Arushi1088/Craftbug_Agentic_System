@@ -52,6 +52,17 @@
             border-right: 1px solid #d1d1d1;
             padding: 20px;
         }
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 5px;
+            text-decoration: none;
+            color: #333;
+        }
         .document-area {
             flex: 1;
             background-color: #ffffff;
@@ -66,7 +77,7 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             min-height: 600px;
         }
-        textarea {
+        #editor {
             width: 100%;
             height: 400px;
             border: none;
@@ -181,27 +192,29 @@
     </div>
     
     <div class="toolbar">
-        <button>File</button>
-        <button>Edit</button>
-        <button>View</button>
-        <button>Insert</button>
-        <button>Format</button>
-        <button>Tools</button>
-        <button id="comments-tab" onclick="toggleComments()">Comments</button>
-        <button>Help</button>
+        <button aria-label="File">File</button>
+        <button aria-label="Edit">Edit</button>
+        <button aria-label="View">View</button>
+        <button aria-label="Insert">Insert</button>
+        <button aria-label="Format">Format</button>
+        <button aria-label="Tools">Tools</button>
+        <button id="comments-tab" aria-label="Toggle comments panel" aria-expanded="false" onclick="toggleComments()">Comments</button>
+        <button aria-label="Help">Help</button>
     </div>
     
     <div class="editor-container">
         <div class="sidebar">
             <h3>Navigation</h3>
-            <ul>
-                <li>Home</li>
-                <li>Insert</li>
-                <li>Layout</li>
-                <li>References</li>
-                <li>Review</li>
-                <li>View</li>
-            </ul>
+            <nav>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Insert</a></li>
+                    <li><a href="#">Layout</a></li>
+                    <li><a href="#">References</a></li>
+                    <li><a href="#">Review</a></li>
+                    <li><a href="#">View</a></li>
+                </ul>
+            </nav>
         </div>
         
         <div class="document-area">
@@ -209,28 +222,28 @@
             
             <div class="document">
                 <h2>Document Title</h2>
-                <textarea id="editor" placeholder="Start typing your document here..."></textarea>
+                <label for="editor" style="display: none;">Document Content</label><textarea id="editor" placeholder="Start typing your document here..." aria-label="Document Content"></textarea>
             </div>
         </div>
     </div>
 
     <!-- Comments Panel -->
-    <div class="comments-panel" id="comments-panel">
+    <div class="comments-panel" id="comments-panel" aria-label="Comments Panel">
         <h3>Comments</h3>
         
-        <div class="comment-thread">
+        <div class="comment-thread" tabindex="0">
             <div class="comment-header">John Smith</div>
             <div class="comment-text">Please fix the title formatting. It should be centered and use Arial font.</div>
             <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
         </div>
         
-        <div class="comment-thread">
+        <div class="comment-thread" tabindex="0">
             <div class="comment-header">Sarah Johnson</div>
             <div class="comment-text">The introduction paragraph needs more details about the project scope.</div>
             <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
         </div>
         
-        <div class="comment-thread">
+        <div class="comment-thread" tabindex="0">
             <div class="comment-header">Mike Brown</div>
             <div class="comment-text">Consider adding a table of contents for better navigation.</div>
             <button class="resolve-button" onclick="resolveComment(this)">Resolve</button>
@@ -258,9 +271,11 @@
             if (commentsPanel.classList.contains('visible')) {
                 commentsPanel.classList.remove('visible');
                 commentsTab.classList.remove('active');
+                commentsTab.setAttribute('aria-expanded', 'false');
             } else {
                 commentsPanel.classList.add('visible');
                 commentsTab.classList.add('active');
+                commentsTab.setAttribute('aria-expanded', 'true');
             }
         }
         
@@ -278,29 +293,22 @@
             
             console.log('Comment resolved successfully');
         }
-        
-        // Add some interactive behavior
+
         document.addEventListener('DOMContentLoaded', function() {
-            const buttons = document.querySelectorAll('.toolbar button:not(#comments-tab)');
+            const buttons = document.querySelectorAll('.toolbar button');
             buttons.forEach(button => {
                 button.addEventListener('click', function() {
-                    alert('Feature: ' + this.textContent + ' clicked!');
+                   if (this.id !== 'comments-tab') {
+                       alert('Feature: ' + this.textContent + ' clicked!');
+                   }
                 });
+                button.setAttribute('tabindex', '0');
             });
+            document.querySelectorAll('.sidebar a, .start-button, .resolve-button').forEach(el => el.setAttribute('tabindex', '0'));
+
             
-            // Add accessibility attributes
-            const commentsTab = document.getElementById('comments-tab');
-            commentsTab.setAttribute('aria-label', 'Toggle comments panel');
-            commentsTab.setAttribute('aria-expanded', 'false');
-            
-            // Update aria-expanded when comments are toggled
-            const originalToggle = window.toggleComments;
-            window.toggleComments = function() {
-                originalToggle();
-                const isVisible = document.getElementById('comments-panel').classList.contains('visible');
-                commentsTab.setAttribute('aria-expanded', isVisible.toString());
-            };
         });
+
     </script>
 </body>
 </html>
