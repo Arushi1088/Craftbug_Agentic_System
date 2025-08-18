@@ -107,8 +107,7 @@ from enhanced_report_handler import (
 
 # Excel Web Integration
 try:
-    from excel_web_navigator import get_excel_web_navigator
-    from excel_scenarios import get_excel_scenario_executor
+    from excel_web_selenium_only import get_selenium_navigator
     EXCEL_WEB_AVAILABLE = True
     print("✅ Excel Web integration loaded")
 except ImportError as e:
@@ -717,7 +716,7 @@ async def health_check():
         "version": "2.0.0",
         "system_info": {
             "active_analyses": len([a for a in ANALYSIS_CACHE.values() if a.get("status") == "processing"]),
-            "cached_reports": len(ANALYSIS_CACHE),
+            "cached_reports": stats.get("index_statistics", {}).get("total_reports", 0),
             "disk_reports": stats.get("index_statistics", {}).get("total_reports", 0),
             "storage_usage_mb": stats.get("storage_info", {}).get("disk_usage_mb", 0)
         },
@@ -725,9 +724,16 @@ async def health_check():
             "realistic_scenarios": True,
             "craft_bug_detection": True,
             "persistent_storage": True,
-            "browser_automation": True
+            "browser_automation": True,
+            "excel_web_integration": EXCEL_WEB_AVAILABLE
         }
     }
+
+@app.get("/excel-tester")
+async def excel_tester():
+    """Serve the Excel Web Automation Tester frontend"""
+    from fastapi.responses import FileResponse
+    return FileResponse("excel_web_frontend.html")
 
 # Enhanced Analysis Endpoints
 
@@ -2361,7 +2367,7 @@ if EXCEL_WEB_AVAILABLE:
     async def excel_web_authenticate():
         """Authenticate to Excel Web"""
         try:
-            navigator = await get_excel_web_navigator()
+            navigator = await get_selenium_navigator()
             
             if await navigator.initialize():
                 if await navigator.ensure_authenticated():
@@ -2395,18 +2401,11 @@ if EXCEL_WEB_AVAILABLE:
     async def excel_web_execute_scenario(scenario_name: str = "document_creation"):
         """Execute an Excel Web scenario"""
         try:
-            navigator = await get_excel_web_navigator()
-            executor = await get_excel_scenario_executor(navigator)
+            from excel_document_creation_scenario import ExcelDocumentCreationScenario
             
-            if not await navigator.initialize():
-                return JSONResponse(content={
-                    "status": "error",
-                    "message": "Failed to initialize Excel Web navigator"
-                })
-            
-            # Execute the document creation scenario
             if scenario_name == "document_creation":
-                result = await executor.execute_document_creation_scenario()
+                scenario = ExcelDocumentCreationScenario()
+                result = await scenario.execute_scenario()
             else:
                 return JSONResponse(content={
                     "status": "error",

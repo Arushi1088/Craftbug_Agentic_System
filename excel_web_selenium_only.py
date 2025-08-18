@@ -285,7 +285,7 @@ class SeleniumExcelWebNavigator:
             return False
     
     async def click_element(self, selector: str, timeout: int = 10) -> bool:
-        """Click an element on the page"""
+        """Click an element on the page using CSS selector"""
         try:
             if not self.driver:
                 return False
@@ -303,6 +303,27 @@ class SeleniumExcelWebNavigator:
             return False
         except Exception as e:
             print(f"❌ Failed to click element {selector}: {e}")
+            return False
+    
+    async def click_element_by_xpath(self, xpath: str, timeout: int = 10) -> bool:
+        """Click an element on the page using XPath"""
+        try:
+            if not self.driver:
+                return False
+            
+            # Wait for element and click
+            wait = WebDriverWait(self.driver, timeout)
+            element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            element.click()
+            
+            print(f"✅ Clicked element by XPath: {xpath}")
+            return True
+            
+        except TimeoutException:
+            print(f"❌ Element not found for clicking by XPath: {xpath}")
+            return False
+        except Exception as e:
+            print(f"❌ Failed to click element by XPath {xpath}: {e}")
             return False
     
     async def fill_input(self, selector: str, value: str, timeout: int = 10) -> bool:
