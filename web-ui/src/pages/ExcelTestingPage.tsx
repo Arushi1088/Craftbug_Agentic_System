@@ -23,6 +23,11 @@ interface ExcelTestResult {
   screenshots: string[];
   errors: string[];
   performance_metrics: any;
+  ux_analysis?: {
+    ux_score: number;
+    craft_bugs_found: number;
+    recommendations: string[];
+  };
 }
 
 export function ExcelTestingPage() {
@@ -87,35 +92,53 @@ export function ExcelTestingPage() {
     try {
       setIsRunning(true);
       setProgress(0);
-      addLog('Starting Excel Document Creation scenario...', 'info');
+      addLog('Starting Excel Document Creation scenario with UX Analysis...', 'info');
       
-      const response = await fetch(`${API_BASE}/api/excel-web/execute-scenario`, {
+      // Step 1: Execute the scenario with UX analysis
+      setProgress(20);
+      addLog('Executing Excel scenario with UX analysis...', 'info');
+      
+      const response = await fetch(`${API_BASE}/api/excel-web/ux-report`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario_name: 'document_creation' })
+        headers: { 'Content-Type': 'application/json' }
       });
       
-      const result = await response.json();
-      
-      if (result.status === 'success') {
-        setCurrentTest(result.result);
-        setTestHistory(prev => [result.result, ...prev]);
-        addLog('Document Creation scenario completed successfully', 'success');
-        addLog(`Steps completed: ${result.result.steps_completed}/${result.result.total_steps}`, 'info');
-        addLog(`Execution time: ${result.result.execution_time.toFixed(2)}s`, 'info');
+      if (response.ok) {
+        const result = await response.json();
         
-        if (result.result.errors && result.result.errors.length > 0) {
-          result.result.errors.forEach((error: string) => {
-            addLog(`Error: ${error}`, 'error');
-          });
+        if (result.status === 'success') {
+          // Step 2: Automatically navigate to the report URL
+          setProgress(80);
+          addLog('Generating comprehensive UX analysis report...', 'info');
+          
+          const reportUrl = `${API_BASE}${result.report_url}`;
+          addLog(`📊 Report generated: ${result.report_filename}`, 'success');
+          
+          // Navigate to the report URL
+          const newWindow = window.open(reportUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+          
+          if (newWindow) {
+            addLog('✅ UX Analysis Report opened automatically in new window', 'success');
+            addLog('🎨 Report contains Craft bug analysis and UX recommendations', 'success');
+            addLog(`🔗 Report URL: ${reportUrl}`, 'info');
+          } else {
+            // Fallback: navigate in current window
+            window.location.href = reportUrl;
+            addLog('✅ Navigating to UX Analysis Report in current window', 'success');
+          }
+          
+          setProgress(100);
+          addLog('🎉 Scenario execution and UX analysis completed!', 'success');
+          addLog('📊 Report shows Craft bugs detected during Excel interaction', 'info');
+        } else {
+          addLog(`❌ Report generation failed: ${result.message || 'Unknown error'}`, 'error');
         }
-        
-        setProgress(100);
       } else {
-        addLog(`Scenario failed: ${result.message}`, 'error');
+        const errorData = await response.json();
+        addLog(`❌ UX Report generation failed: ${errorData.detail || 'Unknown error'}`, 'error');
       }
     } catch (error) {
-      addLog(`Scenario error: ${error}`, 'error');
+      addLog(`❌ Scenario error: ${error}`, 'error');
     } finally {
       setIsRunning(false);
     }
@@ -142,6 +165,8 @@ export function ExcelTestingPage() {
     URL.revokeObjectURL(url);
   };
 
+
+
   useEffect(() => {
     checkStatus();
     addLog('Excel Web Testing Dashboard loaded', 'info');
@@ -150,17 +175,17 @@ export function ExcelTestingPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <div className="bg-green-100 text-green-600 p-3 rounded-lg mr-4">
-            <Table className="w-8 h-8" />
+                <div className="mb-8">
+            <div className="flex items-center mb-4">
+              <div className="bg-green-100 text-green-600 p-3 rounded-lg mr-4">
+                <Table className="w-8 h-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Excel Web UX Analysis</h1>
+                <p className="text-gray-600">Execute real Excel scenarios and automatically generate UX analysis reports with Craft bug detection</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Excel Web Testing</h1>
-            <p className="text-gray-600">Automated testing and bug detection for Excel Web applications</p>
-          </div>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Testing Panel */}
@@ -219,7 +244,7 @@ export function ExcelTestingPage() {
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  Run Document Creation Test
+                  Run Excel Scenario & Generate UX Report
                 </button>
                 {isRunning && (
                   <button
@@ -249,7 +274,7 @@ export function ExcelTestingPage() {
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Latest Test Results</h2>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">{currentTest.steps_completed}/{currentTest.total_steps}</div>
                   <div className="text-sm text-gray-600">Steps Completed</div>
@@ -266,6 +291,12 @@ export function ExcelTestingPage() {
                   <div className="text-2xl font-bold text-red-600">{currentTest.errors.length}</div>
                   <div className="text-sm text-gray-600">Errors</div>
                 </div>
+                {currentTest.ux_analysis && (
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">{currentTest.ux_analysis.ux_score}/100</div>
+                    <div className="text-sm text-gray-600">UX Score</div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center mb-4">

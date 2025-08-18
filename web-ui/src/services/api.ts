@@ -97,6 +97,24 @@ export const apiClient = {
     return json<{ analysis_id: string; status: string; message: string; execution_mode: string }>(res);
   },
 
+  // EXCEL: Scenario with UX Telemetry
+  async startExcelScenario(scenario_id: string) {
+    const res = await fetch(`${BASE_URL}/api/analyze/excel-scenario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scenario_id,
+      }),
+    });
+    return json<{ 
+      status: string; 
+      analysis_id: string; 
+      telemetry: any; 
+      ux_analysis: any; 
+      message: string 
+    }>(res);
+  },
+
   async getReport(id: string) {
     const res = await fetch(`${BASE_URL}/api/reports/${id}`);
     return json<any>(res);

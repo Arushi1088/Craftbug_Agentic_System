@@ -117,10 +117,25 @@ class SessionManager:
                 return None
             
             with open(session_file, 'r') as f:
-                data = json.load(f)
+                content = f.read().strip()
+                if not content:  # Empty file
+                    print(f"⚠️  Session file is empty: {session_file}")
+                    return None
+                data = json.loads(content)
             
             session = ExcelWebSession.from_dict(data)
             return session
+        except json.JSONDecodeError as e:
+            print(f"❌ Failed to parse session JSON: {e}")
+            # Remove corrupted session file
+            try:
+                session_file = self.sessions_dir / f"{session_id}.json"
+                if session_file.exists():
+                    session_file.unlink()
+                    print(f"🗑️  Removed corrupted session file: {session_file}")
+            except Exception as cleanup_error:
+                print(f"⚠️  Failed to remove corrupted session file: {cleanup_error}")
+            return None
         except Exception as e:
             print(f"❌ Failed to load session: {e}")
             return None

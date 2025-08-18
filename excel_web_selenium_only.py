@@ -89,7 +89,7 @@ class SeleniumExcelWebNavigator:
             
             # Navigate to Excel Web
             print("🌐 Navigating to Excel Web...")
-            self.driver.get("https://excel.office.com")
+            self.driver.get("https://excel.cloud.microsoft/")
             
             print("\n" + "=" * 60)
             print("🔐 MANUAL AUTHENTICATION REQUIRED")

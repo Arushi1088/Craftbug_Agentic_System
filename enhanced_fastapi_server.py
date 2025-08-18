@@ -18,6 +18,7 @@ import os
 import sys
 import asyncio
 import logging
+import time
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -97,7 +98,7 @@ from scenario_executor import ScenarioExecutor, get_available_scenarios
 # Temporarily disabled due to Playwright import issues
 # from enhanced_scenario_runner import execute_realistic_scenario, EnhancedScenarioRunner
 from enhanced_report_handler import (
-    save_analysis_to_disk,
+    save_analysis_to_disk, 
     load_analysis_from_disk, 
     list_saved_reports, 
     get_report_statistics,
@@ -278,8 +279,16 @@ app.add_middleware(
         "http://localhost:4174",  # Vite preview server (mocks)
         "http://localhost:4173",  # Vite preview server (mocks - backup)
         "http://localhost:5173",  # Vite dev server
-        "http://127.0.0.1:8080",  # Dashboard server
+        "http://localhost:8080",  # Dashboard server
+        "http://localhost:8081",  # Dashboard server
+        "http://localhost:8082",  # Dashboard server
+        "http://localhost:8083",  # Dashboard server
+        "http://localhost:8084",  # Dashboard server
         "http://127.0.0.1:8080",  # Dashboard server (127.0.0.1)
+        "http://127.0.0.1:8081",  # Dashboard server (127.0.0.1)
+        "http://127.0.0.1:8082",  # Dashboard server (127.0.0.1)
+        "http://127.0.0.1:8083",  # Dashboard server (127.0.0.1)
+        "http://127.0.0.1:8084",  # Dashboard server (127.0.0.1)
         "http://127.0.0.1:3000",  # Dashboard on 127.0.0.1:3000
         "http://127.0.0.1:5173",  # Vite dev server (127.0.0.1)
         "https://dev.azure.com",
@@ -1703,25 +1712,25 @@ async def download_report(report_id: str, format: str = "json"):
             </style>
         </head>
         <body>
-            <div class="header">
+                <div class="header">
                 <h1>Enhanced UX Analysis Report</h1>
-                <p><strong>Report ID:</strong> {report_id}</p>
-                <p><strong>Analysis Type:</strong> {report.get('type', 'Unknown')}</p>
-                <p><strong>Overall Score:</strong> <span class="score">{report.get('overall_score', 0)}/100</span></p>
-                <p><strong>Timestamp:</strong> {report.get('timestamp', 'Unknown')}</p>
-            </div>
-            
-            <div class="craft-bugs">
-                <h2>🔍 Craft Bug Analysis</h2>
-                <p><strong>Craft Bugs Detected:</strong> {len(report.get('craft_bugs_detected', []))}</p>
-                <p><strong>Pattern Issues:</strong> {len(report.get('pattern_issues', []))}</p>
-            </div>
-            
-            <h2>📊 Module Results</h2>
+                    <p><strong>Report ID:</strong> {report_id}</p>
+                    <p><strong>Analysis Type:</strong> {report.get('type', 'Unknown')}</p>
+                    <p><strong>Overall Score:</strong> <span class="score">{report.get('overall_score', 0)}/100</span></p>
+                    <p><strong>Timestamp:</strong> {report.get('timestamp', 'Unknown')}</p>
+                </div>
+                
+                <div class="craft-bugs">
+                    <h2>🔍 Craft Bug Analysis</h2>
+                    <p><strong>Craft Bugs Detected:</strong> {len(report.get('craft_bugs_detected', []))}</p>
+                    <p><strong>Pattern Issues:</strong> {len(report.get('pattern_issues', []))}</p>
+                </div>
+                
+                <h2>📊 Module Results</h2>
             {"".join([f'<div class="module"><h3>{module.title()}</h3><p>Score: {data.get("score", 0)}/100</p></div>' for module, data in report.get('modules', {}).items()])}
             
-            <h2>🎯 Scenario Steps</h2>
-            <div class="steps">
+                <h2>🎯 Scenario Steps</h2>
+                <div class="steps">
                 {"".join([f'<div class="step {step.get("status", "")}">{step.get("action", "Unknown")} - {step.get("status", "Unknown")} ({step.get("duration_ms", 0)}ms)</div>' for step in report.get('steps', [])])}
             </div>
         </body>
@@ -1836,18 +1845,18 @@ async def create_ado_tickets(report_id: str, demo_mode: bool = True):
         issues = analysis_data.get("issues", [])
         
         for i, issue in enumerate(issues):
-            ux_issue = {
-                "app_type": analysis_data.get("app_type", "unknown"),
-                "scenario_id": f"scenario_{i}",
-                "title": issue.get("title", f"UX Issue {i+1}"),
-                "description": issue.get("description", str(issue)),
-                "category": issue.get("category", "General"),
-                "severity": issue.get("severity", "medium")
-            }
-            
-            work_item = ado_client.create_ux_work_item(ux_issue)
-            if work_item:
-                work_items.append(work_item)
+                ux_issue = {
+                    "app_type": analysis_data.get("app_type", "unknown"),
+                    "scenario_id": f"scenario_{i}",
+                    "title": issue.get("title", f"UX Issue {i+1}"),
+                    "description": issue.get("description", str(issue)),
+                    "category": issue.get("category", "General"),
+                    "severity": issue.get("severity", "medium")
+                }
+                
+                work_item = ado_client.create_ux_work_item(ux_issue)
+                if work_item:
+                    work_items.append(work_item)
         
         return JSONResponse(content={
             "status": "success", 
@@ -2446,19 +2455,149 @@ if EXCEL_WEB_AVAILABLE:
             "message": "Excel Web integration is available"
         })
 
+    @app.post("/api/excel-web/ux-report")
+    async def generate_excel_ux_report():
+        """Generate Excel UX analysis report as HTML and save to file"""
+        try:
+            logger.info("🎨 Generating Excel UX Report...")
+            
+            # Import required modules
+            try:
+                from excel_scenario_telemetry import execute_scenario_with_telemetry
+                from simple_ux_analyzer import SimpleExcelUXAnalyzer
+            except ImportError as e:
+                logger.error(f"❌ Failed to import UX analysis modules: {e}")
+                raise HTTPException(status_code=500, detail="UX analysis modules not available")
+            
+            # Execute scenario with telemetry
+            logger.info("📊 Executing Excel scenario with telemetry...")
+            
+            # Create telemetry instance and execute directly
+            from excel_scenario_telemetry import ExcelScenarioTelemetry
+            telemetry = ExcelScenarioTelemetry()
+            telemetry_result = await telemetry.execute_scenario_with_telemetry()
+            
+            if not telemetry_result:
+                raise HTTPException(status_code=500, detail="Failed to execute scenario with telemetry")
+            
+            # Convert telemetry result to JSON-serializable format
+            if hasattr(telemetry_result, 'telemetry'):
+                telemetry_data = telemetry_result['telemetry']
+            else:
+                telemetry_data = telemetry_result
+            
+            # Check if UX analysis is already included in telemetry result
+            if 'ux_analysis' in telemetry_result:
+                logger.info("🔍 Using existing UX analysis results...")
+                ux_analysis = telemetry_result['ux_analysis']
+            elif 'ux_analysis_results' in telemetry_data:
+                logger.info("🔍 Using existing UX analysis results from telemetry...")
+                ux_analysis = telemetry_data['ux_analysis_results']
+            else:
+                logger.info("🔍 Analyzing UX data...")
+                ux_analyzer = SimpleExcelUXAnalyzer()
+                ux_analysis = await ux_analyzer.analyze_scenario_with_telemetry(telemetry_data)
+            
+            # Generate HTML report
+            logger.info("📄 Generating HTML report...")
+            try:
+                from jinja2 import Template
+                
+                # Read the HTML template
+                template_path = "excel_ux_report_template.html"
+                with open(template_path, 'r') as f:
+                    template_content = f.read()
+                
+                template = Template(template_content)
+                
+                # Prepare data for template
+                craft_bugs = ux_analysis.get("craft_bugs", [])
+                ux_score = ux_analysis.get("ux_score", 0)
+                
+                # Determine UX score class for styling
+                if ux_score >= 80:
+                    ux_score_class = "success"
+                elif ux_score >= 60:
+                    ux_score_class = "warning"
+                else:
+                    ux_score_class = "error"
+                
+                # Prepare steps data for template
+                steps = []
+                for step in telemetry_data.get("steps", []):
+                    step_data = {
+                        "name": step.get("step_name", "Unknown"),  # Use step_name from telemetry
+                        "duration_ms": step.get("duration_ms", 0),
+                        "success": step.get("success", False),
+                        "dialog_detected": step.get("dialog_detected", False),
+                        "dialog_type": step.get("dialog_type", ""),
+                        "interaction_attempted": step.get("interaction_attempted", False),
+                        "interaction_successful": step.get("interaction_successful", False),
+                        "status_class": "success" if step.get("success") else "error"
+                    }
+                    steps.append(step_data)
+                
+                report_data = {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "scenario_name": "Excel Document Creation",
+                    "telemetry": telemetry_data,
+                    "ux_analysis": ux_analysis,
+                    "craft_bugs": craft_bugs,
+                    "craft_bugs_count": len(craft_bugs),
+                    "ux_score": ux_score,
+                    "ux_score_class": ux_score_class,
+                    "total_steps": len(telemetry_data.get("steps", [])),
+                    "execution_time": round(telemetry_data.get("total_duration_ms", 0) / 1000, 1),
+                    "steps": steps,
+                    "performance_issues": ux_analysis.get("performance_issues", []),
+                    "interaction_issues": ux_analysis.get("interaction_issues", []),
+                    "recommendations": ux_analysis.get("recommendations", []),
+                    "report_id": f"excel_ux_{int(time.time())}"
+                }
+                
+                html_content = template.render(**report_data)
+                
+                # Save report to file
+                reports_dir = Path("reports/excel_ux")
+                reports_dir.mkdir(parents=True, exist_ok=True)
+                
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                report_filename = f"excel_ux_report_{timestamp}.html"
+                report_path = reports_dir / report_filename
+                
+                with open(report_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                
+                # Generate URL for the report
+                report_url = f"/reports/excel_ux/{report_filename}"
+                
+                logger.info(f"✅ Excel UX Report saved to: {report_path}")
+                logger.info(f"📊 Report URL: {report_url}")
+                
+                return {
+                    "status": "success",
+                    "report_url": report_url,
+                    "report_filename": report_filename,
+                    "message": "Excel UX Report generated successfully"
+                }
+                
+            except FileNotFoundError:
+                logger.error("❌ HTML template not found")
+                raise HTTPException(status_code=500, detail="HTML template not found")
+            except Exception as e:
+                logger.error(f"❌ HTML generation failed: {e}")
+                raise HTTPException(status_code=500, detail=f"HTML generation failed: {str(e)}")
+                
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"❌ Excel UX report generation failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+
 else:
     @app.post("/api/excel-web/authenticate")
     async def excel_web_authenticate():
         """Excel Web authentication endpoint (not available)"""
-        return JSONResponse(content={
-            "status": "error",
-            "message": "Excel Web integration is not available",
-            "available": False
-        })
-
-    @app.post("/api/excel-web/execute-scenario")
-    async def excel_web_execute_scenario():
-        """Excel Web scenario execution endpoint (not available)"""
         return JSONResponse(content={
             "status": "error",
             "message": "Excel Web integration is not available",
@@ -2474,6 +2613,69 @@ else:
             "message": "Excel Web integration is not available"
         })
 
+@app.post("/api/analyze/excel-scenario")
+async def analyze_excel_scenario(request: Dict[str, Any]):
+    """Analyze Excel scenario with UX telemetry and generate comprehensive report"""
+    try:
+        scenario_id = request.get("scenario_id")
+        if not scenario_id:
+            raise HTTPException(status_code=400, detail="scenario_id is required")
+        
+        logger.info(f"🎯 Starting Excel scenario analysis for: {scenario_id}")
+        
+        # Import telemetry wrapper
+        try:
+            from excel_scenario_telemetry import run_scenario_with_telemetry
+            from simple_ux_analyzer import analyze_scenario_with_telemetry
+        except ImportError as e:
+            logger.error(f"❌ Failed to import telemetry modules: {e}")
+            raise HTTPException(status_code=500, detail="Telemetry modules not available")
+        
+        # Run scenario with telemetry
+        logger.info("📊 Running Excel scenario with telemetry...")
+        telemetry_result = run_scenario_with_telemetry(scenario_id)
+        
+        if not telemetry_result or not telemetry_result.get("success"):
+            error_msg = telemetry_result.get("error", "Unknown error") if telemetry_result else "No result returned"
+            logger.error(f"❌ Scenario execution failed: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Scenario execution failed: {error_msg}")
+        
+        # Analyze telemetry data
+        logger.info("🔍 Analyzing telemetry data...")
+        analysis_result = analyze_scenario_with_telemetry(telemetry_result)
+        
+        # Generate comprehensive report
+        report_data = {
+            "status": "completed",
+            "scenario_id": scenario_id,
+            "telemetry": telemetry_result,
+            "ux_analysis": analysis_result,
+            "timestamp": datetime.now().isoformat(),
+            "report_type": "excel_ux_analysis"
+        }
+        
+        # Save report
+        report_id = f"excel_ux_{int(time.time())}"
+        from enhanced_report_handler import get_report_handler
+        report_handler = get_report_handler()
+        report_handler.save_report(report_id, report_data)
+        
+        logger.info(f"✅ Excel scenario analysis completed: {report_id}")
+        
+        return {
+            "status": "completed",
+            "analysis_id": report_id,
+            "telemetry": telemetry_result,
+            "ux_analysis": analysis_result,
+            "message": "Excel scenario analysis completed successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Excel scenario analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
 @app.get("/dashboard")
 async def serve_dashboard():
     """Serve the analytics dashboard HTML"""
@@ -2487,7 +2689,24 @@ async def serve_dashboard():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dashboard serving failed: {str(e)}")
 
+@app.get("/reports/excel_ux/{filename}")
+async def serve_excel_ux_report(filename: str):
+    """Serve Excel UX analysis reports"""
+    try:
+        report_path = Path("reports/excel_ux") / filename
+        if not report_path.exists():
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        with open(report_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        return HTMLResponse(content=html_content)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to serve report: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     print("🚀 Starting Enhanced UX Analyzer FastAPI Server...")
-    uvicorn.run("enhanced_fastapi_server:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("enhanced_fastapi_server:app", host="127.0.0.1", port=8000, reload=False)
