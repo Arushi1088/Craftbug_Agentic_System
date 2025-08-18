@@ -11,7 +11,10 @@ import {
   ArrowRight,
   Globe,
   FileText,
-  BarChart3
+  BarChart3,
+  Table,
+  Database,
+  Bot
 } from 'lucide-react';
 
 export function HomePage() {
@@ -50,6 +53,11 @@ export function HomePage() {
       icon: <PlayCircle className="w-6 h-6" />,
       title: "Scenario Testing",
       description: "YAML-based user journey validation and workflow testing"
+    },
+    {
+      icon: <Table className="w-6 h-6" />,
+      title: "Excel Web Automation",
+      description: "Automated testing and bug detection for Excel Web applications"
     }
   ];
 
@@ -58,19 +66,22 @@ export function HomePage() {
       icon: <Globe className="w-8 h-8" />,
       title: "URL Analysis",
       description: "Analyze live websites and web applications with comprehensive UX auditing",
-      features: ["Performance metrics", "Accessibility audit", "Best practices check"]
+      features: ["Performance metrics", "Accessibility audit", "Best practices check"],
+      link: "/analyze"
     },
     {
-      icon: <FileText className="w-8 h-8" />,
-      title: "Scenario Testing", 
-      description: "Test user journeys with predefined YAML scenarios for consistent evaluation",
-      features: ["Office integration tests", "Login workflows", "Navigation scenarios"]
+      icon: <Table className="w-8 h-8" />,
+      title: "Excel Web Testing", 
+      description: "Automated testing and bug detection for Excel Web with biometric authentication",
+      features: ["Document creation", "Data entry workflows", "Save operations"],
+      link: "/excel-testing"
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,
       title: "Advanced Reports",
       description: "Visual and JSON reports with interactive charts and detailed insights",
-      features: ["Interactive charts", "JSON view", "Downloadable reports"]
+      features: ["Interactive charts", "JSON view", "Downloadable reports"],
+      link: "/reports"
     }
   ];
 
@@ -79,11 +90,11 @@ export function HomePage() {
       {/* Hero Section */}
       <div className="text-center mb-16">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-          Comprehensive UX Analysis Platform
+          Enhanced UX Analysis Platform
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          Analyze websites and applications with our unified platform combining performance 
-          monitoring, accessibility auditing, UX heuristics evaluation, and functional testing.
+          Comprehensive platform for analyzing websites, applications, and Excel Web automation 
+          with performance monitoring, accessibility auditing, and automated testing capabilities.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
@@ -92,6 +103,13 @@ export function HomePage() {
           >
             Start Analysis
             <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
+          <Link
+            to="/excel-testing"
+            className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Excel Web Testing
+            <Table className="w-4 h-4 ml-2" />
           </Link>
           <a
             href="/docs"
@@ -109,7 +127,7 @@ export function HomePage() {
         <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
           Comprehensive Analysis Suite
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
@@ -123,7 +141,7 @@ export function HomePage() {
                   {feature.title}
                 </h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm">
                 {feature.description}
               </p>
             </div>
@@ -178,12 +196,12 @@ export function HomePage() {
             
             <div className="flex items-start space-x-3">
               <div className="bg-teal-100 text-teal-600 p-2 rounded-lg">
-                <Brain className="w-5 h-5" />
+                <Table className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900">Mock App Testing</h4>
+                <h4 className="font-semibold text-gray-900">Excel Web Automation</h4>
                 <p className="text-gray-600 text-sm">
-                  Test prototypes and development builds with comprehensive UX evaluation.
+                  Automated testing and bug detection for Excel Web with biometric authentication.
                 </p>
               </div>
             </div>
@@ -200,46 +218,120 @@ export function HomePage() {
           {analysisTypes.map((type, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow border border-gray-100"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100"
             >
-              <div className="text-blue-600 mb-4">
-                {type.icon}
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-100 text-blue-600 p-3 rounded-lg mr-4">
+                  {type.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {type.title}
+                </h3>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                {type.title}
-              </h3>
               <p className="text-gray-600 mb-4">
                 {type.description}
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 mb-6">
                 {type.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-center text-sm text-gray-600">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2"></div>
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
                     {feature}
                   </li>
                 ))}
               </ul>
+              <Link
+                to={type.link}
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Call to Action */}
-      <div className="text-center bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white p-8">
-        <h2 className="text-2xl font-bold mb-4">
-          Ready to Improve Your User Experience?
+      {/* Excel Web Highlight Section */}
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-8 mb-16 border border-green-200">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-full mb-4">
+            <Table className="w-8 h-8" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Excel Web Automation
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Test Excel Web applications with automated scenarios, biometric authentication, 
+            and comprehensive bug detection. Perfect for enterprise Excel workflows.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="text-center">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <Bot className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-900">Automated Testing</h3>
+              <p className="text-sm text-gray-600">Run predefined scenarios for document creation and data entry</p>
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <ShieldCheck className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-900">Biometric Auth</h3>
+              <p className="text-sm text-gray-600">Secure authentication with fingerprint and passkey support</p>
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <Database className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-900">Bug Detection</h3>
+              <p className="text-sm text-gray-600">Identify issues and report to Azure DevOps automatically</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-center">
+          <Link
+            to="/excel-testing"
+            className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Start Excel Testing
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          Ready to Get Started?
         </h2>
-        <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-          Get started with our comprehensive UX analysis platform and discover 
-          actionable insights to enhance your website's usability and performance.
+        <p className="text-lg text-gray-600 mb-8">
+          Choose your analysis type and start uncovering insights about your applications.
         </p>
-        <Link
-          to="/analyze"
-          className="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          Start Your First Analysis
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            to="/analyze"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Analyze Website
+            <Globe className="w-4 h-4 ml-2" />
+          </Link>
+          <Link
+            to="/excel-testing"
+            className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Test Excel Web
+            <Table className="w-4 h-4 ml-2" />
+          </Link>
+          <Link
+            to="/reports"
+            className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            View Reports
+            <BarChart3 className="w-4 h-4 ml-2" />
+          </Link>
+        </div>
       </div>
     </div>
   );
