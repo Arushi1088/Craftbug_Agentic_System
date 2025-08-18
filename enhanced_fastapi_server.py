@@ -97,13 +97,23 @@ from scenario_executor import ScenarioExecutor, get_available_scenarios
 # Temporarily disabled due to Playwright import issues
 # from enhanced_scenario_runner import execute_realistic_scenario, EnhancedScenarioRunner
 from enhanced_report_handler import (
-    save_analysis_to_disk, 
+    save_analysis_to_disk,
     load_analysis_from_disk, 
     list_saved_reports, 
     get_report_statistics,
     search_saved_reports,
     cleanup_old_reports
 )
+
+# Excel Web Integration
+try:
+    from excel_web_navigator import get_excel_web_navigator
+    from excel_scenarios import get_excel_scenario_executor
+    EXCEL_WEB_AVAILABLE = True
+    print("✅ Excel Web integration loaded")
+except ImportError as e:
+    EXCEL_WEB_AVAILABLE = False
+    print(f"⚠️ Excel Web integration not available: {e}")
 # Import craft bug detector
 from craft_bug_detector import CraftBugDetector
 
@@ -2344,6 +2354,126 @@ async def get_ado_work_item_status(work_item_id: int):
     except Exception as e:
         logger.error(f"Error checking ADO work item status: {e}")
         raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
+
+# Excel Web Integration Endpoints
+if EXCEL_WEB_AVAILABLE:
+    @app.post("/api/excel-web/authenticate")
+    async def excel_web_authenticate():
+        """Authenticate to Excel Web"""
+        try:
+            navigator = await get_excel_web_navigator()
+            
+            if await navigator.initialize():
+                if await navigator.ensure_authenticated():
+                    return JSONResponse(content={
+                        "status": "success",
+                        "message": "Successfully authenticated to Excel Web",
+                        "authenticated": True
+                    })
+                else:
+                    return JSONResponse(content={
+                        "status": "error",
+                        "message": "Failed to authenticate to Excel Web",
+                        "authenticated": False
+                    })
+            else:
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": "Failed to initialize Excel Web navigator",
+                    "authenticated": False
+                })
+                
+        except Exception as e:
+            logger.error(f"Excel Web authentication error: {e}")
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Authentication failed: {str(e)}",
+                "authenticated": False
+            })
+
+    @app.post("/api/excel-web/execute-scenario")
+    async def excel_web_execute_scenario(scenario_name: str = "document_creation"):
+        """Execute an Excel Web scenario"""
+        try:
+            navigator = await get_excel_web_navigator()
+            executor = await get_excel_scenario_executor(navigator)
+            
+            if not await navigator.initialize():
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": "Failed to initialize Excel Web navigator"
+                })
+            
+            # Execute the document creation scenario
+            if scenario_name == "document_creation":
+                result = await executor.execute_document_creation_scenario()
+            else:
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": f"Unknown scenario: {scenario_name}"
+                })
+            
+            # Convert result to JSON-serializable format
+            result_data = {
+                "scenario_name": result.scenario_name,
+                "success": result.success,
+                "steps_completed": result.steps_completed,
+                "total_steps": result.total_steps,
+                "execution_time": result.execution_time,
+                "screenshots": result.screenshots,
+                "errors": result.errors,
+                "performance_metrics": result.performance_metrics
+            }
+            
+            return JSONResponse(content={
+                "status": "success" if result.success else "error",
+                "message": f"Scenario execution {'completed' if result.success else 'failed'}",
+                "result": result_data
+            })
+            
+        except Exception as e:
+            logger.error(f"Excel Web scenario execution error: {e}")
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Scenario execution failed: {str(e)}"
+            })
+
+    @app.get("/api/excel-web/status")
+    async def excel_web_status():
+        """Get Excel Web integration status"""
+        return JSONResponse(content={
+            "available": True,
+            "status": "ready",
+            "message": "Excel Web integration is available"
+        })
+
+else:
+    @app.post("/api/excel-web/authenticate")
+    async def excel_web_authenticate():
+        """Excel Web authentication endpoint (not available)"""
+        return JSONResponse(content={
+            "status": "error",
+            "message": "Excel Web integration is not available",
+            "available": False
+        })
+
+    @app.post("/api/excel-web/execute-scenario")
+    async def excel_web_execute_scenario():
+        """Excel Web scenario execution endpoint (not available)"""
+        return JSONResponse(content={
+            "status": "error",
+            "message": "Excel Web integration is not available",
+            "available": False
+        })
+
+    @app.get("/api/excel-web/status")
+    async def excel_web_status():
+        """Excel Web status endpoint (not available)"""
+        return JSONResponse(content={
+            "available": False,
+            "status": "unavailable",
+            "message": "Excel Web integration is not available"
+        })
 
 @app.get("/dashboard")
 async def serve_dashboard():
