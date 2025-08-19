@@ -233,6 +233,7 @@
             <button class="refresh-btn" onclick="loadDashboardData()">🔄 Refresh Data</button>
             <button class="refresh-btn" onclick="testEndToEndWorkflow()">🧪 Test E2E Workflow</button>
             <button class="refresh-btn" onclick="loadAvailableReports()">📋 Load Reports</button>
+            <button class="refresh-btn" onclick="generateExcelUXReport()">🎨 Excel UX Report</button>
         </div>
 
         <!-- Loading State -->
@@ -728,6 +729,61 @@
             } catch (error) {
                 alert(`❌ Failed to create ADO tickets: ${error.message}`);
             }
+        }
+
+        async function generateExcelUXReport() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('loading').innerHTML = '🎨 Generating Excel UX Report...';
+                
+                const response = await fetch('/api/excel-web/ux-report/html');
+                
+                if (response.ok) {
+                    const htmlContent = await response.text();
+                    
+                    // Try to open in a new window with proper error handling
+                    const newWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                    
+                    if (newWindow && newWindow.document) {
+                        // Wait a moment for the window to be ready
+                        setTimeout(() => {
+                            try {
+                                newWindow.document.write(htmlContent);
+                                newWindow.document.close();
+                                alert('✅ Excel UX Report generated and opened in new window!');
+                            } catch (writeError) {
+                                console.error('Error writing to new window:', writeError);
+                                // Fallback: create a download link
+                                fallbackDownload(htmlContent);
+                            }
+                        }, 100);
+                    } else {
+                        // Fallback: create a download link
+                        fallbackDownload(htmlContent);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Report generation failed');
+                }
+            } catch (error) {
+                alert(`❌ Failed to generate Excel UX Report: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function fallbackDownload(htmlContent) {
+            // Create a blob and download link as fallback
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `excel-ux-report-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('✅ Excel UX Report downloaded as HTML file! (Popup was blocked)');
         }
 
         // Load dashboard data on page load
