@@ -1,0 +1,6 @@
+ID,Title,Description,State,Priority,Severity,Tags
+1,Excel save dialog not appearing,When clicking save button, dialog doesn't show,Active,High,Critical,Excel;Save;UI
+2,Workbook crashes on data entry,Excel crashes when entering large amounts of data,Active,Medium,High,Excel;Crash;Performance
+3,Copilot dialog blocks cell interaction,After dismissing copilot, cells remain unclickable,Resolved,Low,Medium,Excel;Copilot;UI
+4,Save confirmation fails,Save button clicked but no confirmation appears,Active,High,High,Excel;Save;Confirmation
+5,Performance slow with large datasets,Excel becomes unresponsive with 100k+ rows,Active,Medium,Medium,Excel;Performance;Large Data

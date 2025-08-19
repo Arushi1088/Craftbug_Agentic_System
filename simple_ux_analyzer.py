@@ -412,6 +412,9 @@ class SimpleExcelUXAnalyzer:
         interaction_issues = self._analyze_interactions(telemetry_data)
         results["interaction_issues"] = interaction_issues
         
+        # Store telemetry data for step analysis
+        self._current_telemetry_data = telemetry_data
+        
         # Analyze each step with comprehensive Craft bug detection
         for step in telemetry_data.get("steps", []):
             step_bugs = await self._analyze_step_with_telemetry(step)
@@ -523,6 +526,11 @@ class SimpleExcelUXAnalyzer:
         bugs = []
         step_name = step.get('name', 'Unknown')
         
+        # Get screenshot path for this step if available
+        screenshot_path = step.get('screenshot_path')
+        if screenshot_path and screenshot_path.startswith('screenshots/'):
+            screenshot_path = f"/{screenshot_path}"
+        
         # 1. FLOW DISRUPTIONS - Based on ADO Craft bug patterns
         if not step.get("success"):
             bugs.append({
@@ -537,13 +545,29 @@ class SimpleExcelUXAnalyzer:
         # 2. INTERACTION PROBLEMS - Based on ADO Craft bug patterns
         if step.get("dialog_detected"):
             dialog_type = step.get('dialog_type', 'unknown')
+            
+            # For Copilot dialog bugs, try to find the Copilot dialog screenshot
+            bug_screenshot_path = None
+            if dialog_type.lower() == 'copilot':
+                # Look for Copilot dialog screenshot in the step's screenshot or related screenshots
+                if screenshot_path and 'copilot_dialog' in screenshot_path:
+                    bug_screenshot_path = screenshot_path
+                else:
+                    # Try to find Copilot dialog screenshot from other steps
+                    for other_step in self._get_all_steps():
+                        other_screenshot = other_step.get('screenshot_path')
+                        if other_screenshot and 'copilot_dialog' in other_screenshot:
+                            bug_screenshot_path = f"/{other_screenshot}"
+                            break
+            
             bugs.append({
                 "category": "interaction_problems",
                 "title": f"Unexpected Dialog Interruption: {step_name}",
                 "description": f"Dialog of type '{dialog_type}' appeared unexpectedly during '{step_name}', blocking user progress",
                 "severity": "medium",
                 "step_name": step_name,
-                "recommendation": "Implement proactive dialog detection and dismissal to prevent workflow interruptions"
+                "recommendation": "Implement proactive dialog detection and dismissal to prevent workflow interruptions",
+                "screenshot_path": bug_screenshot_path
             })
         
         if step.get("interaction_attempted") and not step.get("interaction_successful"):
@@ -601,13 +625,26 @@ class SimpleExcelUXAnalyzer:
         
         # 6. EXCEL-SPECIFIC CRAFT BUGS - Based on our Excel analysis
         if "copilot" in step_name.lower() or step.get("dialog_type") == "copilot":
+            # For Copilot dialog bugs, try to find the Copilot dialog screenshot
+            bug_screenshot_path = None
+            if screenshot_path and 'copilot_dialog' in screenshot_path:
+                bug_screenshot_path = screenshot_path
+            else:
+                # Try to find Copilot dialog screenshot from other steps
+                for other_step in self._get_all_steps():
+                    other_screenshot = other_step.get('screenshot_path')
+                    if other_screenshot and 'copilot_dialog' in other_screenshot:
+                        bug_screenshot_path = f"/{other_screenshot}"
+                        break
+            
             bugs.append({
                 "category": "interaction_problems",
                 "title": f"Copilot Dialog UX Issue: {step_name}",
                 "description": f"Copilot dialog appeared in step '{step_name}', which can disrupt user workflow and create confusion",
                 "severity": "medium",
                 "step_name": step_name,
-                "recommendation": "Consider making Copilot opt-in rather than automatic, or provide clear dismissal options"
+                "recommendation": "Consider making Copilot opt-in rather than automatic, or provide clear dismissal options",
+                "screenshot_path": bug_screenshot_path
             })
         
         if "save" in step_name.lower() and step.get("dialog_detected"):
@@ -683,6 +720,12 @@ class SimpleExcelUXAnalyzer:
             })
         
         return bugs
+    
+    def _get_all_steps(self) -> List[Dict[str, Any]]:
+        """Get all steps from the current telemetry data"""
+        if hasattr(self, '_current_telemetry_data'):
+            return self._current_telemetry_data.get("steps", [])
+        return []
 
 async def main():
     """Test the Simple Excel UX Analyzer"""

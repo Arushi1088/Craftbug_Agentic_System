@@ -327,6 +327,12 @@
                 {% if bug.recommendation %}
                 <p><strong>Recommendation:</strong> {{bug.recommendation}}</p>
                 {% endif %}
+                {% if bug.screenshot_path %}
+                <div style="margin-top: 15px;">
+                    <p><strong>Screenshot:</strong></p>
+                    <img src="{{bug.screenshot_path}}" alt="Bug Screenshot" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" onclick="openImageModal(this.src)">
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -400,6 +406,36 @@
     </div>
     
     <script>
+        function openImageModal(src) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                cursor: pointer;
+            `;
+            
+            const img = document.createElement('img');
+            img.src = src;
+            img.style.cssText = `
+                max-width: 90%;
+                max-height: 90%;
+                object-fit: contain;
+                border-radius: 8px;
+            `;
+            
+            modal.appendChild(img);
+            modal.onclick = () => document.body.removeChild(modal);
+            document.body.appendChild(modal);
+        }
+        
         function downloadReport() {
             // Get the current page content
             const htmlContent = document.documentElement.outerHTML;

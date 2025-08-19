@@ -1,0 +1,277 @@
+{
+  "scenario_name": "document_creation",
+  "start_time": 1755517589.361481,
+  "steps": [
+    {
+      "step_name": "Navigate to Excel Web",
+      "step_index": 0,
+      "start_time": 1755517595.3179488,
+      "end_time": 1755517597.317953,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_web_interface"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Click New Workbook",
+      "step_index": 1,
+      "start_time": 1755517597.3179939,
+      "end_time": 1755517599.317995,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "clicked_element": "new_workbook_button"
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Wait for Excel to Launch in New Window",
+      "step_index": 2,
+      "start_time": 1755517599.3180008,
+      "end_time": 1755517601.318002,
+      "duration_ms": 2000,
+      "success": false,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_iframe",
+          "excel_canvas"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Dismiss Copilot Dialog",
+      "step_index": 3,
+      "start_time": 1755517601.318007,
+      "end_time": 1755517603.318008,
+      "duration_ms": 2000,
+      "success": false,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "dialog_elements": [
+          "copilot_dialog",
+          "close_button"
+        ]
+      },
+      "dialog_detected": true,
+      "dialog_type": "copilot",
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Take Screenshot - Initial State",
+      "step_index": 4,
+      "start_time": 1755517603.318013,
+      "end_time": 1755517605.318013,
+      "duration_ms": 2000,
+      "success": false,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Enter Sample Data",
+      "step_index": 5,
+      "start_time": 1755517605.318018,
+      "end_time": 1755517607.318018,
+      "duration_ms": 2000,
+      "success": false,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_cells",
+          "formula_bar"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": true,
+      "interaction_successful": true
+    },
+    {
+      "step_name": "Take Screenshot - Data Entered",
+      "step_index": 6,
+      "start_time": 1755517607.318024,
+      "end_time": 1755517609.3180249,
+      "duration_ms": 2000,
+      "success": false,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Click Save Button",
+      "step_index": 7,
+      "start_time": 1755517609.318033,
+      "end_time": 1755517611.318035,
+      "duration_ms": 2000,
+      "success": false,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "dialog_elements": [
+          "save_dialog",
+          "filename_input",
+          "save_confirm_button"
+        ]
+      },
+      "dialog_detected": true,
+      "dialog_type": "save",
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Take Screenshot - Final State",
+      "step_index": 8,
+      "start_time": 1755517611.318048,
+      "end_time": 1755517613.318049,
+      "duration_ms": 2000,
+      "success": false,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    }
+  ],
+  "end_time": 1755517613.3180559,
+  "total_duration_ms": 23956.5749168396,
+  "overall_success": false,
+  "ux_analysis_results": {
+    "scenario_name": "document_creation",
+    "craft_bugs": [
+      {
+        "category": "flow_disruptions",
+        "title": "Step Failed: Wait for Excel to Launch in New Window",
+        "description": null,
+        "severity": "high",
+        "step_name": "Wait for Excel to Launch in New Window",
+        "recommendation": "Fix step implementation or element selectors"
+      },
+      {
+        "category": "flow_disruptions",
+        "title": "Step Failed: Dismiss Copilot Dialog",
+        "description": null,
+        "severity": "high",
+        "step_name": "Dismiss Copilot Dialog",
+        "recommendation": "Fix step implementation or element selectors"
+      },
+      {
+        "category": "interaction_problems",
+        "title": "Unexpected Dialog: Dismiss Copilot Dialog",
+        "description": "Dialog of type 'copilot' appeared",
+        "severity": "medium",
+        "step_name": "Dismiss Copilot Dialog",
+        "recommendation": "Handle dialog dismissal in step logic"
+      },
+      {
+        "category": "flow_disruptions",
+        "title": "Step Failed: Take Screenshot - Initial State",
+        "description": null,
+        "severity": "high",
+        "step_name": "Take Screenshot - Initial State",
+        "recommendation": "Fix step implementation or element selectors"
+      },
+      {
+        "category": "flow_disruptions",
+        "title": "Step Failed: Enter Sample Data",
+        "description": null,
+        "severity": "high",
+        "step_name": "Enter Sample Data",
+        "recommendation": "Fix step implementation or element selectors"
+      },
+      {
+        "category": "flow_disruptions",
+        "title": "Step Failed: Take Screenshot - Data Entered",
+        "description": null,
+        "severity": "high",
+        "step_name": "Take Screenshot - Data Entered",
+        "recommendation": "Fix step implementation or element selectors"
+      },
+      {
+        "category": "flow_disruptions",
+        "title": "Step Failed: Click Save Button",
+        "description": null,
+        "severity": "high",
+        "step_name": "Click Save Button",
+        "recommendation": "Fix step implementation or element selectors"
+      },
+      {
+        "category": "interaction_problems",
+        "title": "Unexpected Dialog: Click Save Button",
+        "description": "Dialog of type 'save' appeared",
+        "severity": "medium",
+        "step_name": "Click Save Button",
+        "recommendation": "Handle dialog dismissal in step logic"
+      },
+      {
+        "category": "flow_disruptions",
+        "title": "Step Failed: Take Screenshot - Final State",
+        "description": null,
+        "severity": "high",
+        "step_name": "Take Screenshot - Final State",
+        "recommendation": "Fix step implementation or element selectors"
+      }
+    ],
+    "ux_score": 0,
+    "recommendations": [
+      "Fix step implementation or element selectors",
+      "Fix step implementation or element selectors",
+      "Handle dialog dismissal in step logic",
+      "Fix step implementation or element selectors",
+      "Fix step implementation or element selectors",
+      "Fix step implementation or element selectors",
+      "Fix step implementation or element selectors",
+      "Handle dialog dismissal in step logic",
+      "Fix step implementation or element selectors"
+    ],
+    "performance_issues": [],
+    "interaction_issues": [
+      {
+        "type": "interaction",
+        "title": "Dialog Blocking: Dismiss Copilot Dialog",
+        "description": "Dialog detected but interaction failed",
+        "severity": "high",
+        "recommendation": "Ensure dialogs are properly dismissed before proceeding"
+      },
+      {
+        "type": "interaction",
+        "title": "Dialog Blocking: Click Save Button",
+        "description": "Dialog detected but interaction failed",
+        "severity": "high",
+        "recommendation": "Ensure dialogs are properly dismissed before proceeding"
+      }
+    ]
+  }
+}

@@ -64,6 +64,13 @@ class ExcelDocumentCreationScenario:
                 timeout=60
             ),
             ScenarioStep(
+                name="Take Screenshot - Copilot Dialog",
+                description="Capture the Copilot dialog before dismissing it",
+                action="screenshot",
+                selector="",
+                value="excel_copilot_dialog"
+            ),
+            ScenarioStep(
                 name="Dismiss Copilot Dialog",
                 description="Dismiss the 'Start with Copilot' dialog that appears when creating a new workbook",
                 action="dismiss_copilot_dialog",

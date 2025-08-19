@@ -1,0 +1,18 @@
+{
+  "general_bug_detection": {
+    "description": "General bug detection prompt for Excel scenarios",
+    "template": "Based on analysis of 30 historical Excel bugs, detect potential issues in the current scenario.\n\nCommon bug patterns to watch for:\n- Save issues: 1 occurrences\n- UI issues: 1 occurrences  \n- Performance issues: 0 occurrences\n- Copilot issues: 0 occurrences\n\nAnalyze the current Excel scenario and identify potential bugs based on these patterns."
+  },
+  "save_specific": {
+    "description": "Save-specific bug detection prompt",
+    "template": "Focus on save-related issues based on 1 historical save bugs.\n\nCommon save issues:\n- Save dialog not appearing\n- Save confirmation failures\n- File naming conflicts\n- Auto-save issues\n- Save location problems\n\nCheck for these specific issues in the current save operation."
+  },
+  "ui_specific": {
+    "description": "UI-specific bug detection prompt",
+    "template": "Focus on UI-related issues based on 7 historical UI bugs.\n\nCommon UI issues:\n- Dialog dismissal problems\n- Button click failures\n- Element not interactable\n- Layout issues\n- Responsiveness problems\n\nCheck for these specific UI issues in the current scenario."
+  },
+  "copilot_specific": {
+    "description": "Copilot-specific bug detection prompt",
+    "template": "Focus on Copilot/AI-related issues based on 1 historical Copilot bugs.\n\nCommon Copilot issues:\n- Dialog blocking interactions\n- Response quality problems\n- Performance issues\n- Context awareness problems\n- UI/UX inconsistencies\n\nCheck for these specific Copilot issues in the current scenario."
+  }
+}
