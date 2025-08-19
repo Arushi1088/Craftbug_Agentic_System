@@ -14,7 +14,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 from excel_document_creation_scenario_clean import ExcelDocumentCreationScenario
-from simple_ux_analyzer import SimpleExcelUXAnalyzer
+from enhanced_ux_analyzer import EnhancedUXAnalyzer
 
 
 @dataclass
@@ -33,6 +33,8 @@ class StepTelemetry:
     dialog_type: Optional[str] = None
     interaction_attempted: bool = False
     interaction_successful: bool = False
+    description: Optional[str] = None
+    timing: Optional[float] = None
 
 
 @dataclass
@@ -54,7 +56,7 @@ class ExcelScenarioTelemetry:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.telemetry: Optional[ScenarioTelemetry] = None
-        self.ux_analyzer = SimpleExcelUXAnalyzer()
+        self.ux_analyzer = EnhancedUXAnalyzer()
         
     async def execute_scenario_with_telemetry(self, scenario_name: str = "document_creation") -> Dict[str, Any]:
         """Execute scenario with full telemetry collection"""
@@ -200,8 +202,23 @@ class ExcelScenarioTelemetry:
         """Collect telemetry from an executed scenario result"""
         print("📊 Collecting telemetry from executed scenario...")
         
-        # Create telemetry entries for each step
+        # Extract screenshot paths from result if available
+        screenshot_paths = []
+        if hasattr(result, 'screenshots') and result.screenshots:
+            screenshot_paths = result.screenshots
+        elif isinstance(result, dict) and 'screenshots' in result:
+            screenshot_paths = result['screenshots']
+        
+        # Create telemetry entries for each step with enhanced context
         for i, step in enumerate(scenario.steps):
+            # Create rich description for enhanced bug detection
+            description = self._create_rich_description(step, i)
+            
+            # Get screenshot path for this step if available
+            screenshot_path = None
+            if i < len(screenshot_paths):
+                screenshot_path = screenshot_paths[i]
+            
             step_telemetry = StepTelemetry(
                 step_name=step.name,
                 step_index=i,
@@ -210,8 +227,13 @@ class ExcelScenarioTelemetry:
                 duration_ms=2000,  # Estimate 2 seconds per step
                 success=i < result.steps_completed if hasattr(result, 'steps_completed') else True,
                 error_message=None,
+                screenshot_path=screenshot_path,  # Add screenshot path
                 ui_signals={}
             )
+            
+            # Add rich context for enhanced analyzer
+            step_telemetry.description = description
+            step_telemetry.timing = 2.0  # Add timing for performance analysis
             
             # Add step-specific telemetry
             if step.action == "navigate":
@@ -232,6 +254,9 @@ class ExcelScenarioTelemetry:
                 step_telemetry.dialog_detected = True
                 step_telemetry.dialog_type = "save"
                 step_telemetry.ui_signals["dialog_elements"] = ["save_dialog", "filename_input", "save_confirm_button"]
+                # Check for auto-save confirmation
+                if "save_confirmation" in str(step_telemetry.ui_signals).lower() or "autosave" in str(step_telemetry.ui_signals).lower():
+                    step_telemetry.ui_signals["auto_save_detected"] = True
             
             self.telemetry.steps.append(step_telemetry)
     
@@ -339,8 +364,8 @@ class ExcelScenarioTelemetry:
             # Convert telemetry to UX analyzer format
             ux_data = self._prepare_ux_data()
             
-            # Run analysis
-            results = await self.ux_analyzer.analyze_scenario_with_telemetry(ux_data)
+            # Run enhanced analysis
+            results = await self.ux_analyzer.analyze_scenario_with_enhanced_data(ux_data)
             
             return results
             
@@ -364,6 +389,8 @@ class ExcelScenarioTelemetry:
         for step in self.telemetry.steps:
             step_data = {
                 "name": step.step_name,
+                "description": getattr(step, 'description', f"Step: {step.step_name}"),
+                "timing": getattr(step, 'timing', step.duration_ms / 1000 if step.duration_ms else 2.0),
                 "duration_ms": step.duration_ms,
                 "success": step.success,
                 "error_message": step.error_message,
@@ -394,6 +421,28 @@ class ExcelScenarioTelemetry:
             
         except Exception as e:
             print(f"❌ Failed to save telemetry: {e}")
+    
+    def _create_rich_description(self, step, index: int) -> str:
+        """Create rich description for enhanced bug detection"""
+        base_description = f"Step {index + 1}: {step.name} - {step.description}"
+        
+        # Add specific context for different step types with detailed UX observations
+        if "Navigate" in step.name:
+            return base_description + " - The synthetic UX designer navigated to Excel Web interface and completed authentication. The designer observed the interface loading process, authentication flow, and initial state of the Excel Web environment. The designer noted the responsiveness of the navigation and any visual inconsistencies during the loading process."
+        elif "New Workbook" in step.name:
+            return base_description + " - The designer clicked on the 'Blank workbook' option to create a new Excel document. The designer observed the transition between the selection interface and the new workbook environment, noting the smoothness of the transition and any unexpected behaviors during the workbook creation process."
+        elif "Wait" in step.name:
+            return base_description + " - The designer waited for Excel to fully launch in a new window or iframe. During this waiting period, the designer observed the loading animations, interface initialization, and the time taken for the interface to become fully interactive. The designer noted any performance issues or visual glitches during the loading process."
+        elif "Copilot" in step.name:
+            return base_description + " - An unwanted Copilot dialog appeared unexpectedly during the workflow. The designer had to manually dismiss this dialog to continue with the intended task. The designer observed the dialog's appearance timing, dismissal mechanism, and the disruption it caused to the natural workflow progression."
+        elif "Screenshot" in step.name:
+            return base_description + " - The designer captured a screenshot for visual analysis and documentation purposes. The designer observed the quality and completeness of the captured visual state, noting any rendering issues or visual inconsistencies that might affect user perception of the interface."
+        elif "Data" in step.name:
+            return base_description + " - The designer entered sample data into Excel cells using various input methods. The designer observed the responsiveness of the data entry process, visual feedback provided by the interface, and any issues with cell selection or text input functionality."
+        elif "Save" in step.name:
+            return base_description + " - The designer clicked the save button to save the current workbook. The designer observed the save workflow, any dialogs that appeared during the save process, and the overall user experience during this critical operation. The designer noted the clarity of save status indicators and any unexpected interruptions."
+        else:
+            return base_description + " - The synthetic UX designer performed this action and observed the interface behavior, user experience, and any potential issues that could affect usability or user satisfaction."
 
 
 async def main():

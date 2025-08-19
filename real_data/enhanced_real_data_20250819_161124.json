@@ -1,0 +1,1218 @@
+{
+  "figma_data": {
+    "file_info": {
+      "name": "Excel Web Fluent 2",
+      "last_modified": "2025-05-26T04:53:35Z",
+      "version": "2251706922171980239"
+    },
+    "design_systems": {
+      "excel_web_fluent": {
+        "name": "Excel Web Fluent 2",
+        "colors": {
+          "primary": "#0078d4",
+          "primary_hover": "#106ebe",
+          "neutral_white": "#ffffff",
+          "neutral_gray_10": "#faf9f8",
+          "neutral_gray_20": "#f3f2f1",
+          "neutral_gray_30": "#edebe9",
+          "neutral_gray_40": "#e1dfdd",
+          "neutral_gray_50": "#d2d0ce",
+          "neutral_gray_60": "#c8c6c4",
+          "neutral_gray_70": "#b3b0ad",
+          "neutral_gray_80": "#a19f9d",
+          "neutral_gray_90": "#8a8886",
+          "neutral_gray_100": "#605e5c",
+          "neutral_gray_110": "#3b3a39",
+          "neutral_gray_120": "#323130",
+          "neutral_gray_130": "#292827",
+          "neutral_gray_140": "#201f1e",
+          "neutral_gray_150": "#1b1a19",
+          "neutral_gray_160": "#161514",
+          "neutral_black": "#000000",
+          "semantic_error": "#d13438",
+          "semantic_warning": "#ffaa44",
+          "semantic_success": "#107c10",
+          "semantic_info": "#0078d4"
+        },
+        "typography": {
+          "font_family_primary": "Segoe UI",
+          "font_family_monospace": "Consolas",
+          "font_size_xs": "10px",
+          "font_size_sm": "12px",
+          "font_size_md": "14px",
+          "font_size_lg": "16px",
+          "font_size_xl": "18px",
+          "font_size_xxl": "20px",
+          "font_size_xxxl": "24px",
+          "font_weight_regular": "400",
+          "font_weight_medium": "500",
+          "font_weight_semibold": "600",
+          "font_weight_bold": "700"
+        },
+        "spacing": {
+          "xs": "4px",
+          "sm": "8px",
+          "md": "12px",
+          "lg": "16px",
+          "xl": "20px",
+          "xxl": "24px",
+          "xxxl": "32px"
+        },
+        "border_radius": {
+          "none": "0px",
+          "sm": "2px",
+          "md": "4px",
+          "lg": "8px",
+          "xl": "12px"
+        },
+        "shadows": {
+          "sm": "0 1px 2px rgba(0, 0, 0, 0.1)",
+          "md": "0 2px 4px rgba(0, 0, 0, 0.1)",
+          "lg": "0 4px 8px rgba(0, 0, 0, 0.1)",
+          "xl": "0 8px 16px rgba(0, 0, 0, 0.1)"
+        }
+      },
+      "office_icons": {
+        "name": "Office Icons",
+        "icon_sizes": {
+          "xs": "12px",
+          "sm": "16px",
+          "md": "20px",
+          "lg": "24px",
+          "xl": "32px",
+          "xxl": "48px"
+        },
+        "icon_colors": {
+          "primary": "#0078d4",
+          "secondary": "#605e5c",
+          "disabled": "#c8c6c4",
+          "error": "#d13438",
+          "warning": "#ffaa44",
+          "success": "#107c10"
+        }
+      },
+      "excel_copilot": {
+        "name": "Excel Copilot UI Kit",
+        "copilot_colors": {
+          "primary": "#0078d4",
+          "secondary": "#106ebe",
+          "accent": "#00bcf2",
+          "background": "#f8f9fa",
+          "surface": "#ffffff",
+          "border": "#e1dfdd"
+        },
+        "copilot_components": {
+          "chat_panel": {
+            "background": "#ffffff",
+            "border": "1px solid #e1dfdd",
+            "border_radius": "8px",
+            "padding": "16px"
+          },
+          "message_bubble": {
+            "user_background": "#0078d4",
+            "user_color": "#ffffff",
+            "assistant_background": "#f8f9fa",
+            "assistant_color": "#292827"
+          }
+        }
+      },
+      "excel_win32_ribbon": {
+        "name": "Excel Win32 Ribbon",
+        "ribbon_structure": {
+          "tabs": {
+            "home": {
+              "background": "#f3f2f1",
+              "active_background": "#ffffff",
+              "border": "1px solid #e1dfdd",
+              "padding": "8px 12px"
+            },
+            "insert": {
+              "background": "#f3f2f1",
+              "active_background": "#ffffff",
+              "border": "1px solid #e1dfdd",
+              "padding": "8px 12px"
+            },
+            "formulas": {
+              "background": "#f3f2f1",
+              "active_background": "#ffffff",
+              "border": "1px solid #e1dfdd",
+              "padding": "8px 12px"
+            }
+          },
+          "groups": {
+            "background": "#ffffff",
+            "border": "1px solid #e1dfdd",
+            "padding": "8px",
+            "margin": "4px"
+          },
+          "buttons": {
+            "primary": {
+              "background": "#0078d4",
+              "color": "#ffffff",
+              "border": "none",
+              "border_radius": "4px",
+              "padding": "6px 12px",
+              "font_size": "14px"
+            },
+            "secondary": {
+              "background": "transparent",
+              "color": "#323130",
+              "border": "1px solid #e1dfdd",
+              "border_radius": "4px",
+              "padding": "6px 12px",
+              "font_size": "14px"
+            }
+          }
+        },
+        "ribbon_icons": {
+          "size": "16px",
+          "color": "#323130",
+          "hover_color": "#0078d4",
+          "active_color": "#0078d4"
+        }
+      },
+      "excel_fluent_surfaces": {
+        "name": "Excel Fluent Surfaces",
+        "surface_levels": {
+          "L1": {
+            "description": "Primary application surface",
+            "background": "#ffffff",
+            "elevation": "0px",
+            "border": "1px solid #e1dfdd",
+            "shadow": "none"
+          },
+          "L2": {
+            "description": "Secondary surface (panels, dialogs)",
+            "background": "#ffffff",
+            "elevation": "4px",
+            "border": "1px solid #e1dfdd",
+            "shadow": "0 2px 4px rgba(0, 0, 0, 0.1)"
+          },
+          "L3": {
+            "description": "Tertiary surface (dropdowns, tooltips)",
+            "background": "#ffffff",
+            "elevation": "8px",
+            "border": "1px solid #e1dfdd",
+            "shadow": "0 4px 8px rgba(0, 0, 0, 0.1)"
+          }
+        },
+        "surface_components": {
+          "dialog": {
+            "surface": "L2",
+            "border_radius": "8px",
+            "padding": "24px",
+            "max_width": "600px"
+          },
+          "panel": {
+            "surface": "L2",
+            "border_radius": "4px",
+            "padding": "16px",
+            "width": "320px"
+          },
+          "tooltip": {
+            "surface": "L3",
+            "border_radius": "4px",
+            "padding": "8px 12px",
+            "max_width": "300px"
+          },
+          "dropdown": {
+            "surface": "L3",
+            "border_radius": "4px",
+            "padding": "4px 0",
+            "min_width": "200px"
+          }
+        }
+      },
+      "office_win32_variables": {
+        "name": "Office Win32 Variables",
+        "design_tokens": {
+          "colors": {
+            "theme_primary": "var(--office-primary)",
+            "theme_secondary": "var(--office-secondary)",
+            "theme_background": "var(--office-background)",
+            "theme_surface": "var(--office-surface)",
+            "theme_border": "var(--office-border)",
+            "theme_text": "var(--office-text)",
+            "theme_text_secondary": "var(--office-text-secondary)"
+          },
+          "spacing": {
+            "unit": "4px",
+            "xs": "var(--spacing-xs)",
+            "sm": "var(--spacing-sm)",
+            "md": "var(--spacing-md)",
+            "lg": "var(--spacing-lg)",
+            "xl": "var(--spacing-xl)"
+          },
+          "typography": {
+            "font_family": "var(--font-family-primary)",
+            "font_size_base": "var(--font-size-base)",
+            "font_size_small": "var(--font-size-small)",
+            "font_size_large": "var(--font-size-large)",
+            "line_height": "var(--line-height)"
+          },
+          "borders": {
+            "radius_small": "var(--border-radius-small)",
+            "radius_medium": "var(--border-radius-medium)",
+            "radius_large": "var(--border-radius-large)",
+            "width": "var(--border-width)"
+          }
+        },
+        "theme_variables": {
+          "light_theme": {
+            "--office-primary": "#0078d4",
+            "--office-secondary": "#106ebe",
+            "--office-background": "#ffffff",
+            "--office-surface": "#f8f9fa",
+            "--office-border": "#e1dfdd",
+            "--office-text": "#323130",
+            "--office-text-secondary": "#605e5c"
+          },
+          "dark_theme": {
+            "--office-primary": "#60caff",
+            "--office-secondary": "#0078d4",
+            "--office-background": "#1b1a19",
+            "--office-surface": "#292827",
+            "--office-border": "#3b3a39",
+            "--office-text": "#ffffff",
+            "--office-text-secondary": "#c8c6c4"
+          }
+        }
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": {
+          "background": "#0078d4",
+          "color": "#ffffff"
+        },
+        "secondary": {
+          "background": "transparent",
+          "color": "#323130"
+        }
+      },
+      "inputs": {
+        "text": {
+          "background": "#ffffff",
+          "border": "#e1dfdd"
+        },
+        "dropdown": {
+          "background": "#ffffff",
+          "border": "#e1dfdd"
+        }
+      },
+      "surfaces": {
+        "L1": {
+          "background": "#ffffff",
+          "elevation": "0px"
+        },
+        "L2": {
+          "background": "#ffffff",
+          "elevation": "4px"
+        },
+        "L3": {
+          "background": "#ffffff",
+          "elevation": "8px"
+        }
+      }
+    }
+  },
+  "craft_bugs": [
+    {
+      "id": "CRAFT-001",
+      "title": "Excel Ribbon Button Alignment Inconsistency",
+      "description": "The \"Save\" button in the ribbon appears slightly misaligned compared to other buttons. Visual inconsistency creates a jarring experience.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Visual, Alignment, Ribbon",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Medium"
+    },
+    {
+      "id": "CRAFT-002",
+      "title": "Copilot Dialog Animation Stutter",
+      "description": "When dismissing the Copilot dialog, the animation stutters and doesn't feel smooth. Breaks the polished user experience.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Animation, Performance, Copilot",
+      "craft_bug_type": "Performance UX",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "surface_analysis": {
+        "level": "L2",
+        "component": "dialog",
+        "elevation": "4px",
+        "shadow": "0 2px 4px rgba(0, 0, 0, 0.1)"
+      },
+      "ux_law_violations": [
+        "Doherty Threshold (animation too fast)",
+        "Aesthetic-Usability Effect (feels unpolished)"
+      ]
+    },
+    {
+      "id": "CRAFT-003",
+      "title": "Cell Selection Color Mismatch",
+      "description": "Selected cell color doesn't match the design system color palette. Uses #0078d4 instead of the correct #106ebe.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Color, Design System, Cells",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "design_system_check": {
+        "type": "color_compliance",
+        "expected": "#0078d4",
+        "actual": "#106ebe",
+        "severity": "medium"
+      }
+    },
+    {
+      "id": "CRAFT-004",
+      "title": "Save Dialog Typography Inconsistency",
+      "description": "Font size in save dialog is 16px instead of the standard 14px. Breaks typography hierarchy.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Dialog, Save",
+      "craft_bug_type": "Typography Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "surface_analysis": {
+        "level": "L2",
+        "component": "dialog",
+        "elevation": "4px",
+        "shadow": "0 2px 4px rgba(0, 0, 0, 0.1)"
+      }
+    },
+    {
+      "id": "CRAFT-005",
+      "title": "Tooltip Shadow Elevation Wrong",
+      "description": "Tooltip uses L2 shadow instead of L3 shadow. Incorrect surface elevation creates visual confusion.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Shadow, Elevation, Tooltip",
+      "craft_bug_type": "Surface Level Violation",
+      "surface_level": "L3",
+      "user_impact": "Low"
+    },
+    {
+      "id": "CRAFT-006",
+      "title": "Icon Spacing Inconsistent in Format Panel",
+      "description": "Icons in format panel have inconsistent spacing - some are 8px apart, others are 12px. Visual rhythm is broken.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Spacing, Icons, Panel",
+      "craft_bug_type": "Spacing Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Medium"
+    },
+    {
+      "id": "CRAFT-007",
+      "title": "Dropdown Border Radius Mismatch",
+      "description": "Chart type dropdown uses 8px border radius instead of standard 4px. Inconsistent with design system.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Border Radius, Dropdown, Charts",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L3",
+      "user_impact": "Low"
+    },
+    {
+      "id": "CRAFT-008",
+      "title": "Loading State Animation Too Fast",
+      "description": "Loading spinner animation is 200ms instead of standard 400ms. Feels rushed and unpolished.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Animation, Loading, Performance",
+      "craft_bug_type": "Animation Timing Issue",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "ux_law_violations": [
+        "Doherty Threshold (animation too fast)",
+        "Aesthetic-Usability Effect (feels unpolished)"
+      ]
+    },
+    {
+      "id": "CRAFT-009",
+      "title": "Button Hover State Color Wrong",
+      "description": "Primary button hover state uses #106ebe instead of correct #005a9e. Color transition feels off.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Color, Button, Hover",
+      "craft_bug_type": "Interaction State Issue",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "design_system_check": {
+        "type": "color_compliance",
+        "expected": "#0078d4",
+        "actual": "#106ebe",
+        "severity": "medium"
+      }
+    },
+    {
+      "id": "CRAFT-010",
+      "title": "Panel Padding Inconsistent",
+      "description": "Format panel uses 20px padding while other panels use 16px. Inconsistent spacing creates visual disharmony.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Padding, Panel, Consistency",
+      "craft_bug_type": "Spacing Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Medium"
+    },
+    {
+      "id": "CRAFT-011",
+      "title": "Excel Ribbon Tab Spacing Inconsistent",
+      "description": "Spacing between ribbon tabs varies - some are 8px apart, others are 12px. Breaks visual rhythm and feels unpolished.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Spacing, Ribbon, Visual Rhythm",
+      "craft_bug_type": "Spacing Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "design_system_check": {
+        "type": "spacing_compliance",
+        "expected": "8px",
+        "actual": "12px",
+        "severity": "medium"
+      },
+      "ux_law_violations": [
+        "Law of Proximity",
+        "Aesthetic-Usability Effect"
+      ]
+    },
+    {
+      "id": "CRAFT-012",
+      "title": "Cell Border Color Wrong on Selection",
+      "description": "Selected cell border uses #0078d4 instead of correct #106ebe. Color mismatch creates visual confusion.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Color, Cells, Selection",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "design_system_check": {
+        "type": "color_compliance",
+        "expected": "#106ebe",
+        "actual": "#0078d4",
+        "severity": "medium"
+      }
+    },
+    {
+      "id": "CRAFT-013",
+      "title": "Format Panel Typography Hierarchy Broken",
+      "description": "Section headers in format panel use 16px instead of 14px. Breaks typography hierarchy and feels inconsistent.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Panel, Hierarchy",
+      "craft_bug_type": "Typography Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "design_system_check": {
+        "type": "typography_compliance",
+        "expected": "14px",
+        "actual": "16px",
+        "severity": "low"
+      }
+    },
+    {
+      "id": "CRAFT-001",
+      "title": "Excel Ribbon Button Alignment Inconsistency",
+      "description": "Ribbon buttons are not perfectly aligned - some are 1-2px off from the grid. This creates visual noise and feels unpolished.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Alignment, Ribbon, Visual",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-01-15",
+      "assigned_to": "UX Team"
+    },
+    {
+      "id": "CRAFT-002",
+      "title": "Dialog Shadow Inconsistency",
+      "description": "Dialog shadow uses 0 4px 8px instead of the standard 0 2px 4px. This creates inconsistent elevation perception.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Shadow, Dialog, Elevation",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-01-16",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-003",
+      "title": "Icon Size Mismatch in Toolbar",
+      "description": "Icons in the toolbar have inconsistent sizes - some are 16px, others are 20px. This breaks visual harmony.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Icons, Size, Visual",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-01-17",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-004",
+      "title": "Border Radius Inconsistency",
+      "description": "Some buttons use 4px border radius while others use 2px. This creates visual inconsistency across the interface.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Border Radius, Buttons, Visual",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-01-18",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-005",
+      "title": "Grid Line Color Mismatch",
+      "description": "Grid lines use #e1dfdd instead of the correct #edebe9. This creates subtle but noticeable color inconsistency.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Grid, Color, Visual",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-01-19",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-006",
+      "title": "Panel Header Alignment Issue",
+      "description": "Panel headers are not perfectly aligned with their content - 1px offset creates visual noise.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Alignment, Panel, Visual",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-01-20",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-007",
+      "title": "Text Baseline Misalignment",
+      "description": "Text elements have inconsistent baseline alignment - some are 1px higher than others.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Baseline, Visual",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-01-21",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-008",
+      "title": "Background Color Inconsistency",
+      "description": "Some panels use #ffffff while others use #faf9f8. This creates subtle background inconsistency.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Background, Color, Visual",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-01-22",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-009",
+      "title": "Copilot Dialog Animation Stutter",
+      "description": "When Copilot dialog appears, there is a slight stutter in the animation. The transition is not smooth and feels jarring.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Animation, Copilot, Performance",
+      "craft_bug_type": "Performance UX",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-01-23",
+      "assigned_to": "Performance Team"
+    },
+    {
+      "id": "CRAFT-010",
+      "title": "Slow Cell Selection Response",
+      "description": "Cell selection takes 600ms instead of the target 400ms. This exceeds Doherty Threshold and feels sluggish.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Performance, Cells, Timing",
+      "craft_bug_type": "Performance UX",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-01-24",
+      "assigned_to": "Performance Team"
+    },
+    {
+      "id": "CRAFT-011",
+      "title": "Ribbon Animation Frame Drop",
+      "description": "Ribbon animations drop frames during transitions, creating choppy visual experience.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Animation, Ribbon, Performance",
+      "craft_bug_type": "Performance UX",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-01-25",
+      "assigned_to": "Performance Team"
+    },
+    {
+      "id": "CRAFT-012",
+      "title": "Dialog Opening Delay",
+      "description": "Dialog opening takes 800ms instead of 400ms. This creates noticeable lag in user interactions.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Performance, Dialog, Timing",
+      "craft_bug_type": "Performance UX",
+      "surface_level": "L2",
+      "user_impact": "Medium",
+      "created_date": "2024-01-26",
+      "assigned_to": "Performance Team"
+    },
+    {
+      "id": "CRAFT-013",
+      "title": "Scroll Performance Issue",
+      "description": "Scrolling through large datasets causes frame drops and stuttering animation.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Performance, Scroll, Animation",
+      "craft_bug_type": "Performance UX",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-01-27",
+      "assigned_to": "Performance Team"
+    },
+    {
+      "id": "CRAFT-014",
+      "title": "Button Click Response Lag",
+      "description": "Button clicks have 500ms response time instead of 400ms, exceeding Doherty Threshold.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Performance, Buttons, Timing",
+      "craft_bug_type": "Performance UX",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-01-28",
+      "assigned_to": "Performance Team"
+    },
+    {
+      "id": "CRAFT-015",
+      "title": "Cell Selection Color Mismatch",
+      "description": "Selected cell border color uses #0078d4 instead of the correct #106ebe. This creates a color inconsistency in the design system.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Color, Cells, Design System",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-01-29",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-016",
+      "title": "Button Color System Violation",
+      "description": "Secondary button uses #323130 instead of the correct #605e5c from the design system.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Color, Buttons, Design System",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-01-30",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-017",
+      "title": "Typography Scale Violation",
+      "description": "Panel headers use 18px instead of the correct 16px from the typography scale.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Scale, Design System",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-02-01",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-018",
+      "title": "Spacing Token Violation",
+      "description": "Dialog padding uses 20px instead of the correct 24px spacing token.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Spacing, Dialog, Design System",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-02-02",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-019",
+      "title": "Icon Color System Violation",
+      "description": "Icons use #323130 instead of the correct #605e5c from the icon color system.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Icons, Color, Design System",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-02-03",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-020",
+      "title": "Border Color Violation",
+      "description": "Input borders use #d2d0ce instead of the correct #e1dfdd from the border color system.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Borders, Color, Design System",
+      "craft_bug_type": "Design System Violation",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-02-04",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-021",
+      "title": "Save Button Typography Inconsistency",
+      "description": "Save button text uses 14px font size instead of the standard 12px. This breaks typography hierarchy and feels inconsistent.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Buttons, Hierarchy",
+      "craft_bug_type": "Typography Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-02-05",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-022",
+      "title": "Panel Header Font Weight Issue",
+      "description": "Panel headers use 500 weight instead of the correct 600 weight, breaking typography hierarchy.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Headers, Weight",
+      "craft_bug_type": "Typography Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-02-06",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-023",
+      "title": "Tooltip Font Size Inconsistency",
+      "description": "Tooltip text uses 12px instead of the correct 10px, making it too prominent.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Tooltip, Size",
+      "craft_bug_type": "Typography Inconsistency",
+      "surface_level": "L3",
+      "user_impact": "Low",
+      "created_date": "2024-02-07",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-024",
+      "title": "Menu Item Typography Mismatch",
+      "description": "Menu items use 14px instead of 12px, creating inconsistent text hierarchy.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Menu, Hierarchy",
+      "craft_bug_type": "Typography Inconsistency",
+      "surface_level": "L3",
+      "user_impact": "Low",
+      "created_date": "2024-02-08",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-025",
+      "title": "Label Font Weight Inconsistency",
+      "description": "Form labels use 400 weight instead of 500, making them less prominent than intended.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Typography, Labels, Weight",
+      "craft_bug_type": "Typography Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-02-09",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-026",
+      "title": "Format Panel Surface Level Violation",
+      "description": "Format panel uses L1 elevation (0px) instead of L2 (4px). This breaks the surface hierarchy and makes it feel flat.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Surface Level, Panel, Elevation",
+      "craft_bug_type": "Surface Level Violation",
+      "surface_level": "L2",
+      "user_impact": "Medium",
+      "created_date": "2024-02-10",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-027",
+      "title": "Dropdown Surface Elevation Issue",
+      "description": "Dropdown menu uses L2 elevation instead of L3, breaking surface hierarchy.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Surface Level, Dropdown, Elevation",
+      "craft_bug_type": "Surface Level Violation",
+      "surface_level": "L3",
+      "user_impact": "Low",
+      "created_date": "2024-02-11",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-028",
+      "title": "Tooltip Shadow Violation",
+      "description": "Tooltip uses 0 2px 4px shadow instead of 0 4px 8px, breaking L3 surface specification.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Surface Level, Tooltip, Shadow",
+      "craft_bug_type": "Surface Level Violation",
+      "surface_level": "L3",
+      "user_impact": "Low",
+      "created_date": "2024-02-12",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-029",
+      "title": "Dialog Surface Level Mismatch",
+      "description": "Dialog uses L3 elevation instead of L2, creating incorrect surface hierarchy.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Surface Level, Dialog, Elevation",
+      "craft_bug_type": "Surface Level Violation",
+      "surface_level": "L2",
+      "user_impact": "Medium",
+      "created_date": "2024-02-13",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-030",
+      "title": "Ribbon Tab Spacing Inconsistent",
+      "description": "Spacing between ribbon tabs varies - some are 8px apart, others are 12px. This breaks visual rhythm and feels unpolished.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Spacing, Ribbon, Visual Rhythm",
+      "craft_bug_type": "Spacing Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-02-14",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-031",
+      "title": "Dropdown Menu Spacing Inconsistency",
+      "description": "Dropdown menu items have inconsistent spacing - some are 8px apart, others are 12px. This breaks visual rhythm.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Spacing, Dropdown, Visual Rhythm",
+      "craft_bug_type": "Spacing Inconsistency",
+      "surface_level": "L3",
+      "user_impact": "Low",
+      "created_date": "2024-02-15",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-032",
+      "title": "Panel Content Spacing Issue",
+      "description": "Panel content has inconsistent padding - some sections use 16px, others use 20px.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Spacing, Panel, Content",
+      "craft_bug_type": "Spacing Inconsistency",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-02-16",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-033",
+      "title": "Button Group Spacing Violation",
+      "description": "Button groups have inconsistent spacing between buttons - some are 4px, others are 8px.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Spacing, Buttons, Groups",
+      "craft_bug_type": "Spacing Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-02-17",
+      "assigned_to": "Design Team"
+    },
+    {
+      "id": "CRAFT-034",
+      "title": "Tooltip Animation Timing Issue",
+      "description": "Tooltip appears too quickly (100ms) instead of the standard 300ms delay. This feels jarring and interrupts user flow.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Animation, Tooltip, Timing",
+      "craft_bug_type": "Animation Timing Issue",
+      "surface_level": "L3",
+      "user_impact": "Low",
+      "created_date": "2024-02-18",
+      "assigned_to": "UX Team"
+    },
+    {
+      "id": "CRAFT-035",
+      "title": "Button Hover Animation Speed",
+      "description": "Button hover animation is too fast (150ms) instead of the standard 200ms, feeling abrupt.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Animation, Buttons, Timing",
+      "craft_bug_type": "Animation Timing Issue",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-02-19",
+      "assigned_to": "UX Team"
+    },
+    {
+      "id": "CRAFT-036",
+      "title": "Dialog Transition Timing",
+      "description": "Dialog transition takes 500ms instead of the standard 300ms, feeling sluggish.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Animation, Dialog, Timing",
+      "craft_bug_type": "Animation Timing Issue",
+      "surface_level": "L2",
+      "user_impact": "Low",
+      "created_date": "2024-02-20",
+      "assigned_to": "UX Team"
+    },
+    {
+      "id": "CRAFT-037",
+      "title": "Button Hover State Interaction Issue",
+      "description": "Button hover state color transition is too abrupt - no smooth transition between normal and hover states.",
+      "state": "Active",
+      "severity": "Low",
+      "tags": "Craft, Interaction, Buttons, Hover",
+      "craft_bug_type": "Interaction State Issue",
+      "surface_level": "L1",
+      "user_impact": "Low",
+      "created_date": "2024-02-21",
+      "assigned_to": "UX Team"
+    },
+    {
+      "id": "CRAFT-038",
+      "title": "Focus State Visual Feedback",
+      "description": "Focus states lack proper visual feedback - users cannot clearly see which element is focused.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Interaction, Focus, Feedback",
+      "craft_bug_type": "Interaction State Issue",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-02-22",
+      "assigned_to": "UX Team"
+    },
+    {
+      "id": "CRAFT-039",
+      "title": "Disabled State Clarity",
+      "description": "Disabled button states are not clearly distinguishable from enabled states.",
+      "state": "Active",
+      "severity": "Medium",
+      "tags": "Craft, Interaction, Disabled, States",
+      "craft_bug_type": "Interaction State Issue",
+      "surface_level": "L1",
+      "user_impact": "Medium",
+      "created_date": "2024-02-23",
+      "assigned_to": "UX Team"
+    },
+    {
+      "id": "CRAFT-040",
+      "title": "Multi-Surface Consistency Violation",
+      "description": "Similar elements across L1/L2/L3 surfaces have inconsistent styling - buttons look different in ribbon vs panels vs dropdowns.",
+      "state": "Active",
+      "severity": "High",
+      "tags": "Craft, Consistency, Multi-Surface, Design",
+      "craft_bug_type": "Visual Inconsistency",
+      "surface_level": "L1",
+      "user_impact": "High",
+      "created_date": "2024-02-24",
+      "assigned_to": "Design Team"
+    }
+  ],
+  "compliance_rules": {
+    "colors": {
+      "primary": {
+        "value": "#0078d4",
+        "usage": "primary"
+      },
+      "primary_hover": {
+        "value": "#106ebe",
+        "usage": "primary"
+      },
+      "neutral_white": {
+        "value": "#ffffff",
+        "usage": "neutral"
+      },
+      "neutral_gray_10": {
+        "value": "#faf9f8",
+        "usage": "neutral"
+      },
+      "neutral_gray_20": {
+        "value": "#f3f2f1",
+        "usage": "neutral"
+      },
+      "neutral_gray_30": {
+        "value": "#edebe9",
+        "usage": "neutral"
+      },
+      "neutral_gray_40": {
+        "value": "#e1dfdd",
+        "usage": "neutral"
+      },
+      "neutral_gray_50": {
+        "value": "#d2d0ce",
+        "usage": "neutral"
+      },
+      "neutral_gray_60": {
+        "value": "#c8c6c4",
+        "usage": "neutral"
+      },
+      "neutral_gray_70": {
+        "value": "#b3b0ad",
+        "usage": "neutral"
+      },
+      "neutral_gray_80": {
+        "value": "#a19f9d",
+        "usage": "neutral"
+      },
+      "neutral_gray_90": {
+        "value": "#8a8886",
+        "usage": "neutral"
+      },
+      "neutral_gray_100": {
+        "value": "#605e5c",
+        "usage": "neutral"
+      },
+      "neutral_gray_110": {
+        "value": "#3b3a39",
+        "usage": "neutral"
+      },
+      "neutral_gray_120": {
+        "value": "#323130",
+        "usage": "neutral"
+      },
+      "neutral_gray_130": {
+        "value": "#292827",
+        "usage": "neutral"
+      },
+      "neutral_gray_140": {
+        "value": "#201f1e",
+        "usage": "neutral"
+      },
+      "neutral_gray_150": {
+        "value": "#1b1a19",
+        "usage": "neutral"
+      },
+      "neutral_gray_160": {
+        "value": "#161514",
+        "usage": "neutral"
+      },
+      "neutral_black": {
+        "value": "#000000",
+        "usage": "neutral"
+      },
+      "semantic_error": {
+        "value": "#d13438",
+        "usage": "semantic"
+      },
+      "semantic_warning": {
+        "value": "#ffaa44",
+        "usage": "semantic"
+      },
+      "semantic_success": {
+        "value": "#107c10",
+        "usage": "semantic"
+      },
+      "semantic_info": {
+        "value": "#0078d4",
+        "usage": "semantic"
+      }
+    },
+    "typography": {
+      "font_size_xs": {
+        "value": "10px",
+        "usage": "caption"
+      },
+      "font_size_sm": {
+        "value": "12px",
+        "usage": "caption"
+      },
+      "font_size_md": {
+        "value": "14px",
+        "usage": "body"
+      },
+      "font_size_lg": {
+        "value": "16px",
+        "usage": "caption"
+      },
+      "font_size_xl": {
+        "value": "18px",
+        "usage": "heading"
+      },
+      "font_size_xxl": {
+        "value": "20px",
+        "usage": "heading"
+      },
+      "font_size_xxxl": {
+        "value": "24px",
+        "usage": "heading"
+      }
+    },
+    "spacing": {
+      "xs": {
+        "value": "4px",
+        "usage": "layout"
+      },
+      "sm": {
+        "value": "8px",
+        "usage": "component"
+      },
+      "md": {
+        "value": "12px",
+        "usage": "component"
+      },
+      "lg": {
+        "value": "16px",
+        "usage": "layout"
+      },
+      "xl": {
+        "value": "20px",
+        "usage": "layout"
+      },
+      "xxl": {
+        "value": "24px",
+        "usage": "layout"
+      },
+      "xxxl": {
+        "value": "32px",
+        "usage": "layout"
+      }
+    },
+    "surfaces": {
+      "L1": {
+        "elevation": "0px",
+        "shadow": "none",
+        "usage": "Primary application surface"
+      },
+      "L2": {
+        "elevation": "4px",
+        "shadow": "0 2px 4px rgba(0, 0, 0, 0.1)",
+        "usage": "Secondary surface (panels, dialogs)"
+      },
+      "L3": {
+        "elevation": "8px",
+        "shadow": "0 4px 8px rgba(0, 0, 0, 0.1)",
+        "usage": "Tertiary surface (dropdowns, tooltips)"
+      }
+    },
+    "components": {}
+  },
+  "enhanced_prompt": "\n# ENHANCED UX DESIGNER PERSONA FOR EXCEL WEB CRAFT BUG DETECTION\n\n## Your Identity\nYou are a Senior UX Designer with 10+ years of experience analyzing Microsoft Office applications, specifically Excel Web. You are an expert in Fluent Design principles, UX laws, and Craft bug detection. You think systematically about user journeys, cognitive load, and emotional responses. You notice everything that feels \"off\" - from pixel misalignments to broken workflows.\n\n## Your Mission\nAnalyze Excel Web interactions to detect Craft bugs - unintended issues that affect usability, perception, and polish. Your goal is to ensure Excel Web delights users and feels natural, not frustrating.\n\n## Advanced Analysis Capabilities\n- **Computer Vision Analysis**: Automatic visual inconsistency detection using image processing\n- **Performance Monitoring**: Real-time animation quality and frame rate analysis\n- **Accessibility Compliance**: WCAG 2.1 AA compliance checking (separate from Craft bugs)\n- **Cross-Surface Validation**: Pattern matching across L1/L2/L3 surfaces\n- **Predictive Detection**: ML-based pattern recognition for proactive bug identification\n- **Persona-Specific Analysis**: User type-specific sensitivity and cognitive load analysis\n\n## Real Data Integration\n- **Figma Design Systems**: 5 categories with real design tokens\n- **Craft Bug Examples**: 53 real-world examples analyzed (including 40 expanded examples)\n- **Surface Level Analysis**: L1/L2/L3 with actual elevation and shadow specs\n- **Top Bug Types Detected**: ['Visual Inconsistency', 'Performance UX', 'Design System Violation', 'Typography Inconsistency', 'Surface Level Violation']\n- **Surface Focus Areas**: ['L1', 'L2', 'L3']\n\n## Analysis Framework - Apply to Every Interaction\n\n### 1. PERFORMANCE ANALYSIS (Doherty Threshold Priority)\n- \u23f1\ufe0f **Response Time**: Flag >400ms as Craft Orange, >1000ms as Craft Red\n- \ud83c\udfac **Animation Quality**: Check for smoothness (>30fps), stuttering, jarring transitions\n- \ud83d\udcca **Loading States**: Detect confusing spinners, frozen UI, unclear progress\n- \ud83d\udd04 **Frame Rate Monitoring**: Track animation performance in real-time\n- \ud83d\udcbb **System Resources**: Monitor CPU/memory impact on user experience\n\n### 2. VISUAL CRAFT ANALYSIS (Computer Vision Enhanced)\n- \ud83c\udfa8 **Color Compliance**: Validate against Figma design tokens with pixel-perfect analysis\n  - Primary: #0078d4, Primary Hover: #106ebe\n  - Neutrals: #ffffff, #f3f2f1, #edebe9, #e1dfdd, #323130\n- \ud83d\udcd0 **Spacing Consistency**: Check 8px grid alignment (4px, 8px, 12px, 16px, 20px, 24px, 32px)\n- \u270f\ufe0f **Typography**: Validate Segoe UI, font sizes (10px, 12px, 14px, 16px, 18px, 20px, 24px)\n- \ud83d\udccf **Alignment**: Pixel-perfect on L1 surfaces, \u00b12px tolerance on L2/L3\n- \ud83d\uddbc\ufe0f **Visual Rhythm**: Analyze repetitive patterns and visual harmony\n- \ud83c\udfaf **Pattern Recognition**: Detect inconsistencies across similar elements\n\n### 3. SURFACE LEVEL ANALYSIS (L1/L2/L3 Hierarchy)\n- **L1 (Primary)**: Ribbon, main canvas, primary navigation\n  - Specs: Background #ffffff, elevation 0px, shadow none\n  - Priority: 3x multiplier for issues (most visible impact)\n  - **Cross-Surface Check**: Ensure L1 elements maintain consistency\n- **L2 (Secondary)**: Panels, dialogs, secondary toolbars\n  - Specs: Background #ffffff, elevation 4px, shadow 0 2px 4px rgba(0,0,0,0.1)\n  - Priority: 2x multiplier for issues\n  - **Pattern Validation**: Check consistency with other L2 surfaces\n- **L3 (Tertiary)**: Dropdowns, tooltips, micro-interactions\n  - Specs: Background #ffffff, elevation 8px, shadow 0 4px 8px rgba(0,0,0,0.1)\n  - Priority: 1x multiplier for issues\n  - **Micro-Interaction Analysis**: Validate timing and smoothness\n\n### 4. INTERACTION CRAFT ANALYSIS\n- \ud83d\uddb1\ufe0f **Button States**: Check hover, active, disabled states\n- \ud83d\udc46 **Fitts's Law**: Flag buttons <20px as Craft Yellow, <16px as Craft Orange\n- \ud83d\udd04 **Feedback**: Ensure clear system responses to user actions\n- \u26a1 **Animation Timing**: Validate transition durations (200-300ms standard)\n- \ud83c\udfaf **Focus Management**: Check focus indicators and keyboard navigation\n\n### 5. UX LAWS COMPLIANCE (Enhanced with ML Patterns)\n1. **Doherty Threshold**: <400ms response times\n2. **Aesthetic-Usability Effect**: Visual polish affects perceived usability\n3. **Fitts's Law**: Target size and distance optimization\n4. **Law of Proximity**: Consistent spacing for visual grouping\n5. **Cognitive Load**: Minimize mental effort, <7 options per menu\n6. **Pattern Recognition**: Use ML to identify recurring UX issues\n7. **Predictive Analysis**: Flag likely problem areas based on historical patterns\n\n### 6. PERSONA-SPECIFIC DETECTION (Enhanced)\n- **Full Stack Analysts** (12%): +20% weight to performance issues, +15% to advanced features\n- **Super Fans** (8%): +30% weight to advanced feature bugs, +25% to edge cases\n- **Advanced Users** (25%): +15% weight to workflow disruptions, +10% to efficiency issues\n- **Novice Users** (39%): +25% weight to clarity issues, +20% to basic functionality\n- **Cognitive Load Analysis**: Consider mental effort for each persona type\n\n### 7. ACCESSIBILITY COMPLIANCE (Separate Module)\n- \u267f **WCAG 2.1 AA Standards**: Separate accessibility bug detection\n- \ud83c\udfa8 **Color Contrast**: 4.5:1 ratio for normal text, 3:1 for large text\n- \u2328\ufe0f **Keyboard Navigation**: All functionality accessible via keyboard\n- \ud83d\udc41\ufe0f **Focus Indicators**: Visible focus states for all interactive elements\n- \ud83d\udcdd **Semantic Structure**: Proper heading hierarchy and form labels\n\n## CRAFT BUG CLASSIFICATION SYSTEM (Enhanced)\n\n### \ud83d\udd34 CRAFT RED (P1 - Critical)\n- Critical workflow broken (save fails, data loss risk)\n- Visual glitches on L1 surfaces (ribbon broken, canvas issues)\n- Response times >1000ms\n- Performance issues affecting all users\n- **Threshold**: Immediate user impact, task completion impossible\n\n### \ud83d\udfe0 CRAFT ORANGE (P1 - High)\n- Secondary workflow issues (panel not opening, format not applying)\n- Visual inconsistencies on L2 surfaces (dialog alignment, color mismatches)\n- Response times 400-1000ms\n- Confusing interactions (unclear button states, misleading labels)\n- Animation stuttering or frame drops\n- **Threshold**: Noticeable user friction, task completion hindered\n\n### \ud83d\udfe1 CRAFT YELLOW (P2 - Medium)\n- Subtle inconsistencies on L3 surfaces (tooltip alignment, dropdown spacing)\n- Minor visual mismatches (1-2px alignment, slight color variance)\n- Response times 200-400ms\n- Small usability improvements (better labeling, clearer icons)\n- Minor animation timing issues\n- **Threshold**: Polish improvements, user delight opportunities\n\n## DETECTION ALGORITHM (Enhanced)\n\nFor each interaction step, systematically check:\n\n1. **Timing Analysis**: Measure response time, flag thresholds\n2. **Visual Scan**: Computer vision analysis for inconsistencies\n3. **Surface Classification**: Determine L1/L2/L3 level with cross-surface validation\n4. **UX Law Validation**: Apply enhanced UX laws with ML pattern recognition\n5. **Persona Weighting**: Adjust severity based on user impact and cognitive load\n6. **Performance Monitoring**: Real-time frame rate and animation quality\n7. **Predictive Analysis**: Flag potential issues based on historical patterns\n8. **Confidence Scoring**: High (90-100%), Medium (70-89%), Low (50-69%)\n\n## MACHINE LEARNING PATTERN RECOGNITION\n\nBased on 53 Craft bug examples, identify patterns:\n- **Surface Level Patterns**: L1 issues are 3x more impactful than L3\n- **Performance Patterns**: Timing violations correlate with user frustration\n- **Visual Patterns**: Color and spacing inconsistencies affect perceived quality\n- **Interaction Patterns**: State management issues impact workflow efficiency\n- **Predictive Flags**: Similar contexts likely to have similar issues\n\n## DESIGN COMPLIANCE RULES (Real Data)\n{\n  \"colors\": {\n    \"primary\": {\n      \"value\": \"#0078d4\",\n      \"usage\": \"primary\"\n    },\n    \"primary_hover\": {\n      \"value\": \"#106ebe\",\n      \"usage\": \"primary\"\n    },\n    \"neutral_white\": {\n      \"value\": \"#ffffff\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_10\": {\n      \"value\": \"#faf9f8\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_20\": {\n      \"value\": \"#f3f2f1\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_30\": {\n      \"value\": \"#edebe9\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_40\": {\n      \"value\": \"#e1dfdd\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_50\": {\n      \"value\": \"#d2d0ce\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_60\": {\n      \"value\": \"#c8c6c4\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_70\": {\n      \"value\": \"#b3b0ad\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_80\": {\n      \"value\": \"#a19f9d\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_90\": {\n      \"value\": \"#8a8886\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_100\": {\n      \"value\": \"#605e5c\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_110\": {\n      \"value\": \"#3b3a39\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_120\": {\n      \"value\": \"#323130\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_130\": {\n      \"value\": \"#292827\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_140\": {\n      \"value\": \"#201f1e\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_150\": {\n      \"value\": \"#1b1a19\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_gray_160\": {\n      \"value\": \"#161514\",\n      \"usage\": \"neutral\"\n    },\n    \"neutral_black\": {\n      \"value\": \"#000000\",\n      \"usage\": \"neutral\"\n    },\n    \"semantic_error\": {\n      \"value\": \"#d13438\",\n      \"usage\": \"semantic\"\n    },\n    \"semantic_warning\": {\n      \"value\": \"#ffaa44\",\n      \"usage\": \"semantic\"\n    },\n    \"semantic_success\": {\n      \"value\": \"#107c10\",\n      \"usage\": \"semantic\"\n    },\n    \"semantic_info\": {\n      \"value\": \"#0078d4\",\n      \"usage\": \"semantic\"\n    }\n  },\n  \"typography\": {\n    \"font_size_xs\": {\n      \"value\": \"10px\",\n      \"usage\": \"caption\"\n    },\n    \"font_size_sm\": {\n      \"value\": \"12px\",\n      \"usage\": \"caption\"\n    },\n    \"font_size_md\": {\n      \"value\": \"14px\",\n      \"usage\": \"body\"\n    },\n    \"font_size_lg\": {\n      \"value\": \"16px\",\n      \"usage\": \"caption\"\n    },\n    \"font_size_xl\": {\n      \"value\": \"18px\",\n      \"usage\": \"heading\"\n    },\n    \"font_size_xxl\": {\n      \"value\": \"20px\",\n      \"usage\": \"heading\"\n    },\n    \"font_size_xxxl\": {\n      \"value\": \"24px\",\n      \"usage\": \"heading\"\n    }\n  },\n  \"spacing\": {\n    \"xs\": {\n      \"value\": \"4px\",\n      \"usage\": \"layout\"\n    },\n    \"sm\": {\n      \"value\": \"8px\",\n      \"usage\": \"component\"\n    },\n    \"md\": {\n      \"value\": \"12px\",\n      \"usage\": \"component\"\n    },\n    \"lg\": {\n      \"value\": \"16px\",\n      \"usage\": \"layout\"\n    },\n    \"xl\": {\n      \"value\": \"20px\",\n      \"usage\": \"layout\"\n    },\n    \"xxl\": {\n      \"value\": \"24px\",\n      \"usage\": \"layout\"\n    },\n    \"xxxl\": {\n      \"value\": \"32px\",\n      \"usage\": \"layout\"\n    }\n  },\n  \"surfaces\": {\n    \"L1\": {\n      \"elevation\": \"0px\",\n      \"shadow\": \"none\",\n      \"usage\": \"Primary application surface\"\n    },\n    \"L2\": {\n      \"elevation\": \"4px\",\n      \"shadow\": \"0 2px 4px rgba(0, 0, 0, 0.1)\",\n      \"usage\": \"Secondary surface (panels, dialogs)\"\n    },\n    \"L3\": {\n      \"elevation\": \"8px\",\n      \"shadow\": \"0 4px 8px rgba(0, 0, 0, 0.1)\",\n      \"usage\": \"Tertiary surface (dropdowns, tooltips)\"\n    }\n  },\n  \"components\": {}\n}\n\n## OUTPUT FORMAT (Enhanced)\n\nFor each detected Craft bug:\n{\n  \"id\": \"CRAFT-XXX-001\",\n  \"title\": \"Descriptive title of the issue\",\n  \"craft_bug_type\": \"Design System Violation|Spacing Inconsistency|Visual Inconsistency|Performance UX|Typography Inconsistency|Surface Level Violation|Animation Timing Issue|Interaction State Issue\",\n  \"severity\": \"Red|Orange|Yellow\",\n  \"surface_level\": \"L1|L2|L3\",\n  \"confidence\": \"High|Medium|Low\",\n  \"ux_law_violations\": [\"Doherty Threshold\", \"Aesthetic-Usability Effect\"],\n  \"persona_impact\": {\n    \"full_stack_analysts\": \"High|Medium|Low\",\n    \"super_fans\": \"High|Medium|Low\", \n    \"advanced_users\": \"High|Medium|Low\",\n    \"novice_users\": \"High|Medium|Low\"\n  },\n  \"cognitive_load_impact\": \"High|Medium|Low\",\n  \"description\": \"Detailed description with specific measurements\",\n  \"user_impact\": \"How this affects user experience\",\n  \"detection_method\": \"timing_threshold|visual_comparison|pattern_match|ml_prediction|computer_vision\",\n  \"recommended_fix\": \"Specific actionable recommendation\",\n  \"predicted_likelihood\": \"High|Medium|Low\"\n}\n\n## SEPARATE ACCESSIBILITY ANALYSIS\n\nAccessibility issues are reported separately with ACC-XXX IDs and include:\n- WCAG 2.1 AA guideline violations\n- Color contrast issues\n- Keyboard navigation problems\n- Focus indicator issues\n- Semantic structure problems\n\nRemember: You are looking for anything that feels \"unnatural\" or \"off\" - trust your expert UX intuition while applying systematic analysis enhanced with computer vision, performance monitoring, and machine learning pattern recognition.\n",
+  "generated_at": "2025-08-19T16:11:24.499217"
+}
