@@ -209,6 +209,8 @@ class ExcelScenarioTelemetry:
         elif isinstance(result, dict) and 'screenshots' in result:
             screenshot_paths = result['screenshots']
         
+        print(f"🔍 DEBUG: Collected screenshot paths: {screenshot_paths}")
+        
         # Create telemetry entries for each step with enhanced context
         for i, step in enumerate(scenario.steps):
             # Create rich description for enhanced bug detection
@@ -218,6 +220,15 @@ class ExcelScenarioTelemetry:
             screenshot_path = None
             if i < len(screenshot_paths):
                 screenshot_path = screenshot_paths[i]
+            
+            # Special handling for Copilot dialog screenshot
+            if step.name == "Take Screenshot - Copilot Dialog":
+                # Look for the Copilot dialog screenshot specifically
+                for path in screenshot_paths:
+                    if path and 'copilot_dialog' in path:
+                        screenshot_path = path
+                        print(f"🔍 DEBUG: Found Copilot dialog screenshot: {screenshot_path}")
+                        break
             
             step_telemetry = StepTelemetry(
                 step_name=step.name,

@@ -666,6 +666,9 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
                 screenshot_path = step.get('screenshot_path')
                 if screenshot_path and screenshot_path.startswith('screenshots/'):
                     all_screenshots[step_name] = f"/{screenshot_path}"
+                    print(f"🔍 DEBUG: Found screenshot for step '{step_name}': {screenshot_path}")
+        
+        print(f"🔍 DEBUG: All available screenshots: {list(all_screenshots.keys())}")
         
         # Second pass: analyze steps and assign screenshots
         for step in telemetry_data.get('steps', []):
@@ -684,16 +687,27 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
                         step_name = step.get('step_name', '').lower()
                         
                         if 'copilot' in bug_title or ('dialog' in bug_title and 'copilot' in step_name):
+                            print(f"🔍 DEBUG: Processing Copilot dialog bug: {bug_title}")
                             # For Copilot dialog bugs, we need to find the most relevant screenshot
                             # Since we now have a dedicated "Take Screenshot - Copilot Dialog" step,
                             # we should use that screenshot which shows the actual dialog
                             
                             # First, try to find the dedicated Copilot dialog screenshot
                             screenshot_path = all_screenshots.get('Take Screenshot - Copilot Dialog')
+                            print(f"🔍 DEBUG: Looking for 'Take Screenshot - Copilot Dialog': {screenshot_path}")
                             
-                            # If that's not available, fall back to the initial state screenshot
+                            # If that's not available, look for any screenshot with 'copilot' in the filename
+                            if not screenshot_path:
+                                for screenshot_step, path in all_screenshots.items():
+                                    if 'copilot' in path.lower():
+                                        screenshot_path = path
+                                        print(f"🔍 DEBUG: Found Copilot screenshot by filename: {path}")
+                                        break
+                            
+                            # If still not available, fall back to the initial state screenshot
                             if not screenshot_path:
                                 screenshot_path = all_screenshots.get('Take Screenshot - Initial State')
+                                print(f"🔍 DEBUG: Fallback to 'Take Screenshot - Initial State': {screenshot_path}")
                             
                             # If still not available, try to find any screenshot that might show the dialog context
                             if not screenshot_path:
@@ -701,11 +715,15 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
                                 for screenshot_step, path in all_screenshots.items():
                                     if 'copilot' in screenshot_step.lower() or 'initial' in screenshot_step.lower():
                                         screenshot_path = path
+                                        print(f"🔍 DEBUG: Found alternative screenshot '{screenshot_step}': {path}")
                                         break
                             
                             # If still no screenshot, use the first available one as fallback
                             if not screenshot_path:
                                 screenshot_path = next(iter(all_screenshots.values()), None)
+                                print(f"🔍 DEBUG: Using fallback screenshot: {screenshot_path}")
+                            
+                            print(f"🔍 DEBUG: Final screenshot assigned for Copilot dialog: {screenshot_path}")
                         elif 'save' in bug_title or 'save' in step_name:
                             # Use final state screenshot for save issues
                             screenshot_path = all_screenshots.get('Take Screenshot - Final State')
