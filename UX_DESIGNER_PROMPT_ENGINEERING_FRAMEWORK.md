@@ -178,14 +178,36 @@ As a UX Designer, I follow this systematic approach:
 - **Tools**: Excel + Relational Databases + R/Python + Tableau
 - **Behavior**: "Do everything" power users, complex data analysis
 - **Craft Bug Sensitivity**: High - they notice performance and workflow issues
-- **Pain Points**: Slow interactions, broken analytics workflows, inconsistent data visualization
+- **Pain Points**: 
+  - Slow interactions (>400ms response times)
+  - Broken analytics workflows (formula errors, data connection issues)
+  - Inconsistent data visualization (chart formatting, color schemes)
+  - Performance bottlenecks in large datasets
+  - Complex feature accessibility problems
+- **Detection Rules**:
+  - Flag any interaction >400ms as Craft Orange
+  - Monitor advanced formula/pivot table interactions closely
+  - Check data visualization consistency across charts
+  - Prioritize L2/L3 surface analysis for advanced panels
+- **Success Metrics**: Task completion time, error recovery rate, feature utilization
 
 #### 2. Super Fans (8%)
 - **Analytical Need**: Highest
 - **Tools**: Excel + Full breadth of capabilities
 - **Behavior**: Highly engaged, leverage maximum Excel features
 - **Craft Bug Sensitivity**: Very High - they push boundaries and notice edge cases
-- **Pain Points**: Advanced feature bugs, workflow interruptions, visual inconsistencies
+- **Pain Points**: 
+  - Advanced feature bugs (VBA, custom functions, add-ins)
+  - Workflow interruptions (broken keyboard shortcuts, missing features)
+  - Visual inconsistencies (UI elements, theme mismatches)
+  - Edge case scenarios not working properly
+  - Missing or poorly implemented advanced features
+- **Detection Rules**:
+  - Scrutinize all L3 interactions and advanced features
+  - Flag any inconsistency in advanced UI elements as Craft Yellow minimum
+  - Monitor edge case scenarios and error states
+  - Check keyboard shortcuts and power user workflows
+- **Success Metrics**: Feature coverage, workflow efficiency, satisfaction with advanced capabilities
 
 #### 3. Advanced Users (25%)
 - **Analytical Need**: High
@@ -214,48 +236,271 @@ As a UX Designer, I follow this systematic approach:
 
 ## 🚀 Enhanced Prompt Engineering Strategy
 
-### Core UX Designer Persona
+### **Complete Enhanced UX Analyzer Prompt**
+
 ```
-"You are a Senior UX Designer with 10+ years of experience analyzing Microsoft Office applications. 
-You think in terms of user journeys, cognitive load, and emotional responses. You notice everything 
-that feels 'off' - from pixel misalignments to broken workflows. You understand Fluent Design 
-principles deeply and can spot inconsistencies instantly."
+# ENHANCED UX DESIGNER PERSONA FOR EXCEL WEB CRAFT BUG DETECTION
+
+## Your Identity
+You are a Senior UX Designer with 10+ years of experience analyzing Microsoft Office applications, specifically Excel Web. You are an expert in Fluent Design principles, UX laws, and Craft bug detection. You think systematically about user journeys, cognitive load, and emotional responses. You notice everything that feels "off" - from pixel misalignments to broken workflows.
+
+## Your Mission
+Analyze Excel Web interactions to detect Craft bugs - unintended issues that affect usability, perception, and polish. Your goal is to ensure Excel Web delights users and feels natural, not frustrating.
+
+## Analysis Framework - Apply to Every Interaction
+
+### 1. PERFORMANCE ANALYSIS (Doherty Threshold Priority)
+- ⏱️ **Response Time**: Flag >400ms as Craft Orange, >1000ms as Craft Red
+- 🎬 **Animation Quality**: Check for smoothness (>30fps), stuttering, jarring transitions
+- 📊 **Loading States**: Detect confusing spinners, frozen UI, unclear progress
+
+### 2. VISUAL CRAFT ANALYSIS (Aesthetic-Usability Effect)
+- 🎨 **Color Compliance**: Validate against Figma design tokens
+  - Primary: #0078d4, Primary Hover: #106ebe
+  - Neutrals: #ffffff, #f3f2f1, #edebe9, #e1dfdd, #323130
+- 📐 **Spacing Consistency**: Check 8px grid alignment (4px, 8px, 12px, 16px, 20px, 24px, 32px)
+- ✏️ **Typography**: Validate Segoe UI, font sizes (10px, 12px, 14px, 16px, 18px, 20px, 24px)
+- 📏 **Alignment**: Pixel-perfect on L1 surfaces, ±2px tolerance on L2/L3
+
+### 3. SURFACE LEVEL ANALYSIS (L1/L2/L3 Hierarchy)
+- **L1 (Primary)**: Ribbon, main canvas, primary navigation
+  - Specs: Background #ffffff, elevation 0px, shadow none
+  - Priority: 3x multiplier for issues (most visible impact)
+- **L2 (Secondary)**: Panels, dialogs, secondary toolbars
+  - Specs: Background #ffffff, elevation 4px, shadow 0 2px 4px rgba(0,0,0,0.1)
+  - Priority: 2x multiplier for issues
+- **L3 (Tertiary)**: Dropdowns, tooltips, micro-interactions
+  - Specs: Background #ffffff, elevation 8px, shadow 0 4px 8px rgba(0,0,0,0.1)
+  - Priority: 1x multiplier for issues
+
+### 4. INTERACTION CRAFT ANALYSIS
+- 🖱️ **Button States**: Check hover, active, disabled states
+- 👆 **Fitts's Law**: Flag buttons <20px as Craft Yellow, <16px as Craft Orange
+- 🔄 **Feedback**: Ensure clear system responses to user actions
+- ♿ **Accessibility**: Check WCAG 2.1 AA compliance
+
+### 5. UX LAWS COMPLIANCE (Top 5 Priority)
+1. **Doherty Threshold**: <400ms response times
+2. **Aesthetic-Usability Effect**: Visual polish affects perceived usability
+3. **Fitts's Law**: Target size and distance optimization
+4. **Law of Proximity**: Consistent spacing for visual grouping
+5. **Cognitive Load**: Minimize mental effort, <7 options per menu
+
+### 6. PERSONA-SPECIFIC DETECTION
+- **Full Stack Analysts** (12%): +20% weight to performance issues
+- **Super Fans** (8%): +30% weight to advanced feature bugs
+- **Advanced Users** (25%): +15% weight to workflow disruptions
+- **Novice Users** (39%): +25% weight to clarity issues
+
+## CRAFT BUG CLASSIFICATION SYSTEM
+
+### 🔴 CRAFT RED (P1 - Critical)
+- Critical workflow broken (save fails, data loss risk)
+- Visual glitches on L1 surfaces (ribbon broken, canvas issues)
+- Response times >1000ms
+- Accessibility violations blocking usage
+- **Threshold**: Immediate user impact, task completion impossible
+
+### 🟠 CRAFT ORANGE (P1 - High)
+- Secondary workflow issues (panel not opening, format not applying)
+- Visual inconsistencies on L2 surfaces (dialog alignment, color mismatches)
+- Response times 400-1000ms
+- Confusing interactions (unclear button states, misleading labels)
+- **Threshold**: Noticeable user friction, task completion hindered
+
+### 🟡 CRAFT YELLOW (P2 - Medium)
+- Subtle inconsistencies on L3 surfaces (tooltip alignment, dropdown spacing)
+- Minor visual mismatches (1-2px alignment, slight color variance)
+- Response times 200-400ms
+- Small usability improvements (better labeling, clearer icons)
+- **Threshold**: Polish improvements, user delight opportunities
+
+## DETECTION ALGORITHM
+
+For each interaction step, systematically check:
+
+1. **Timing Analysis**: Measure response time, flag thresholds
+2. **Visual Scan**: Compare against design system specs
+3. **Surface Classification**: Determine L1/L2/L3 level
+4. **UX Law Validation**: Apply top 5 UX laws
+5. **Persona Weighting**: Adjust severity based on user impact
+6. **Confidence Scoring**: High (90-100%), Medium (70-89%), Low (50-69%)
+
+## OUTPUT FORMAT
+
+For each detected Craft bug:
+```json
+{
+  "id": "CRAFT-XXX-001",
+  "title": "Descriptive title of the issue",
+  "craft_bug_type": "Design System Violation|Spacing Inconsistency|Visual Inconsistency|Performance UX|Typography Inconsistency|Surface Level Violation|Animation Timing Issue|Interaction State Issue",
+  "severity": "Red|Orange|Yellow",
+  "surface_level": "L1|L2|L3",
+  "confidence": "High|Medium|Low",
+  "ux_law_violations": ["Doherty Threshold", "Aesthetic-Usability Effect"],
+  "description": "Detailed description with specific measurements",
+  "user_impact": "How this affects user experience",
+  "detection_method": "timing_threshold|visual_comparison|pattern_match",
+  "recommended_fix": "Specific actionable recommendation"
+}
 ```
 
-### Analysis Framework
-```
-"For each interaction, analyze:
-1. L1/L2/L3 surface hierarchy and consistency
-2. Visual craft (alignment, colors, spacing, typography)
-3. Interaction craft (smoothness, feedback, states)
-4. Performance craft (speed, animations, loading)
-5. Usability craft (clarity, accessibility, workflow)
-6. Fluent Design compliance (themes, components, patterns)"
-```
-
-### Craft Bug Classification
-```
-"Classify each issue as:
-- RED (P1): Critical usability, broken workflows, glaring inconsistencies
-- ORANGE (P1): Usability issues, secondary workflow problems  
-- YELLOW (P2): Subtle inconsistencies, alignment issues, design mismatches"
+Remember: You are looking for anything that feels "unnatural" or "off" - trust your expert UX intuition while applying systematic analysis.
 ```
 
 ### UX Laws Integration
-Apply these 21 UX laws systematically:
-- **Aesthetic-Usability Effect**: Users perceive aesthetically pleasing design as more usable
-- **Choice Overload**: People get overwhelmed with too many options
-- **Cognitive Load**: Amount of mental resources needed to understand interface
-- **Doherty Threshold**: Productivity soars when interaction pace is <400ms
-- **Fitts's Law**: Time to acquire target is function of distance and size
-- **Hick's Law**: Decision time increases with number and complexity of choices
-- **Jakob's Law**: Users prefer your site to work like other sites they know
-- **Law of Proximity**: Objects near each other tend to be grouped together
-- **Miller's Law**: Average person can only keep 7±2 items in working memory
-- **Peak-End Rule**: People judge experience by peak and end moments
-- **Tesler's Law**: For any system, there's complexity that cannot be reduced
-- **Von Restorff Effect**: Items that differ from the rest are most remembered
-- **Zeigarnik Effect**: People remember uncompleted tasks better than completed ones
+Apply these 21 UX laws systematically with specific detection rules:
+
+#### **Primary UX Laws (High Priority)**
+1. **Aesthetic-Usability Effect**: Users perceive aesthetically pleasing design as more usable
+   - **Detection**: Visual inconsistencies, misaligned elements, poor color harmony
+   - **Threshold**: >3 visual inconsistencies = Craft Orange bug
+   - **Surface Focus**: L1 surfaces (ribbon, main UI)
+
+2. **Doherty Threshold**: Productivity soars when interaction pace is <400ms
+   - **Detection**: Response times >400ms for interactions
+   - **Threshold**: >400ms = Craft Orange, >1000ms = Craft Red
+   - **Measurement**: Track all click-to-response timings
+
+3. **Fitts's Law**: Time to acquire target is function of distance and size
+   - **Detection**: Small buttons (<24px), far targets (>200px movement)
+   - **Threshold**: Buttons <20px = Craft Yellow, <16px = Craft Orange
+   - **Surface Focus**: All L1/L2/L3 interactive elements
+
+4. **Law of Proximity**: Objects near each other tend to be grouped together
+   - **Detection**: Inconsistent spacing breaking visual groups
+   - **Threshold**: Spacing variance >4px within groups = Craft Yellow
+   - **Measurement**: Check 8px, 12px, 16px standard spacing
+
+5. **Cognitive Load**: Amount of mental resources needed to understand interface
+   - **Detection**: Complex workflows, unclear labels, overwhelming options
+   - **Threshold**: >7 options in menu = Craft Yellow, >10 = Craft Orange
+   - **Measurement**: Count decision points per task
+
+#### **Secondary UX Laws (Medium Priority)**
+6. **Hick's Law**: Decision time increases with number and complexity of choices
+7. **Jakob's Law**: Users prefer your site to work like other sites they know
+8. **Miller's Law**: Average person can only keep 7±2 items in working memory
+9. **Peak-End Rule**: People judge experience by peak and end moments
+10. **Von Restorff Effect**: Items that differ from the rest are most remembered
+11. **Zeigarnik Effect**: People remember uncompleted tasks better than completed ones
+12. **Choice Overload**: People get overwhelmed with too many options
+
+#### **Tertiary UX Laws (Lower Priority)**
+13. **Tesler's Law**: For any system, there's complexity that cannot be reduced
+14. **Pareto Principle**: 80% of effects come from 20% of causes
+15. **Postel's Law**: Be conservative in what you send, liberal in what you accept
+16. **Serial Position Effect**: Users remember first and last items best
+17. **Gestalt Principles**: Whole is perceived as more than sum of parts
+18. **Law of Common Region**: Elements in same region perceived as grouped
+19. **Law of Similarity**: Similar elements perceived as related
+20. **Law of Continuity**: Eye follows smooth paths
+21. **Law of Closure**: Mind completes incomplete shapes
+
+---
+
+## 🔍 Detection Algorithm Details
+
+### **Craft Bug Detection Pipeline**
+
+#### **Step 1: Data Collection**
+```
+For each interaction step:
+1. Capture timing data (start, end, duration)
+2. Take screenshot before/after
+3. Log UI elements present
+4. Record user actions and system responses
+5. Collect performance metrics (frame rate, load times)
+```
+
+#### **Step 2: Multi-Layer Analysis**
+```
+Layer 1: Performance Analysis
+- Check Doherty Threshold (<400ms)
+- Measure animation smoothness (>30fps)
+- Detect loading state issues
+
+Layer 2: Visual Analysis  
+- Scan for alignment issues (pixel-perfect)
+- Check color consistency against design system
+- Validate typography hierarchy
+- Measure spacing consistency (8px grid)
+
+Layer 3: Interaction Analysis
+- Test button states (hover, active, disabled)
+- Validate feedback mechanisms
+- Check accessibility compliance
+- Monitor workflow continuity
+
+Layer 4: Surface Level Analysis
+- L1: Primary surfaces (ribbon, main canvas)
+- L2: Secondary surfaces (panels, dialogs) 
+- L3: Tertiary surfaces (dropdowns, tooltips)
+```
+
+#### **Step 3: Craft Bug Classification**
+```
+Severity Algorithm:
+IF (critical_workflow_broken OR visual_glitch_L1) THEN Craft_Red
+ELSE IF (secondary_workflow_issue OR visual_inconsistency_L2) THEN Craft_Orange  
+ELSE IF (minor_alignment OR subtle_inconsistency_L3) THEN Craft_Yellow
+
+Confidence Scoring:
+- High (90-100%): Clear design system violation, obvious timing issue
+- Medium (70-89%): Probable issue based on patterns, needs validation
+- Low (50-69%): Potential issue, requires human review
+```
+
+#### **Step 4: Contextual Enhancement**
+```
+Persona-Specific Weighting:
+- Full Stack Analysts: +20% weight to performance issues
+- Super Fans: +30% weight to advanced feature bugs  
+- Advanced Users: +15% weight to workflow disruptions
+- Novice Users: +25% weight to clarity and basic function issues
+
+Surface-Level Prioritization:
+- L1 issues: 3x multiplier (most visible, highest impact)
+- L2 issues: 2x multiplier (secondary workflows)
+- L3 issues: 1x multiplier (detailed interactions)
+```
+
+### **Measurement & Validation Methods**
+
+#### **Automated Measurements**
+- **Response Time**: Millisecond precision timing for all interactions
+- **Visual Consistency**: Pixel-level comparison against design specs
+- **Color Compliance**: Hex code validation against Figma design tokens
+- **Spacing Validation**: 8px grid alignment checking
+- **Typography Checking**: Font size, weight, family validation
+- **Animation Quality**: Frame rate monitoring, smoothness detection
+
+#### **Heuristic Evaluations** 
+- **Cognitive Load Assessment**: Decision point counting per task
+- **Workflow Complexity**: Step count and branching analysis  
+- **Error Recovery**: Success rate after user mistakes
+- **Accessibility Compliance**: WCAG 2.1 guideline checking
+- **Cross-Surface Consistency**: Pattern matching across L1/L2/L3
+
+#### **Success Thresholds**
+```
+Performance Thresholds:
+- Response Time: <400ms (Doherty Threshold)
+- Animation: >30fps smooth motion
+- Load Time: <2s for complex operations
+
+Visual Quality Thresholds:
+- Color Accuracy: 100% match to design tokens
+- Spacing Consistency: ±2px tolerance
+- Alignment: Pixel-perfect on L1 surfaces
+- Typography: 100% compliance with hierarchy
+
+Usability Thresholds:
+- Task Success Rate: >95% for basic workflows
+- Error Recovery: <3 steps to recover from mistakes  
+- Cognitive Load: <7 decision points per task
+- Accessibility: 100% WCAG 2.1 AA compliance
+```
 
 ---
 

@@ -38,6 +38,21 @@ class FigmaIntegration:
                 "url": "https://www.figma.com/design/75lT8qsOZiWMLG89cQmBtq/Excel-Copilot-UI-kit",
                 "file_key": "75lT8qsOZiWMLG89cQmBtq",
                 "node_id": "0-1"
+            },
+            "excel_win32_ribbon": {
+                "url": "https://www.figma.com/design/xOiHWqiGKpFnbkMsq9CLfB/Excel-Win32-Ribbon",
+                "file_key": "xOiHWqiGKpFnbkMsq9CLfB",
+                "node_id": "2054-46829"
+            },
+            "excel_fluent_surfaces": {
+                "url": "https://www.figma.com/design/sh8HH85iScfeMv5FjRivVS/Excel-Fluent-Surfaces",
+                "file_key": "sh8HH85iScfeMv5FjRivVS",
+                "node_id": "174-2"
+            },
+            "office_win32_variables": {
+                "url": "https://www.figma.com/design/3WKpAYNqciKghBlF9vPuaP/Office-Win32-Variables",
+                "file_key": "3WKpAYNqciKghBlF9vPuaP",
+                "node_id": "13-287"
             }
         }
     
@@ -49,6 +64,12 @@ class FigmaIntegration:
             return self._get_office_icons_specs()
         elif system_name == "excel_copilot":
             return self._get_excel_copilot_specs()
+        elif system_name == "excel_win32_ribbon":
+            return self._get_excel_win32_ribbon_specs()
+        elif system_name == "excel_fluent_surfaces":
+            return self._get_excel_fluent_surfaces_specs()
+        elif system_name == "office_win32_variables":
+            return self._get_office_win32_variables_specs()
         else:
             logger.error(f"Unknown design system: {system_name}")
             return {}
@@ -172,6 +193,177 @@ class FigmaIntegration:
             }
         }
     
+    def _get_excel_win32_ribbon_specs(self) -> Dict:
+        """Excel Win32 Ribbon design specifications"""
+        return {
+            "name": "Excel Win32 Ribbon",
+            "ribbon_structure": {
+                "tabs": {
+                    "home": {
+                        "background": "#f3f2f1",
+                        "active_background": "#ffffff",
+                        "border": "1px solid #e1dfdd",
+                        "padding": "8px 12px"
+                    },
+                    "insert": {
+                        "background": "#f3f2f1",
+                        "active_background": "#ffffff",
+                        "border": "1px solid #e1dfdd",
+                        "padding": "8px 12px"
+                    },
+                    "formulas": {
+                        "background": "#f3f2f1",
+                        "active_background": "#ffffff",
+                        "border": "1px solid #e1dfdd",
+                        "padding": "8px 12px"
+                    }
+                },
+                "groups": {
+                    "background": "#ffffff",
+                    "border": "1px solid #e1dfdd",
+                    "padding": "8px",
+                    "margin": "4px"
+                },
+                "buttons": {
+                    "primary": {
+                        "background": "#0078d4",
+                        "color": "#ffffff",
+                        "border": "none",
+                        "border_radius": "4px",
+                        "padding": "6px 12px",
+                        "font_size": "14px"
+                    },
+                    "secondary": {
+                        "background": "transparent",
+                        "color": "#323130",
+                        "border": "1px solid #e1dfdd",
+                        "border_radius": "4px",
+                        "padding": "6px 12px",
+                        "font_size": "14px"
+                    }
+                }
+            },
+            "ribbon_icons": {
+                "size": "16px",
+                "color": "#323130",
+                "hover_color": "#0078d4",
+                "active_color": "#0078d4"
+            }
+        }
+    
+    def _get_excel_fluent_surfaces_specs(self) -> Dict:
+        """Excel Fluent Surfaces design specifications"""
+        return {
+            "name": "Excel Fluent Surfaces",
+            "surface_levels": {
+                "L1": {
+                    "description": "Primary application surface",
+                    "background": "#ffffff",
+                    "elevation": "0px",
+                    "border": "1px solid #e1dfdd",
+                    "shadow": "none"
+                },
+                "L2": {
+                    "description": "Secondary surface (panels, dialogs)",
+                    "background": "#ffffff",
+                    "elevation": "4px",
+                    "border": "1px solid #e1dfdd",
+                    "shadow": "0 2px 4px rgba(0, 0, 0, 0.1)"
+                },
+                "L3": {
+                    "description": "Tertiary surface (dropdowns, tooltips)",
+                    "background": "#ffffff",
+                    "elevation": "8px",
+                    "border": "1px solid #e1dfdd",
+                    "shadow": "0 4px 8px rgba(0, 0, 0, 0.1)"
+                }
+            },
+            "surface_components": {
+                "dialog": {
+                    "surface": "L2",
+                    "border_radius": "8px",
+                    "padding": "24px",
+                    "max_width": "600px"
+                },
+                "panel": {
+                    "surface": "L2",
+                    "border_radius": "4px",
+                    "padding": "16px",
+                    "width": "320px"
+                },
+                "tooltip": {
+                    "surface": "L3",
+                    "border_radius": "4px",
+                    "padding": "8px 12px",
+                    "max_width": "300px"
+                },
+                "dropdown": {
+                    "surface": "L3",
+                    "border_radius": "4px",
+                    "padding": "4px 0",
+                    "min_width": "200px"
+                }
+            }
+        }
+    
+    def _get_office_win32_variables_specs(self) -> Dict:
+        """Office Win32 Variables design specifications"""
+        return {
+            "name": "Office Win32 Variables",
+            "design_tokens": {
+                "colors": {
+                    "theme_primary": "var(--office-primary)",
+                    "theme_secondary": "var(--office-secondary)",
+                    "theme_background": "var(--office-background)",
+                    "theme_surface": "var(--office-surface)",
+                    "theme_border": "var(--office-border)",
+                    "theme_text": "var(--office-text)",
+                    "theme_text_secondary": "var(--office-text-secondary)"
+                },
+                "spacing": {
+                    "unit": "4px",
+                    "xs": "var(--spacing-xs)",
+                    "sm": "var(--spacing-sm)",
+                    "md": "var(--spacing-md)",
+                    "lg": "var(--spacing-lg)",
+                    "xl": "var(--spacing-xl)"
+                },
+                "typography": {
+                    "font_family": "var(--font-family-primary)",
+                    "font_size_base": "var(--font-size-base)",
+                    "font_size_small": "var(--font-size-small)",
+                    "font_size_large": "var(--font-size-large)",
+                    "line_height": "var(--line-height)"
+                },
+                "borders": {
+                    "radius_small": "var(--border-radius-small)",
+                    "radius_medium": "var(--border-radius-medium)",
+                    "radius_large": "var(--border-radius-large)",
+                    "width": "var(--border-width)"
+                }
+            },
+            "theme_variables": {
+                "light_theme": {
+                    "--office-primary": "#0078d4",
+                    "--office-secondary": "#106ebe",
+                    "--office-background": "#ffffff",
+                    "--office-surface": "#f8f9fa",
+                    "--office-border": "#e1dfdd",
+                    "--office-text": "#323130",
+                    "--office-text-secondary": "#605e5c"
+                },
+                "dark_theme": {
+                    "--office-primary": "#60caff",
+                    "--office-secondary": "#0078d4",
+                    "--office-background": "#1b1a19",
+                    "--office-surface": "#292827",
+                    "--office-border": "#3b3a39",
+                    "--office-text": "#ffffff",
+                    "--office-text-secondary": "#c8c6c4"
+                }
+            }
+        }
+    
     def check_design_compliance(self, element_data: Dict, system_name: str = "excel_web_fluent") -> Dict:
         """Check if element complies with design system"""
         specs = self.get_design_specs(system_name)
@@ -207,9 +399,19 @@ class FigmaIntegration:
 if __name__ == "__main__":
     figma = FigmaIntegration()
     
-    # Test Excel Web Fluent specs
-    excel_specs = figma.get_design_specs("excel_web_fluent")
-    print(f"✅ Excel Web Fluent specs: {len(excel_specs)} categories")
+    # Test all design systems
+    design_systems = [
+        "excel_web_fluent",
+        "office_icons", 
+        "excel_copilot",
+        "excel_win32_ribbon",
+        "excel_fluent_surfaces",
+        "office_win32_variables"
+    ]
+    
+    for system in design_systems:
+        specs = figma.get_design_specs(system)
+        print(f"✅ {system}: {len(specs)} categories")
     
     # Test compliance checking
     test_element = {"color": "#0078d4", "font_size": "14px"}
