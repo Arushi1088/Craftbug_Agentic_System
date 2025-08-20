@@ -1,0 +1,222 @@
+{
+  "scenario_name": "document_creation",
+  "start_time": 1755521032.446375,
+  "steps": [
+    {
+      "step_name": "Navigate to Excel Web",
+      "step_index": 0,
+      "start_time": 1755521071.0020669,
+      "end_time": 1755521073.002069,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_web_interface"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Click New Workbook",
+      "step_index": 1,
+      "start_time": 1755521073.002112,
+      "end_time": 1755521075.002113,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "clicked_element": "new_workbook_button"
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Wait for Excel to Launch in New Window",
+      "step_index": 2,
+      "start_time": 1755521075.0021179,
+      "end_time": 1755521077.0021179,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_iframe",
+          "excel_canvas"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Dismiss Copilot Dialog",
+      "step_index": 3,
+      "start_time": 1755521077.002123,
+      "end_time": 1755521079.002123,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "dialog_elements": [
+          "copilot_dialog",
+          "close_button"
+        ]
+      },
+      "dialog_detected": true,
+      "dialog_type": "copilot",
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Take Screenshot - Initial State",
+      "step_index": 4,
+      "start_time": 1755521079.002128,
+      "end_time": 1755521081.002128,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Enter Sample Data",
+      "step_index": 5,
+      "start_time": 1755521081.002131,
+      "end_time": 1755521083.002131,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_cells",
+          "formula_bar"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": true,
+      "interaction_successful": true
+    },
+    {
+      "step_name": "Take Screenshot - Data Entered",
+      "step_index": 6,
+      "start_time": 1755521083.002135,
+      "end_time": 1755521085.002135,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Click Save Button",
+      "step_index": 7,
+      "start_time": 1755521085.0021381,
+      "end_time": 1755521087.0021389,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "dialog_elements": [
+          "save_dialog",
+          "filename_input",
+          "save_confirm_button"
+        ]
+      },
+      "dialog_detected": true,
+      "dialog_type": "save",
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Take Screenshot - Final State",
+      "step_index": 8,
+      "start_time": 1755521087.002146,
+      "end_time": 1755521089.002146,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    }
+  ],
+  "end_time": 1755521089.0021539,
+  "total_duration_ms": 56555.77898025513,
+  "overall_success": true,
+  "ux_analysis_results": {
+    "scenario_name": "document_creation",
+    "craft_bugs": [
+      {
+        "category": "interaction_problems",
+        "title": "Unexpected Dialog: Dismiss Copilot Dialog",
+        "description": "Dialog of type 'copilot' appeared",
+        "severity": "medium",
+        "step_name": "Dismiss Copilot Dialog",
+        "recommendation": "Handle dialog dismissal in step logic"
+      },
+      {
+        "category": "interaction_problems",
+        "title": "Unexpected Dialog: Click Save Button",
+        "description": "Dialog of type 'save' appeared",
+        "severity": "medium",
+        "step_name": "Click Save Button",
+        "recommendation": "Handle dialog dismissal in step logic"
+      }
+    ],
+    "ux_score": 80,
+    "recommendations": [
+      "Handle dialog dismissal in step logic",
+      "Handle dialog dismissal in step logic"
+    ],
+    "performance_issues": [
+      {
+        "type": "performance",
+        "title": "Slow Scenario Execution",
+        "description": "Scenario took 56.6 seconds to complete",
+        "severity": "medium",
+        "recommendation": "Optimize scenario steps to reduce execution time"
+      }
+    ],
+    "interaction_issues": [
+      {
+        "type": "interaction",
+        "title": "Dialog Blocking: Dismiss Copilot Dialog",
+        "description": "Dialog detected but interaction failed",
+        "severity": "high",
+        "recommendation": "Ensure dialogs are properly dismissed before proceeding"
+      },
+      {
+        "type": "interaction",
+        "title": "Dialog Blocking: Click Save Button",
+        "description": "Dialog detected but interaction failed",
+        "severity": "high",
+        "recommendation": "Ensure dialogs are properly dismissed before proceeding"
+      }
+    ]
+  }
+}

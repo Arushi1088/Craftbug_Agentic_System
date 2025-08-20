@@ -1,0 +1,194 @@
+{
+  "scenario_name": "document_creation",
+  "start_time": 1755601534.463135,
+  "steps": [
+    {
+      "step_name": "Navigate to Excel Web",
+      "step_index": 0,
+      "start_time": 1755601569.100557,
+      "end_time": 1755601571.10056,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_web_interface"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Click New Workbook",
+      "step_index": 1,
+      "start_time": 1755601571.100584,
+      "end_time": 1755601573.100586,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "clicked_element": "new_workbook_button"
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Wait for Excel to Launch in New Window",
+      "step_index": 2,
+      "start_time": 1755601573.1005929,
+      "end_time": 1755601575.1005929,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_iframe",
+          "excel_canvas"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Dismiss Copilot Dialog",
+      "step_index": 3,
+      "start_time": 1755601575.100598,
+      "end_time": 1755601577.100598,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "dialog_elements": [
+          "copilot_dialog",
+          "close_button"
+        ]
+      },
+      "dialog_detected": true,
+      "dialog_type": "copilot",
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Take Screenshot - Initial State",
+      "step_index": 4,
+      "start_time": 1755601577.1006021,
+      "end_time": 1755601579.1006029,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Enter Sample Data",
+      "step_index": 5,
+      "start_time": 1755601579.100607,
+      "end_time": 1755601581.100607,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "elements_found": [
+          "excel_cells",
+          "formula_bar"
+        ]
+      },
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": true,
+      "interaction_successful": true
+    },
+    {
+      "step_name": "Take Screenshot - Data Entered",
+      "step_index": 6,
+      "start_time": 1755601581.10061,
+      "end_time": 1755601583.10061,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Click Save Button",
+      "step_index": 7,
+      "start_time": 1755601583.100617,
+      "end_time": 1755601585.100618,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {
+        "dialog_elements": [
+          "save_dialog",
+          "filename_input",
+          "save_confirm_button"
+        ]
+      },
+      "dialog_detected": true,
+      "dialog_type": "save",
+      "interaction_attempted": false,
+      "interaction_successful": false
+    },
+    {
+      "step_name": "Take Screenshot - Final State",
+      "step_index": 8,
+      "start_time": 1755601585.100641,
+      "end_time": 1755601587.100642,
+      "duration_ms": 2000,
+      "success": true,
+      "error_message": null,
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    }
+  ],
+  "end_time": 1755601587.100647,
+  "total_duration_ms": 52637.51196861267,
+  "overall_success": true,
+  "ux_analysis_results": {
+    "base_craft_bugs": [
+      {
+        "category": "flow_disruptions",
+        "title": "Multiple Dialog Interruptions",
+        "description": "Scenario was interrupted by 2 dialogs, creating a fragmented user experience",
+        "severity": "medium",
+        "recommendation": "Minimize dialog interruptions and implement smoother workflow transitions"
+      }
+    ],
+    "base_craft_bug_count": 1,
+    "scenario_name": "document_creation",
+    "total_steps": 9,
+    "success_rate": 0,
+    "enhanced_craft_bugs": [],
+    "enhanced_craft_bug_count": 0,
+    "overall_compliance_score": 100.0,
+    "surface_level_distribution": {
+      "L1": 9
+    },
+    "ux_law_violations": [],
+    "ux_law_violation_count": 0
+  }
+}

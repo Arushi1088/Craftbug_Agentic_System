@@ -1,0 +1,79 @@
+{
+  "analysis": {
+    "total_bugs": 5,
+    "states": {
+      "Unknown": 5
+    },
+    "priorities": {
+      "Unknown": 5
+    },
+    "severities": {
+      "Unknown": 5
+    },
+    "common_keywords": {},
+    "excel_features": {},
+    "bug_categories": {}
+  },
+  "examples": {
+    "save_issues": [],
+    "ui_issues": [],
+    "performance_issues": [],
+    "copilot_issues": [],
+    "data_entry_issues": [],
+    "other_issues": [
+      {
+        "ID": "1",
+        "Title": "Excel save dialog not appearing",
+        "Description": "When clicking save button",
+        "State": " dialog doesn't show",
+        "Priority": "Active",
+        "Severity": "High",
+        "Tags": "Critical",
+        "null": [
+          "Excel;Save;UI"
+        ]
+      },
+      {
+        "ID": "2",
+        "Title": "Workbook crashes on data entry",
+        "Description": "Excel crashes when entering large amounts of data",
+        "State": "Active",
+        "Priority": "Medium",
+        "Severity": "High",
+        "Tags": "Excel;Crash;Performance"
+      },
+      {
+        "ID": "3",
+        "Title": "Copilot dialog blocks cell interaction",
+        "Description": "After dismissing copilot",
+        "State": " cells remain unclickable",
+        "Priority": "Resolved",
+        "Severity": "Low",
+        "Tags": "Medium",
+        "null": [
+          "Excel;Copilot;UI"
+        ]
+      },
+      {
+        "ID": "4",
+        "Title": "Save confirmation fails",
+        "Description": "Save button clicked but no confirmation appears",
+        "State": "Active",
+        "Priority": "High",
+        "Severity": "High",
+        "Tags": "Excel;Save;Confirmation"
+      },
+      {
+        "ID": "5",
+        "Title": "Performance slow with large datasets",
+        "Description": "Excel becomes unresponsive with 100k+ rows",
+        "State": "Active",
+        "Priority": "Medium",
+        "Severity": "Medium",
+        "Tags": "Excel;Performance;Large Data"
+      }
+    ]
+  },
+  "total_bugs": 5,
+  "generated_at": "2025-08-18T16:06:04.968104"
+}

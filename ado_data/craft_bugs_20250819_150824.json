@@ -1,0 +1,112 @@
+[
+  {
+    "id": "CRAFT-001",
+    "title": "Excel Ribbon Button Alignment Inconsistency",
+    "description": "The \"Save\" button in the ribbon appears slightly misaligned compared to other buttons. Visual inconsistency creates a jarring experience.",
+    "state": "Active",
+    "severity": "Medium",
+    "tags": "Craft, Visual, Alignment, Ribbon",
+    "craft_bug_type": "Visual Inconsistency",
+    "surface_level": "L1",
+    "user_impact": "Medium"
+  },
+  {
+    "id": "CRAFT-002",
+    "title": "Copilot Dialog Animation Stutter",
+    "description": "When dismissing the Copilot dialog, the animation stutters and doesn't feel smooth. Breaks the polished user experience.",
+    "state": "Active",
+    "severity": "Low",
+    "tags": "Craft, Animation, Performance, Copilot",
+    "craft_bug_type": "Performance UX",
+    "surface_level": "L2",
+    "user_impact": "Low"
+  },
+  {
+    "id": "CRAFT-003",
+    "title": "Cell Selection Color Mismatch",
+    "description": "Selected cell color doesn't match the design system color palette. Uses #0078d4 instead of the correct #106ebe.",
+    "state": "Active",
+    "severity": "Medium",
+    "tags": "Craft, Color, Design System, Cells",
+    "craft_bug_type": "Design System Violation",
+    "surface_level": "L1",
+    "user_impact": "Medium"
+  },
+  {
+    "id": "CRAFT-004",
+    "title": "Save Dialog Typography Inconsistency",
+    "description": "Font size in save dialog is 16px instead of the standard 14px. Breaks typography hierarchy.",
+    "state": "Active",
+    "severity": "Low",
+    "tags": "Craft, Typography, Dialog, Save",
+    "craft_bug_type": "Typography Inconsistency",
+    "surface_level": "L2",
+    "user_impact": "Low"
+  },
+  {
+    "id": "CRAFT-005",
+    "title": "Tooltip Shadow Elevation Wrong",
+    "description": "Tooltip uses L2 shadow instead of L3 shadow. Incorrect surface elevation creates visual confusion.",
+    "state": "Active",
+    "severity": "Low",
+    "tags": "Craft, Shadow, Elevation, Tooltip",
+    "craft_bug_type": "Surface Level Violation",
+    "surface_level": "L3",
+    "user_impact": "Low"
+  },
+  {
+    "id": "CRAFT-006",
+    "title": "Icon Spacing Inconsistent in Format Panel",
+    "description": "Icons in format panel have inconsistent spacing - some are 8px apart, others are 12px. Visual rhythm is broken.",
+    "state": "Active",
+    "severity": "Medium",
+    "tags": "Craft, Spacing, Icons, Panel",
+    "craft_bug_type": "Spacing Inconsistency",
+    "surface_level": "L2",
+    "user_impact": "Medium"
+  },
+  {
+    "id": "CRAFT-007",
+    "title": "Dropdown Border Radius Mismatch",
+    "description": "Chart type dropdown uses 8px border radius instead of standard 4px. Inconsistent with design system.",
+    "state": "Active",
+    "severity": "Low",
+    "tags": "Craft, Border Radius, Dropdown, Charts",
+    "craft_bug_type": "Design System Violation",
+    "surface_level": "L3",
+    "user_impact": "Low"
+  },
+  {
+    "id": "CRAFT-008",
+    "title": "Loading State Animation Too Fast",
+    "description": "Loading spinner animation is 200ms instead of standard 400ms. Feels rushed and unpolished.",
+    "state": "Active",
+    "severity": "Low",
+    "tags": "Craft, Animation, Loading, Performance",
+    "craft_bug_type": "Animation Timing Issue",
+    "surface_level": "L2",
+    "user_impact": "Low"
+  },
+  {
+    "id": "CRAFT-009",
+    "title": "Button Hover State Color Wrong",
+    "description": "Primary button hover state uses #106ebe instead of correct #005a9e. Color transition feels off.",
+    "state": "Active",
+    "severity": "Medium",
+    "tags": "Craft, Color, Button, Hover",
+    "craft_bug_type": "Interaction State Issue",
+    "surface_level": "L1",
+    "user_impact": "Medium"
+  },
+  {
+    "id": "CRAFT-010",
+    "title": "Panel Padding Inconsistent",
+    "description": "Format panel uses 20px padding while other panels use 16px. Inconsistent spacing creates visual disharmony.",
+    "state": "Active",
+    "severity": "Medium",
+    "tags": "Craft, Padding, Panel, Consistency",
+    "craft_bug_type": "Spacing Inconsistency",
+    "surface_level": "L2",
+    "user_impact": "Medium"
+  }
+]

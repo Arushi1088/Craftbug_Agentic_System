@@ -1,0 +1,25 @@
+{
+  "scenario_name": "document_creation",
+  "start_time": 1755517378.569536,
+  "steps": [
+    {
+      "step_name": "Navigate to Excel Web",
+      "step_index": 0,
+      "start_time": 1755517378.5695748,
+      "end_time": 1755517378.569581,
+      "duration_ms": 0.006198883056640625,
+      "success": false,
+      "error_message": "Action 'navigate' not found or not callable",
+      "screenshot_path": null,
+      "ui_signals": {},
+      "dialog_detected": false,
+      "dialog_type": null,
+      "interaction_attempted": false,
+      "interaction_successful": false
+    }
+  ],
+  "end_time": 1755517417.109498,
+  "total_duration_ms": 38539.94297981262,
+  "overall_success": false,
+  "ux_analysis_results": null
+}

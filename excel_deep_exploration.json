@@ -1,0 +1,8 @@
+{
+  "main_iframe_selector": "iframe[src*='webshell.suite.office.com']",
+  "nested_iframes_count": 0,
+  "screenshots": [
+    "screenshots/excel_web/excel_loading_initial_1755497213.png",
+    "screenshots/excel_web/excel_after_main_iframe_1755497219.png"
+  ]
+}
