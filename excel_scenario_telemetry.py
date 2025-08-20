@@ -14,7 +14,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 from excel_document_creation_scenario_clean import ExcelDocumentCreationScenario
-from enhanced_ux_analyzer import EnhancedUXAnalyzer
+# Remove the import of EnhancedUXAnalyzer
+# from enhanced_ux_analyzer import EnhancedUXAnalyzer
 
 
 @dataclass
@@ -56,22 +57,23 @@ class ExcelScenarioTelemetry:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.telemetry: Optional[ScenarioTelemetry] = None
-        self.ux_analyzer = EnhancedUXAnalyzer()
+        # Remove the import of EnhancedUXAnalyzer
+        # self.ux_analyzer = EnhancedUXAnalyzer()
         
-    async def execute_scenario_with_telemetry(self, scenario_name: str = "document_creation") -> Dict[str, Any]:
+    async def execute_scenario_with_telemetry(self, scenario_name: str = "document_creation", variant: str = "basic") -> Dict[str, Any]:
         """Execute scenario with full telemetry collection"""
-        print(f"🔍 Starting telemetry collection for scenario: {scenario_name}")
+        print(f"🔍 Starting telemetry collection for scenario: {scenario_name} (variant: {variant})")
         
         # Initialize telemetry
         self.telemetry = ScenarioTelemetry(
-            scenario_name=scenario_name,
+            scenario_name=f"{scenario_name}_{variant}",
             start_time=time.time(),
             steps=[]
         )
         
         try:
-            # Create scenario instance and run it normally
-            scenario = ExcelDocumentCreationScenario()
+            # Create scenario instance with variant and run it normally
+            scenario = ExcelDocumentCreationScenario(variant=variant)
             result = await scenario.execute_scenario()
             
             # Now collect telemetry from the executed steps
@@ -82,9 +84,15 @@ class ExcelScenarioTelemetry:
             self.telemetry.total_duration_ms = (self.telemetry.end_time - self.telemetry.start_time) * 1000
             self.telemetry.overall_success = result.success if hasattr(result, 'success') else False
             
-            # Run UX analysis on collected telemetry
-            ux_results = await self._run_ux_analysis()
-            self.telemetry.ux_analysis_results = ux_results
+            # Use AI analysis if available from scenario result
+            ai_analysis = None
+            if hasattr(result, 'ai_analysis') and result.ai_analysis:
+                ai_analysis = result.ai_analysis
+                print(f"🤖 Using AI analysis from scenario result: {len(ai_analysis.get('craft_bugs', []))} craft bugs found")
+            else:
+                # No fallback - AI analysis is required
+                print("❌ No AI analysis found in scenario result - AI analysis is required")
+                raise RuntimeError("AI analysis is required but not available. Please ensure the scenario execution includes AI analysis.")
             
             # Save telemetry data
             await self._save_telemetry()
@@ -93,7 +101,7 @@ class ExcelScenarioTelemetry:
                 "success": True,
                 "scenario_result": result,
                 "telemetry": asdict(self.telemetry),
-                "ux_analysis": ux_results
+                "ux_analysis": ai_analysis
             }
             
         except Exception as e:
@@ -367,22 +375,11 @@ class ExcelScenarioTelemetry:
         
         return None
     
-    async def _run_ux_analysis(self) -> Dict[str, Any]:
-        """Run UX analysis on collected telemetry"""
-        print("🎨 Running UX analysis on telemetry data...")
-        
-        try:
-            # Convert telemetry to UX analyzer format
-            ux_data = self._prepare_ux_data()
-            
-            # Run enhanced analysis
-            results = await self.ux_analyzer.analyze_scenario_with_enhanced_data(ux_data)
-            
-            return results
-            
-        except Exception as e:
-            print(f"❌ UX analysis failed: {e}")
-            return {"error": str(e)}
+    # Remove the _run_ux_analysis method entirely since we're not using hardcoded fallback
+    # async def _run_ux_analysis(self) -> Dict[str, Any]:
+    #     """Run UX analysis on collected telemetry data"""
+    #     # This method is no longer needed since we only use AI analysis
+    #     pass
     
     def _prepare_ux_data(self) -> Dict[str, Any]:
         """Prepare telemetry data for UX analysis"""

@@ -4,7 +4,7 @@ Enhanced FastAPI Server for UX Analyzer
 Provides API endpoints with real browser automation and craft bug detection
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -2475,15 +2475,23 @@ if EXCEL_WEB_AVAILABLE:
         })
 
     @app.post("/api/excel-web/ux-report")
-    async def generate_excel_ux_report():
+    async def generate_excel_ux_report(request: Request):
         """Generate Excel UX analysis report as HTML and save to file using enhanced reporting system"""
         try:
             logger.info("🎨 Generating Enhanced Excel UX Report...")
             
+            # Get variant from request body
+            try:
+                body = await request.json()
+                variant = body.get("variant", "basic")
+            except:
+                variant = "basic"
+            
+            logger.info(f"📊 Executing scenario variant: {variant}")
+            
             # Import required modules
             try:
                 from excel_scenario_telemetry import ExcelScenarioTelemetry
-                from enhanced_ux_analyzer import EnhancedUXAnalyzer
                 from enhanced_report_generator import EnhancedReportGenerator
             except ImportError as e:
                 logger.error(f"❌ Failed to import enhanced UX analysis modules: {e}")
@@ -2497,7 +2505,7 @@ if EXCEL_WEB_AVAILABLE:
             
             # Create telemetry instance and execute with enhanced features
             telemetry = ExcelScenarioTelemetry()
-            telemetry_result = await telemetry.execute_scenario_with_telemetry()
+            telemetry_result = await telemetry.execute_scenario_with_telemetry(variant=variant)
             
             if not telemetry_result:
                 raise HTTPException(status_code=500, detail="Failed to execute scenario with telemetry")
@@ -2516,13 +2524,23 @@ if EXCEL_WEB_AVAILABLE:
                 actual_telemetry_data = telemetry_data
                 logger.info(f"📊 Using direct telemetry data with {len(actual_telemetry_data.get('steps', []))} steps")
             
-            # Analyze UX data with enhanced analyzer
-            logger.info("🔍 Analyzing UX data with enhanced analyzer...")
+            # Use AI analysis from telemetry result if available
+            logger.info("🔍 Checking for AI analysis results...")
             logger.info(f"📊 Telemetry data keys: {list(actual_telemetry_data.keys())}")
             logger.info(f"📊 Telemetry steps count: {len(actual_telemetry_data.get('steps', []))}")
             
-            ux_analyzer = EnhancedUXAnalyzer()
-            ux_analysis = await ux_analyzer.analyze_scenario_with_enhanced_data(actual_telemetry_data)
+            # Check if AI analysis is available in the telemetry result
+            ai_analysis = None
+            if 'ux_analysis' in telemetry_result and telemetry_result['ux_analysis']:
+                ai_analysis = telemetry_result['ux_analysis']
+                logger.info(f"🤖 Found AI analysis with {len(ai_analysis.get('craft_bugs', []))} craft bugs")
+            else:
+                # No fallback - AI analysis is required
+                logger.error("❌ No AI analysis found in telemetry result - AI analysis is required")
+                raise HTTPException(
+                    status_code=500, 
+                    detail="AI analysis is required but not available. Please ensure the scenario execution includes AI analysis."
+                )
             
             # Generate enhanced report with screenshots
             logger.info("📄 Generating enhanced HTML report with screenshots...")
@@ -2536,16 +2554,14 @@ if EXCEL_WEB_AVAILABLE:
                 
                 template = Template(template_content)
                 
-                # Prepare enhanced data for template
-                craft_bugs = ux_analysis.get("craft_bugs", [])
-                ux_score = ux_analysis.get("ux_score", 0)
+                # Prepare enhanced data for template using AI analysis
+                craft_bugs = ai_analysis.get("craft_bugs", [])
+                ux_score = ai_analysis.get("ux_score", 0)
                 
-                # Extract craft bugs from enhanced analysis (combine base and enhanced)
-                base_craft_bugs = ux_analysis.get("base_craft_bugs", [])
-                enhanced_craft_bugs = ux_analysis.get("enhanced_craft_bugs", [])
-                all_craft_bugs = base_craft_bugs + enhanced_craft_bugs
+                # For AI analysis, we use the craft_bugs directly
+                all_craft_bugs = craft_bugs
                 
-                logger.info(f"📊 Found {len(base_craft_bugs)} base craft bugs and {len(enhanced_craft_bugs)} enhanced craft bugs")
+                logger.info(f"🤖 Using AI analysis with {len(craft_bugs)} craft bugs")
                 
                 # Determine UX score class for styling
                 if ux_score >= 80:
@@ -2598,7 +2614,7 @@ if EXCEL_WEB_AVAILABLE:
                             for step in telemetry_steps:
                                 if step.get("screenshot_path") and "copilot" in step.get("screenshot_path", ""):
                                     enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = "Copilot dialog issue evidence"
+                                    enhanced_bug["screenshot_reason"] = "Copilot issue evidence"
                                     logger.info(f"📸 Added copilot screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
                                     break
                         elif "save" in bug.get("title", "").lower():
@@ -2606,24 +2622,8 @@ if EXCEL_WEB_AVAILABLE:
                             for step in telemetry_steps:
                                 if step.get("screenshot_path") and "final_state" in step.get("screenshot_path", ""):
                                     enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = "Save workflow issue evidence"
+                                    enhanced_bug["screenshot_reason"] = "Save issue evidence"
                                     logger.info(f"📸 Added save screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
-                                    break
-                        elif "performance" in bug.get("title", "").lower() or "slow" in bug.get("title", "").lower():
-                            # Use any available screenshot for performance issues
-                            for step in telemetry_steps:
-                                if step.get("screenshot_path"):
-                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = "Performance issue evidence"
-                                    logger.info(f"📸 Added performance screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
-                                    break
-                        else:
-                            # Use any available screenshot as fallback
-                            for step in telemetry_steps:
-                                if step.get("screenshot_path"):
-                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                    logger.info(f"📸 Added fallback screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
                                     break
                     
                     enhanced_craft_bugs.append(enhanced_bug)
@@ -2636,9 +2636,10 @@ if EXCEL_WEB_AVAILABLE:
                 
                 report_data = {
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "scenario_name": "Excel Document Creation",
+                    "scenario_name": f"Excel Document Creation - {variant.title()} Variant",
+                    "scenario_variant": variant,
                     "telemetry": actual_telemetry_data,
-                    "ux_analysis": ux_analysis,
+                    "ux_analysis": ai_analysis,
                     "craft_bugs": enhanced_craft_bugs,  # Use enhanced craft bugs with screenshots
                     "craft_bugs_count": len(enhanced_craft_bugs),
                     "ux_score": ux_score,
@@ -2646,10 +2647,10 @@ if EXCEL_WEB_AVAILABLE:
                     "total_steps": len(telemetry_steps),
                     "execution_time": execution_time,
                     "steps": steps,
-                    "performance_issues": ux_analysis.get("performance_issues", []),
-                    "interaction_issues": ux_analysis.get("interaction_issues", []),
-                    "recommendations": ux_analysis.get("recommendations", []),
-                    "report_id": f"excel_ux_{int(time.time())}"
+                    "performance_issues": ai_analysis.get("performance_issues", []),
+                    "interaction_issues": ai_analysis.get("interaction_issues", []),
+                    "recommendations": ai_analysis.get("recommendations", []),
+                    "report_id": f"excel_ux_{variant}_{int(time.time())}"
                 }
                 
                 logger.info(f"📊 Report data prepared: {len(steps)} steps, {len(enhanced_craft_bugs)} craft bugs, {execution_time}s execution time")
@@ -2699,6 +2700,169 @@ if EXCEL_WEB_AVAILABLE:
             logger.error(f"❌ Enhanced Excel UX report generation failed: {e}")
             raise HTTPException(status_code=500, detail=f"Enhanced report generation failed: {str(e)}")
 
+    @app.post("/api/excel-web/copilot-ux-report")
+    async def generate_copilot_ux_report():
+        """Generate enhanced Copilot UX report with AI-specific analysis"""
+        try:
+            logger.info("🤖 Generating enhanced Copilot UX report...")
+            
+            # Import required modules
+            try:
+                from copilot_scenario_executor import CopilotScenarioExecutor
+                from ai_driven_analyzer import AIDrivenAnalyzer
+            except ImportError as e:
+                logger.error(f"❌ Failed to import Copilot modules: {e}")
+                raise HTTPException(status_code=500, detail="Copilot modules not available")
+            
+            # Execute Copilot scenario with enhanced telemetry
+            logger.info("🤖 Executing Copilot chart generation scenario...")
+            executor = CopilotScenarioExecutor()
+            copilot_result = await executor.execute_copilot_chart_generation()
+            
+            if not copilot_result or not copilot_result.get('success'):
+                error_msg = copilot_result.get('error', 'Unknown error') if copilot_result else 'No result returned'
+                logger.error(f"❌ Copilot scenario execution failed: {error_msg}")
+                raise HTTPException(status_code=500, detail=f"Copilot scenario execution failed: {error_msg}")
+            
+            # Extract AI analysis data
+            ai_analysis = copilot_result.get('ai_analysis', {})
+            ai_interaction_log = copilot_result.get('ai_interaction_log', [])
+            
+            # Use AI-driven analysis results
+            logger.info("🤖 Using AI-driven analysis results...")
+            
+            # Extract craft bugs from AI analysis
+            craft_bugs = ai_analysis.get('craft_bugs', [])
+            
+            # Extract overall assessment
+            overall_assessment = ai_analysis.get('overall_assessment', {})
+            persona_impact = ai_analysis.get('persona_impact', {})
+            business_impact = ai_analysis.get('business_impact', {})
+            
+            # Calculate UX score based on AI analysis
+            craft_bug_count = len(craft_bugs)
+            if craft_bug_count == 0:
+                ux_score = 90  # Excellent if no issues found
+            elif craft_bug_count <= 2:
+                ux_score = 75  # Good with minor issues
+            elif craft_bug_count <= 5:
+                ux_score = 60  # Fair with moderate issues
+            else:
+                ux_score = 40  # Poor with many issues
+            
+            # Generate enhanced HTML report
+            logger.info("📄 Generating enhanced Copilot HTML report...")
+            try:
+                from jinja2 import Template
+                
+                # Read the enhanced HTML template
+                template_path = "excel_ux_report_template.html"
+                with open(template_path, 'r') as f:
+                    template_content = f.read()
+                
+                template = Template(template_content)
+                
+                # Determine UX score class for styling
+                if ux_score >= 80:
+                    ux_score_class = "success"
+                elif ux_score >= 60:
+                    ux_score_class = "warning"
+                else:
+                    ux_score_class = "error"
+                
+                # Prepare enhanced steps data
+                steps = []
+                
+                for step in ai_interaction_log:
+                    step_data = {
+                        "name": step.get("step", "Unknown"),
+                        "duration_ms": step.get("duration", 0) * 1000,
+                        "success": step.get("success", False),
+                        "ai_interaction_quality": step.get("ai_interaction_quality", "unknown"),
+                        "trust_impact": step.get("trust_impact", 0),
+                        "frustration_level": step.get("frustration_level", 0),
+                        "ai_specific_issues": step.get("ai_specific_issues", [])
+                    }
+                    steps.append(step_data)
+                
+                # Calculate execution time
+                execution_time = round(sum(step.get("duration", 0) for step in ai_interaction_log), 1)
+                
+                report_data = {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "scenario_name": "Copilot Chart Generation",
+                    "ai_analysis": ai_analysis,
+                    "craft_bugs": craft_bugs,
+                    "craft_bugs_count": len(craft_bugs),
+                    "ux_score": ux_score,
+                    "ux_score_class": ux_score_class,
+                    "total_steps": len(telemetry_steps),
+                    "execution_time": execution_time,
+                    "steps": steps,
+                    "ai_trust_score": analysis.get("ai_trust_score", 0),
+                    "ai_frustration_score": analysis.get("ai_frustration_score", 0),
+                    "copilot_effectiveness": analysis.get("copilot_effectiveness", 0),
+                    "ai_specific_craft_bugs": analysis.get("ai_specific_craft_bugs", []),
+                    "trust_building_moments": analysis.get("trust_building_moments", []),
+                    "trust_breaking_moments": analysis.get("trust_breaking_moments", []),
+                    "performance_issues": ux_analysis.get("performance_issues", []),
+                    "interaction_issues": ux_analysis.get("interaction_issues", []),
+                    "recommendations": ux_analysis.get("recommendations", []),
+                    "report_id": f"copilot_ux_{int(time.time())}"
+                }
+                
+                html_content = template.render(**report_data)
+                
+                # Save enhanced report to file
+                reports_dir = Path("reports/excel_ux")
+                reports_dir.mkdir(parents=True, exist_ok=True)
+                
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                report_filename = f"copilot_ux_report_{timestamp}.html"
+                report_path = reports_dir / report_filename
+                
+                with open(report_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                
+                # Generate URL for the report
+                report_url = f"/reports/excel_ux/{report_filename}"
+                
+                logger.info(f"✅ Enhanced Copilot UX Report saved to: {report_path}")
+                logger.info(f"📊 Report URL: {report_url}")
+                logger.info(f"🤖 AI Trust Score: {copilot_result.get('ai_trust_score', 0)}/10")
+                logger.info(f"😤 AI Frustration Score: {copilot_result.get('ai_frustration_score', 0)}/10")
+                logger.info(f"🎯 Copilot Effectiveness: {copilot_result.get('copilot_effectiveness', 0):.1f}%")
+                
+                return {
+                    "status": "success",
+                    "report_url": report_url,
+                    "report_filename": report_filename,
+                    "message": "Enhanced Copilot UX Report generated successfully",
+                    "ai_trust_score": analysis.get("ai_trust_score", 0),
+                    "ai_frustration_score": analysis.get("ai_frustration_score", 0),
+                    "copilot_effectiveness": analysis.get("copilot_effectiveness", 0),
+                    "ai_specific_issues": len(analysis.get("ai_specific_craft_bugs", [])),
+                    "enhanced_features": {
+                        "ai_specific_detection": True,
+                        "trust_analysis": True,
+                        "frustration_analysis": True,
+                        "copilot_effectiveness": True
+                    }
+                }
+                
+            except FileNotFoundError:
+                logger.error("❌ HTML template not found")
+                raise HTTPException(status_code=500, detail="HTML template not found")
+            except Exception as e:
+                logger.error(f"❌ Enhanced Copilot HTML generation failed: {e}")
+                raise HTTPException(status_code=500, detail=f"Enhanced Copilot HTML generation failed: {str(e)}")
+                
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"❌ Enhanced Copilot UX report generation failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Enhanced Copilot report generation failed: {str(e)}")
+
 else:
     @app.post("/api/excel-web/authenticate")
     async def excel_web_authenticate():
@@ -2731,7 +2895,6 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
         # Import telemetry wrapper
         try:
             from excel_scenario_telemetry import run_scenario_with_telemetry
-            from enhanced_ux_analyzer import EnhancedUXAnalyzer
         except ImportError as e:
             logger.error(f"❌ Failed to import telemetry modules: {e}")
             raise HTTPException(status_code=500, detail="Telemetry modules not available")
@@ -2745,10 +2908,11 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
             logger.error(f"❌ Scenario execution failed: {error_msg}")
             raise HTTPException(status_code=500, detail=f"Scenario execution failed: {error_msg}")
         
-        # Analyze telemetry data with enhanced analyzer
-        logger.info("🔍 Analyzing telemetry data with enhanced analyzer...")
-        enhanced_analyzer = EnhancedUXAnalyzer()
-        analysis_result = await enhanced_analyzer.analyze_scenario_with_enhanced_data(telemetry_result)
+        # Analyze telemetry data with AI-driven analyzer
+        logger.info("🔍 Analyzing telemetry data with AI-driven analyzer...")
+        from ai_driven_analyzer import AIDrivenAnalyzer
+        ai_analyzer = AIDrivenAnalyzer()
+        analysis_result = await ai_analyzer.analyze_scenario(telemetry_result)
         
         # Generate comprehensive report
         report_data = {

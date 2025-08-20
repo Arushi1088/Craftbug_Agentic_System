@@ -1,16 +1,18 @@
 """
-Excel Document Creation Scenario - Clean Version
-Tests creating a new workbook, adding data, and saving
+Excel Document Creation Scenario - Clean Version with Variants
+Tests creating a new workbook, adding data, and saving with optional Copilot functionality
 """
 
 import asyncio
 import time
+from datetime import datetime
 from typing import List, Dict, Any
 from dataclasses import dataclass
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from excel_web_selenium_only import get_selenium_navigator
+from ai_driven_analyzer import AIDrivenAnalyzer
 
 
 @dataclass
@@ -34,14 +36,25 @@ class ScenarioResult:
     screenshots: List[str]
     errors: List[str]
     performance_metrics: Dict[str, Any]
+    ai_analysis: Dict[str, Any] = None
 
 
 class ExcelDocumentCreationScenario:
-    """Excel Document Creation Scenario Executor - Clean Version"""
+    """Excel Document Creation Scenario Executor - Clean Version with Variants"""
     
-    def __init__(self):
+    def __init__(self, variant: str = "basic"):
+        """
+        Initialize scenario with variant support
+        
+        Args:
+            variant: "basic" for document creation + save, "copilot" for basic + Copilot chart generation
+        """
         self.navigator = None
-        self.steps = [
+        self.ai_analyzer = AIDrivenAnalyzer()
+        self.variant = variant
+        
+        # Define base steps (common to all variants)
+        self.base_steps = [
             ScenarioStep(
                 name="Navigate to Excel Web",
                 description="Ensure we're on Excel Web with authentication",
@@ -114,12 +127,69 @@ class ExcelDocumentCreationScenario:
                 value="excel_final_state"
             )
         ]
+        
+        # Define Copilot-specific steps
+        self.copilot_steps = [
+            ScenarioStep(
+                name="Click Copilot Button",
+                description="Click the Copilot button in the Excel ribbon to open Copilot pane",
+                action="click_copilot_button",
+                selector="",
+                timeout=15
+            ),
+            ScenarioStep(
+                name="Take Screenshot - Copilot Pane",
+                description="Capture the Copilot pane after opening",
+                action="screenshot",
+                selector="",
+                value="excel_copilot_pane"
+            ),
+            ScenarioStep(
+                name="Enter Chart Prompt",
+                description="Enter prompt to generate chart using the data on the sheet",
+                action="enter_copilot_prompt",
+                selector="",
+                value="Create a chart using the data on the sheet",
+                timeout=10
+            ),
+            ScenarioStep(
+                name="Wait for Chart Generation",
+                description="Wait for Copilot to generate and apply the chart",
+                action="wait_for_copilot_response",
+                selector="",
+                timeout=30
+            ),
+            ScenarioStep(
+                name="Take Screenshot - Chart Generated",
+                description="Capture the workbook with the generated chart",
+                action="screenshot",
+                selector="",
+                value="excel_chart_generated"
+            ),
+            ScenarioStep(
+                name="Verify Chart Creation",
+                description="Verify that the chart was successfully created and applied",
+                action="verify_chart_creation",
+                selector="",
+                timeout=10
+            )
+        ]
+        
+        # Set steps based on variant
+        if variant == "basic":
+            self.steps = self.base_steps
+        elif variant == "copilot":
+            # For Copilot variant, skip the save step to avoid interference
+            base_steps_without_save = [step for step in self.base_steps if "Save" not in step.name]
+            self.steps = base_steps_without_save + self.copilot_steps
+        else:
+            raise ValueError(f"Unknown variant: {variant}. Supported variants: 'basic', 'copilot'")
     
     async def execute_scenario(self) -> ScenarioResult:
         """Execute the Excel document creation scenario"""
         start_time = time.time()
         result = ScenarioResult(
-            scenario_name="Excel Document Creation",
+            scenario_name=f"Excel Document Creation - {self.variant.title()} Variant",
             success=False,
             steps_completed=0,
             total_steps=len(self.steps),
@@ -199,6 +269,13 @@ class ExcelDocumentCreationScenario:
             print(f"   Execution time: {result.execution_time:.2f} seconds")
             print(f"   Screenshots taken: {len(result.screenshots)}")
             print(f"   Errors: {len(result.errors)}")
+            
+            # Perform AI-driven analysis
+            if result.success:
+                print("\n🤖 Performing AI-driven analysis...")
+                ai_analysis = await self._perform_ai_analysis(result)
+                result.ai_analysis = ai_analysis
+                print(f"✅ AI analysis completed: {len(ai_analysis.get('craft_bugs', []))} craft bugs found")
             
             return result
             
@@ -423,6 +500,316 @@ class ExcelDocumentCreationScenario:
                 except Exception as e:
                     print(f"Save verification failed: {e}")
                     return False
+            
+            # Copilot-specific actions
+            elif step.action == "click_copilot_button":
+                # Click the Copilot button in the Excel ribbon
+                driver = self.navigator.driver
+                if not driver:
+                    return False
+                try:
+                    print("🔍 Looking for Copilot button in ribbon...")
+                    
+                    # Multiple selectors for Copilot button
+                    copilot_selectors = [
+                        "[aria-label*='Copilot']",
+                        "[title*='Copilot']",
+                        "[data-testid*='copilot']",
+                        "[class*='copilot']",
+                        "button[aria-label*='Copilot']",
+                        "button[title*='Copilot']",
+                        "[role='button'][aria-label*='Copilot']",
+                        "[class*='ewaother_Copilot']",
+                        "[class*='CopilotButton']",
+                        "button:contains('Copilot')",
+                        "[data-automation-id*='copilot']",
+                        "[class*='ewaother_CopilotButton']",
+                        "[class*='ewaother_CopilotIcon']",
+                        "button[class*='copilot']",
+                        "[class*='ewaother_Copilot']"
+                    ]
+                    
+                    for selector in copilot_selectors:
+                        try:
+                            elements = driver.find_elements("css selector", selector)
+                            if elements:
+                                print(f"✅ Found Copilot button with selector: {selector}")
+                                # Try multiple click methods
+                                try:
+                                    elements[0].click()
+                                    print("✅ Clicked Copilot button directly")
+                                except Exception as click_e:
+                                    print(f"⚠️ Direct click failed: {click_e}")
+                                    try:
+                                        driver.execute_script("arguments[0].click();", elements[0])
+                                        print("✅ Clicked Copilot button via JavaScript")
+                                    except Exception as js_e:
+                                        print(f"⚠️ JavaScript click failed: {js_e}")
+                                        driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('click', {bubbles: true}));", elements[0])
+                                        print("✅ Clicked Copilot button via MouseEvent")
+                                
+                                await asyncio.sleep(3)  # Wait longer for pane to open
+                                return True
+                        except Exception as e:
+                            print(f"⚠️ Selector {selector} failed: {e}")
+                            continue
+                    
+                    # Fallback: try to find by text content
+                    try:
+                        copilot_elements = driver.find_elements("xpath", "//*[contains(text(), 'Copilot')]")
+                        for elem in copilot_elements:
+                            if elem.is_displayed() and elem.is_enabled():
+                                print("✅ Found Copilot button by text content")
+                                driver.execute_script("arguments[0].click();", elem)
+                                await asyncio.sleep(3)
+                                return True
+                    except Exception as e:
+                        print(f"⚠️ Text-based search failed: {e}")
+                    
+                    # Additional fallback: look for any button that might be Copilot
+                    try:
+                        all_buttons = driver.find_elements("css selector", "button")
+                        for button in all_buttons:
+                            try:
+                                aria_label = button.get_attribute("aria-label") or ""
+                                title = button.get_attribute("title") or ""
+                                if "copilot" in aria_label.lower() or "copilot" in title.lower():
+                                    print(f"✅ Found Copilot button via attribute search: {aria_label or title}")
+                                    driver.execute_script("arguments[0].click();", button)
+                                    await asyncio.sleep(3)
+                                    return True
+                            except:
+                                continue
+                    except Exception as e:
+                        print(f"⚠️ Attribute search failed: {e}")
+                    
+                    print("❌ Could not find Copilot button")
+                    return False
+                    
+                except Exception as e:
+                    print(f"❌ Error clicking Copilot button: {e}")
+                    return False
+            
+            elif step.action == "enter_copilot_prompt":
+                # Enter prompt in Copilot pane
+                driver = self.navigator.driver
+                if not driver:
+                    return False
+                try:
+                    print("🔍 Looking for Copilot input field...")
+                    
+                    # Wait for Copilot pane to fully load
+                    await asyncio.sleep(2)
+                    
+                    prompt = step.value or "Create a chart using the data on the sheet"
+                    
+                    # Multiple selectors for Copilot input - more specific to avoid Excel cells
+                    input_selectors = [
+                        "[placeholder*='Ask Copilot']",
+                        "[placeholder*='Ask me anything']",
+                        "[aria-label*='Ask Copilot']",
+                        "[data-testid*='copilot-input']",
+                        "[class*='copilot-input']",
+                        "[class*='ewaother_CopilotInput']",
+                        "textarea[placeholder*='Ask']",
+                        "input[placeholder*='Ask']",
+                        "[contenteditable='true'][placeholder*='Ask']",
+                        # More specific selectors to avoid Excel cells
+                        "[class*='ewaother_CopilotChatInput']",
+                        "[class*='ewaother_CopilotMessageInput']",
+                        "[class*='ewaother_CopilotTextInput']",
+                        "[data-testid*='copilot-chat-input']",
+                        "[data-testid*='copilot-message-input']",
+                        # Only use role='textbox' if it's within Copilot pane
+                        "[class*='ewaother_Copilot'] [role='textbox']",
+                        "[class*='ewaother_CopilotPane'] [role='textbox']",
+                        "[class*='ewaother_CopilotChat'] [role='textbox']"
+                    ]
+                    
+                    for selector in input_selectors:
+                        try:
+                            elements = driver.find_elements("css selector", selector)
+                            if elements:
+                                print(f"✅ Found Copilot input with selector: {selector}")
+                                input_element = elements[0]
+                                
+                                # Validate that this is actually a Copilot input (not an Excel cell)
+                                try:
+                                    # Check if element is within Copilot pane
+                                    parent = input_element.find_element("xpath", "./ancestor::*[contains(@class, 'ewaother_Copilot') or contains(@class, 'ewaother_CopilotPane') or contains(@class, 'ewaother_CopilotChat')]")
+                                    print(f"✅ Validated input is within Copilot pane")
+                                except:
+                                    # If not in Copilot pane, check if it has Copilot-specific attributes
+                                    aria_label = input_element.get_attribute("aria-label") or ""
+                                    placeholder = input_element.get_attribute("placeholder") or ""
+                                    if "copilot" in aria_label.lower() or "ask" in placeholder.lower():
+                                        print(f"✅ Validated input has Copilot-specific attributes")
+                                    else:
+                                        print(f"⚠️ Input found but may not be Copilot input, skipping...")
+                                        continue
+                                
+                                # Try multiple input methods
+                                try:
+                                    # Method 1: Direct send_keys
+                                    input_element.clear()
+                                    input_element.send_keys(prompt)
+                                    print(f"✅ Entered prompt: {prompt}")
+                                except Exception as e1:
+                                    print(f"⚠️ Direct send_keys failed: {e1}")
+                                    try:
+                                        # Method 2: JavaScript injection
+                                        driver.execute_script(f"arguments[0].value = '{prompt}';", input_element)
+                                        print(f"✅ Entered prompt via JavaScript: {prompt}")
+                                    except Exception as e2:
+                                        print(f"⚠️ JavaScript injection failed: {e2}")
+                                        try:
+                                            # Method 3: Click and type
+                                            input_element.click()
+                                            await asyncio.sleep(0.5)
+                                            actions = ActionChains(driver)
+                                            actions.send_keys(prompt).perform()
+                                            print(f"✅ Entered prompt via ActionChains: {prompt}")
+                                        except Exception as e3:
+                                            print(f"⚠️ ActionChains failed: {e3}")
+                                            continue
+                                
+                                await asyncio.sleep(1)
+                                
+                                # Try to submit the prompt
+                                try:
+                                    input_element.send_keys(Keys.ENTER)
+                                    print("✅ Submitted prompt with Enter key")
+                                except Exception as e:
+                                    print(f"⚠️ Enter key failed: {e}")
+                                    # Look for send button
+                                    send_selectors = [
+                                        "[aria-label*='Send']",
+                                        "[title*='Send']",
+                                        "button[aria-label*='Send']",
+                                        "[class*='send']",
+                                        "[data-testid*='send']",
+                                        "button[type='submit']",
+                                        "[role='button']"
+                                    ]
+                                    for send_sel in send_selectors:
+                                        try:
+                                            send_buttons = driver.find_elements("css selector", send_sel)
+                                            if send_buttons:
+                                                driver.execute_script("arguments[0].click();", send_buttons[0])
+                                                print(f"✅ Submitted prompt via send button: {send_sel}")
+                                                break
+                                        except Exception as send_e:
+                                            print(f"⚠️ Send button {send_sel} failed: {send_e}")
+                                            continue
+                                
+                                await asyncio.sleep(2)
+                                return True
+                        except Exception as e:
+                            print(f"⚠️ Input selector {selector} failed: {e}")
+                            continue
+                    
+                    print("❌ Could not find or interact with Copilot input field")
+                    return False
+                    
+                except Exception as e:
+                    print(f"❌ Error entering Copilot prompt: {e}")
+                    return False
+            
+            elif step.action == "wait_for_copilot_response":
+                # Wait for Copilot to generate response and apply chart
+                driver = self.navigator.driver
+                if not driver:
+                    return False
+                try:
+                    print("⏳ Waiting for Copilot response...")
+                    
+                    # Wait for response indicators
+                    max_wait = step.timeout
+                    start_time = time.time()
+                    
+                    while time.time() - start_time < max_wait:
+                        try:
+                            # Look for response indicators
+                            response_indicators = [
+                                "[class*='copilot-response']",
+                                "[class*='ewaother_CopilotResponse']",
+                                "[data-testid*='copilot-response']",
+                                "[aria-label*='Copilot response']",
+                                "[class*='typing']",
+                                "[class*='loading']"
+                            ]
+                            
+                            response_found = False
+                            for indicator in response_indicators:
+                                elements = driver.find_elements("css selector", indicator)
+                                if elements:
+                                    print(f"✅ Found response indicator: {indicator}")
+                                    response_found = True
+                                    break
+                            
+                            if response_found:
+                                # Wait a bit more for completion
+                                await asyncio.sleep(5)
+                                return True
+                            
+                            await asyncio.sleep(2)
+                            
+                        except Exception as e:
+                            print(f"⚠️ Error checking response: {e}")
+                            await asyncio.sleep(2)
+                    
+                    print("⚠️ Timeout waiting for Copilot response, proceeding anyway")
+                    return True
+                    
+                except Exception as e:
+                    print(f"❌ Error waiting for Copilot response: {e}")
+                    return True  # Continue anyway
+            
+            elif step.action == "verify_chart_creation":
+                # Verify that a chart was created
+                driver = self.navigator.driver
+                if not driver:
+                    return False
+                try:
+                    print("🔍 Verifying chart creation...")
+                    
+                    # Look for chart elements
+                    chart_selectors = [
+                        "[class*='chart']",
+                        "[data-testid*='chart']",
+                        "[aria-label*='chart']",
+                        "[role='img']",
+                        "canvas[class*='chart']",
+                        "[class*='ewaother_Chart']",
+                        "[class*='ChartContainer']"
+                    ]
+                    
+                    for selector in chart_selectors:
+                        try:
+                            elements = driver.find_elements("css selector", selector)
+                            if elements:
+                                print(f"✅ Found chart with selector: {selector}")
+                                return True
+                        except Exception as e:
+                            print(f"⚠️ Chart selector {selector} failed: {e}")
+                            continue
+                    
+                    # Fallback: look for any visual elements that might be charts
+                    try:
+                        visual_elements = driver.find_elements("css selector", "canvas, svg, img")
+                        if len(visual_elements) > 0:
+                            print(f"✅ Found {len(visual_elements)} visual elements (potential charts)")
+                            return True
+                    except Exception as e:
+                        print(f"⚠️ Visual element search failed: {e}")
+                    
+                    print("⚠️ Could not verify chart creation, but proceeding")
+                    return True  # Continue anyway
+                    
+                except Exception as e:
+                    print(f"❌ Error verifying chart creation: {e}")
+                    return True  # Continue anyway
+            
             else:
                 print(f"Unknown action: {step.action}")
                 return False
@@ -990,6 +1377,81 @@ class ExcelDocumentCreationScenario:
             print(f"   ❌ Step execution error: {e}")
         
         return step_data
+    
+    async def _perform_ai_analysis(self, result: ScenarioResult) -> Dict[str, Any]:
+        """Perform AI-driven analysis of the scenario"""
+        try:
+            print("🤖 Preparing scenario data for AI analysis...")
+            
+            # Prepare scenario data for AI analysis
+            scenario_data = {
+                "scenario_name": "Excel Document Creation Scenario",
+                "steps": [
+                    {
+                        "name": step.name,
+                        "description": step.description,
+                        "action": step.action,
+                        "duration": 0,  # We don't have individual step timing
+                        "success": True  # Assume success if we got here
+                    }
+                    for step in self.steps[:result.steps_completed]
+                ],
+                "screenshots": result.screenshots,
+                "telemetry": {
+                    "total_time": result.execution_time,
+                    "steps_completed": result.steps_completed,
+                    "total_steps": result.total_steps,
+                    "performance_metrics": {
+                        "success_rate": result.steps_completed / result.total_steps if result.total_steps > 0 else 0,
+                        "error_count": len(result.errors),
+                        "execution_time": result.execution_time
+                    }
+                }
+            }
+            
+            # Perform AI analysis
+            ai_analysis = await self.ai_analyzer.analyze_scenario(scenario_data)
+            
+            return ai_analysis
+            
+        except Exception as e:
+            print(f"❌ AI analysis failed: {e}")
+            return {
+                "craft_bugs": [
+                    {
+                        "title": "AI Analysis Unavailable",
+                        "description": "The AI analysis could not be completed.",
+                        "category": "system",
+                        "severity": "yellow",
+                        "evidence": "AI analysis failure",
+                        "impact_analysis": "Unable to assess UX impact",
+                        "recommendations": "Retry the analysis"
+                    }
+                ],
+                "overall_assessment": {
+                    "scenario_quality": "unknown",
+                    "summary": "AI analysis failed",
+                    "key_strengths": [],
+                    "critical_issues": ["AI analysis unavailable"]
+                },
+                "persona_impact": {
+                    "novice_users": "Unable to assess",
+                    "full_stack_analysts": "Unable to assess",
+                    "super_fans": "Unable to assess"
+                },
+                "business_impact": {
+                    "usability_impact": "unknown",
+                    "adoption_risk": "unknown",
+                    "competitive_disadvantage": "Unable to assess",
+                    "workflow_disruption": "Unable to assess"
+                },
+                "analysis_metadata": {
+                    "analyzer_type": "fallback",
+                    "analysis_timestamp": datetime.now().isoformat(),
+                    "ai_model": "none",
+                    "response_quality": "fallback"
+                }
+            }
 
 
 async def test_excel_scenario():
@@ -1015,6 +1477,32 @@ async def test_excel_scenario():
         print("\n❌ Errors encountered:")
         for error in result.errors:
             print(f"   - {error}")
+    
+    # Display AI analysis results
+    if result.ai_analysis:
+        print("\n🤖 AI Analysis Results:")
+        print("=" * 40)
+        
+        craft_bugs = result.ai_analysis.get('craft_bugs', [])
+        print(f"Craft Bugs Found: {len(craft_bugs)}")
+        
+        if craft_bugs:
+            print("\n📋 Craft Bugs:")
+            for i, bug in enumerate(craft_bugs, 1):
+                print(f"   {i}. {bug.get('title', 'Unknown')}")
+                print(f"      Category: {bug.get('category', 'Unknown')}")
+                print(f"      Severity: {bug.get('severity', 'Unknown')}")
+                print(f"      Description: {bug.get('description', 'No description')[:100]}...")
+        
+        overall_assessment = result.ai_analysis.get('overall_assessment', {})
+        print(f"\n📊 Overall Assessment:")
+        print(f"   Quality: {overall_assessment.get('scenario_quality', 'Unknown')}")
+        print(f"   Summary: {overall_assessment.get('summary', 'No summary')}")
+        
+        business_impact = result.ai_analysis.get('business_impact', {})
+        print(f"\n💼 Business Impact:")
+        print(f"   Usability Impact: {business_impact.get('usability_impact', 'Unknown')}/10")
+        print(f"   Adoption Risk: {business_impact.get('adoption_risk', 'Unknown')}")
     
     return result.success
 

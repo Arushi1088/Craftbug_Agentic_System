@@ -37,6 +37,7 @@ export function ExcelTestingPage() {
   const [testHistory, setTestHistory] = useState<ExcelTestResult[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
+  const [selectedScenario, setSelectedScenario] = useState('basic');
 
   const API_BASE = 'http://localhost:8000';
 
@@ -88,19 +89,28 @@ export function ExcelTestingPage() {
     }
   };
 
-  const runDocumentCreationTest = async () => {
+  const runSelectedScenario = async () => {
     try {
       setIsRunning(true);
       setProgress(0);
-      addLog('Starting Excel Document Creation scenario with UX Analysis...', 'info');
+      
+      if (selectedScenario === 'copilot') {
+        addLog('Starting Copilot Chart Generation scenario with AI-specific UX Analysis...', 'info');
+        addLog('🤖 This scenario tests AI trust, conversation flow, and chart generation integration', 'info');
+      } else {
+        addLog('Starting Excel Document Creation scenario with UX Analysis...', 'info');
+      }
       
       // Step 1: Execute the scenario with UX analysis
       setProgress(20);
-      addLog('Executing Excel scenario with UX analysis...', 'info');
+      addLog('Executing scenario with enhanced UX analysis...', 'info');
       
       const response = await fetch(`${API_BASE}/api/excel-web/ux-report`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          variant: selectedScenario
+        })
       });
       
       if (response.ok) {
@@ -114,12 +124,18 @@ export function ExcelTestingPage() {
           const reportUrl = `${API_BASE}${result.report_url}`;
           addLog(`📊 Report generated: ${result.report_filename}`, 'success');
           
+          if (selectedScenario === 'copilot') {
+            addLog('🤖 AI Trust Score: ' + (result.ai_trust_score || 'N/A'), 'info');
+            addLog('😤 AI Frustration Score: ' + (result.ai_frustration_score || 'N/A'), 'info');
+            addLog('🎯 Copilot Effectiveness: ' + (result.copilot_effectiveness || 'N/A') + '%', 'info');
+          }
+          
           // Navigate to the report URL
           const newWindow = window.open(reportUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
           
           if (newWindow) {
             addLog('✅ UX Analysis Report opened automatically in new window', 'success');
-            addLog('🎨 Report contains Craft bug analysis and UX recommendations', 'success');
+            addLog('🎨 Report contains enhanced Craft bug analysis and UX recommendations', 'success');
             addLog(`🔗 Report URL: ${reportUrl}`, 'info');
           } else {
             // Fallback: navigate in current window
@@ -129,7 +145,7 @@ export function ExcelTestingPage() {
           
           setProgress(100);
           addLog('🎉 Scenario execution and UX analysis completed!', 'success');
-          addLog('📊 Report shows Craft bugs detected during Excel interaction', 'info');
+          addLog('📊 Report shows enhanced Craft bugs detected during interaction', 'info');
         } else {
           addLog(`❌ Report generation failed: ${result.message || 'Unknown error'}`, 'error');
         }
@@ -142,6 +158,12 @@ export function ExcelTestingPage() {
     } finally {
       setIsRunning(false);
     }
+  };
+
+  const runDocumentCreationTest = async () => {
+    // Legacy function - now handled by runSelectedScenario
+    setSelectedScenario('basic');
+    await runSelectedScenario();
   };
 
   const stopTest = () => {
@@ -237,14 +259,27 @@ export function ExcelTestingPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Test Execution</h2>
             
             <div className="space-y-4">
+              {/* Scenario Selection */}
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-medium text-gray-700">Select Test Scenario:</label>
+                <select 
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => setSelectedScenario(e.target.value)}
+                  value={selectedScenario}
+                >
+                  <option value="basic">📄 Document Creation & Save</option>
+                  <option value="copilot">🤖 Copilot Chart Generation</option>
+                </select>
+              </div>
+              
               <div className="flex gap-4">
                 <button
-                  onClick={runDocumentCreationTest}
+                  onClick={runSelectedScenario}
                   disabled={!isAuthenticated || isRunning}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  Run Excel Scenario & Generate UX Report
+                  Run {selectedScenario === 'copilot' ? 'Copilot' : 'Excel'} Scenario & Generate UX Report
                 </button>
                 {isRunning && (
                   <button

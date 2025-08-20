@@ -1,0 +1,114 @@
+version: 1
+scenarios:
+  - id: copilot_chart_generation
+    name: "Copilot Chart Generation: Create chart using AI"
+    app_type: "excel"
+    description: "Test Copilot's ability to generate charts from data with enhanced AI-specific UX detection"
+    steps:
+      - action: navigate_to_excel_web
+        description: "Navigate to Excel Web and create new workbook"
+        timeout_ms: 15000
+        expected_ux_signals:
+          - copilot_dialog_appearance
+          - loading_states
+          - ai_trust_indicators
+      
+      - action: dismiss_copilot_dialog
+        description: "Dismiss initial Copilot dialog if present"
+        timeout_ms: 5000
+        expected_ux_signals:
+          - dialog_dismissal_smoothness
+          - ai_interruption_frustration
+      
+      - action: enter_sales_data
+        description: "Enter sample sales data for FY 2024-2025"
+        data:
+          headers: ["Month", "Sales", "Revenue", "Growth %"]
+          rows:
+            - ["Apr 2024", "1250", "$125,000", "12.5%"]
+            - ["May 2024", "1380", "$138,000", "10.4%"]
+            - ["Jun 2024", "1520", "$152,000", "10.1%"]
+            - ["Jul 2024", "1680", "$168,000", "10.5%"]
+            - ["Aug 2024", "1850", "$185,000", "10.1%"]
+            - ["Sep 2024", "2030", "$203,000", "9.7%"]
+            - ["Oct 2024", "2230", "$223,000", "9.8%"]
+            - ["Nov 2024", "2450", "$245,000", "9.9%"]
+            - ["Dec 2024", "2700", "$270,000", "10.2%"]
+            - ["Jan 2025", "2970", "$297,000", "10.0%"]
+            - ["Feb 2025", "3270", "$327,000", "10.1%"]
+            - ["Mar 2025", "3600", "$360,000", "10.1%"]
+        timeout_ms: 30000
+        expected_ux_signals:
+          - data_entry_smoothness
+          - grid_responsiveness
+          - input_validation
+      
+      - action: click_copilot_icon
+        description: "Click Copilot icon in top ribbon to open chat pane"
+        selector: "[aria-label*='Copilot'], [title*='Copilot'], .copilot-button, [data-testid*='copilot']"
+        timeout_ms: 10000
+        expected_ux_signals:
+          - copilot_pane_animation
+          - pane_positioning
+          - interface_responsiveness
+          - ai_trust_building
+      
+      - action: wait_for_copilot_pane
+        description: "Wait for Copilot chat pane to fully load"
+        timeout_ms: 8000
+        expected_ux_signals:
+          - loading_performance
+          - ai_interface_quality
+          - conversation_flow_readiness
+      
+      - action: type_copilot_prompt
+        description: "Enter prompt to create chart from data"
+        prompt: "Create a chart using the sales data on this sheet"
+        timeout_ms: 15000
+        expected_ux_signals:
+          - prompt_input_quality
+          - ai_understanding_indicators
+          - conversation_flow_smoothness
+          - trust_building_moments
+      
+      - action: wait_for_copilot_response
+        description: "Wait for Copilot to process and respond"
+        timeout_ms: 30000
+        expected_ux_signals:
+          - ai_processing_indicators
+          - response_time_quality
+          - trust_maintenance
+          - frustration_prevention
+      
+      - action: verify_chart_generation
+        description: "Verify chart was generated and displayed"
+        timeout_ms: 15000
+        expected_ux_signals:
+          - chart_quality_assessment
+          - ai_integration_smoothness
+          - user_satisfaction_indicators
+          - workflow_completion_quality
+      
+      - action: take_final_screenshot
+        description: "Capture final state with generated chart"
+        timeout_ms: 5000
+        expected_ux_signals:
+          - overall_ai_experience
+          - visual_evidence_quality
+          - craft_bug_detection_opportunities
+
+    ai_specific_detection_focus:
+      - copilot_pane_management
+      - ai_trust_and_transparency
+      - conversation_flow_quality
+      - chart_generation_integration
+      - frustration_prevention
+      - workflow_disruption_assessment
+
+    expected_craft_bugs:
+      - ai_pane_positioning_issues
+      - conversation_flow_interruptions
+      - chart_integration_problems
+      - trust_breaking_moments
+      - ai_response_quality_issues
+      - workflow_disruption_patterns

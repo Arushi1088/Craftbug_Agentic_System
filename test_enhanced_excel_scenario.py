@@ -10,7 +10,7 @@ how well it detects Craft bugs with all the new capabilities.
 import asyncio
 import json
 from datetime import datetime
-from enhanced_ux_analyzer import EnhancedUXAnalyzer
+from ai_driven_analyzer import AIDrivenAnalyzer
 from excel_scenario_telemetry import ExcelScenarioTelemetry
 
 async def test_enhanced_excel_scenario():
@@ -20,7 +20,7 @@ async def test_enhanced_excel_scenario():
     print("=" * 70)
     
     # Initialize the enhanced analyzer
-    analyzer = EnhancedUXAnalyzer()
+    analyzer = AIDrivenAnalyzer()
     
     # Initialize scenario telemetry
     telemetry = ExcelScenarioTelemetry()
