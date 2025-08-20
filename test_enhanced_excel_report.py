@@ -47,7 +47,7 @@ async def test_enhanced_excel_report():
                         content = f.read()
                     
                     # Check for screenshot elements
-                    if 'screenshot_path' in content:
+                    if 'src="/screenshots' in content:
                         print("✅ Report contains screenshot paths")
                     else:
                         print("⚠️  Report does not contain screenshot paths")
@@ -57,7 +57,7 @@ async def test_enhanced_excel_report():
                     else:
                         print("⚠️  Report does not contain 'Visual Evidence' sections")
                     
-                    if 'craft-bug' in content:
+                    if 'craft-bug' in content or 'Craft Bugs' in content:
                         print("✅ Report contains craft bug analysis")
                     else:
                         print("⚠️  Report does not contain craft bug analysis")
