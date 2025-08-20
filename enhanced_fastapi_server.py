@@ -84,13 +84,14 @@ try:
 except ImportError:
     print("⚠️ python-dotenv not available, using OS environment only")
 
-# Validate OpenAI API Key early (optional)
+# Validate OpenAI API Key early
 api_key = os.getenv("OPENAI_API_KEY")
 if api_key and api_key != "your-openai-api-key-here" and api_key.startswith("sk-"):
     print(f"✅ OpenAI API Key Loaded: {api_key[:8]}... (truncated)")
 else:
-    # Suppress warning - OpenAI API key is optional for core functionality
-    pass
+    print("⚠️ OpenAI API key not properly configured")
+    print("   Server will start but AI features may not work")
+    print("   Run: python3 validate_api_key.py for detailed diagnosis")
 
 # Import enhanced components
 from scenario_executor import ScenarioExecutor, get_available_scenarios
@@ -302,7 +303,6 @@ app.add_middleware(
 
 # Mount static files for serving screenshots
 app.mount("/reports", StaticFiles(directory="reports"), name="reports")
-app.mount("/screenshots", StaticFiles(directory="screenshots"), name="screenshots")
 
 # Include orchestrator routes if available
 if orchestrator_router:
@@ -2455,16 +2455,6 @@ if EXCEL_WEB_AVAILABLE:
             "message": "Excel Web integration is available"
         })
 
-    @app.get("/screenshots/{path:path}")
-    async def serve_screenshot(path: str):
-        """Serve screenshot files"""
-        import os
-        screenshot_path = os.path.join("screenshots", path)
-        if os.path.exists(screenshot_path):
-            return FileResponse(screenshot_path)
-        else:
-            raise HTTPException(status_code=404, detail="Screenshot not found")
-
     @app.post("/api/excel-web/ux-report")
     async def generate_excel_ux_report():
         """Generate Excel UX analysis report as HTML and save to file"""
@@ -2496,46 +2486,17 @@ if EXCEL_WEB_AVAILABLE:
             else:
                 telemetry_data = telemetry_result
             
-            # Fix: Handle nested telemetry structure
-            if 'telemetry' in telemetry_data:
-                logger.info("🔍 DEBUG: Found nested telemetry structure, extracting...")
-                telemetry_data = telemetry_data['telemetry']
-            
-            # Debug logging for telemetry data
-            logger.info(f"🔍 DEBUG: Telemetry data structure:")
-            logger.info(f"  - Type: {type(telemetry_data)}")
-            logger.info(f"  - Keys: {list(telemetry_data.keys()) if isinstance(telemetry_data, dict) else 'Not a dict'}")
-            logger.info(f"  - Steps count: {len(telemetry_data.get('steps', []))}")
-            logger.info(f"  - Steps type: {type(telemetry_data.get('steps', []))}")
-            if telemetry_data.get('steps'):
-                logger.info(f"  - First step keys: {list(telemetry_data['steps'][0].keys())}")
-            
-            # Always run enhanced UX analysis for better Craft bug detection
-            logger.info("🔍 Running enhanced UX analysis with all new capabilities...")
-            try:
+            # Check if UX analysis is already included in telemetry result
+            if 'ux_analysis' in telemetry_result:
+                logger.info("🔍 Using existing UX analysis results...")
+                ux_analysis = telemetry_result['ux_analysis']
+            elif 'ux_analysis_results' in telemetry_data:
+                logger.info("🔍 Using existing UX analysis results from telemetry...")
+                ux_analysis = telemetry_data['ux_analysis_results']
+            else:
+                logger.info("🔍 Analyzing UX data with enhanced analyzer...")
                 ux_analyzer = EnhancedUXAnalyzer()
                 ux_analysis = await ux_analyzer.analyze_scenario_with_enhanced_data(telemetry_data)
-                
-                # Debug logging to see what we're getting
-                logger.info(f"🔍 DEBUG: Enhanced analysis result keys: {list(ux_analysis.keys())}")
-                logger.info(f"🔍 DEBUG: Enhanced craft bugs type: {type(ux_analysis.get('enhanced_craft_bugs'))}")
-                logger.info(f"🔍 DEBUG: Enhanced craft bugs length: {len(ux_analysis.get('enhanced_craft_bugs', []))}")
-                
-                logger.info(f"✅ Enhanced analysis completed. Enhanced craft bugs found: {len(ux_analysis.get('enhanced_craft_bugs', []))}")
-            except Exception as e:
-                logger.error(f"❌ Enhanced analysis failed: {e}")
-                # Fallback to basic analysis
-                ux_analysis = telemetry_data.get('ux_analysis_results', {})
-                ux_analysis['craft_bugs'] = []
-                ux_analysis['enhanced_analysis_error'] = str(e)
-            
-            # Merge with existing basic analysis if available
-            if 'ux_analysis_results' in telemetry_data:
-                logger.info("🔍 Merging with existing basic analysis...")
-                basic_analysis = telemetry_data['ux_analysis_results']
-                # Combine basic and enhanced analysis
-                ux_analysis['base_craft_bugs'] = basic_analysis.get('base_craft_bugs', [])
-                ux_analysis['base_craft_bug_count'] = basic_analysis.get('base_craft_bug_count', 0)
             
             # Generate HTML report
             logger.info("📄 Generating HTML report...")
@@ -2550,19 +2511,8 @@ if EXCEL_WEB_AVAILABLE:
                 template = Template(template_content)
                 
                 # Prepare data for template
-                # Get both base and enhanced craft bugs
-                base_craft_bugs = ux_analysis.get("base_craft_bugs", [])
-                enhanced_craft_bugs = ux_analysis.get("enhanced_craft_bugs", [])
-                craft_bugs = base_craft_bugs + enhanced_craft_bugs
+                craft_bugs = ux_analysis.get("craft_bugs", [])
                 ux_score = ux_analysis.get("ux_score", 0)
-                
-                # Debug logging for template data
-                logger.info(f"🔍 DEBUG: Template data preparation:")
-                logger.info(f"  - Base craft bugs: {len(base_craft_bugs)}")
-                logger.info(f"  - Enhanced craft bugs: {len(enhanced_craft_bugs)}")
-                logger.info(f"  - Total craft bugs: {len(craft_bugs)}")
-                logger.info(f"  - UX score: {ux_score}")
-                logger.info(f"  - Steps count: {len(telemetry_data.get('steps', []))}")
                 
                 # Determine UX score class for styling
                 if ux_score >= 80:
@@ -2676,7 +2626,7 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
         # Import telemetry wrapper
         try:
             from excel_scenario_telemetry import run_scenario_with_telemetry
-            from simple_ux_analyzer import analyze_scenario_with_telemetry
+            from enhanced_ux_analyzer import EnhancedUXAnalyzer
         except ImportError as e:
             logger.error(f"❌ Failed to import telemetry modules: {e}")
             raise HTTPException(status_code=500, detail="Telemetry modules not available")
@@ -2690,9 +2640,10 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
             logger.error(f"❌ Scenario execution failed: {error_msg}")
             raise HTTPException(status_code=500, detail=f"Scenario execution failed: {error_msg}")
         
-        # Analyze telemetry data
-        logger.info("🔍 Analyzing telemetry data...")
-        analysis_result = analyze_scenario_with_telemetry(telemetry_result)
+        # Analyze telemetry data with enhanced analyzer
+        logger.info("🔍 Analyzing telemetry data with enhanced analyzer...")
+        enhanced_analyzer = EnhancedUXAnalyzer()
+        analysis_result = await enhanced_analyzer.analyze_scenario_with_enhanced_data(telemetry_result)
         
         # Generate comprehensive report
         report_data = {
