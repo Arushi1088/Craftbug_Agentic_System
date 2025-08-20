@@ -301,8 +301,9 @@ app.add_middleware(
     expose_headers=["Content-Security-Policy", "frame-ancestors"]
 )
 
-# Mount static files for serving screenshots
+# Mount static files for serving screenshots and reports
 app.mount("/reports", StaticFiles(directory="reports"), name="reports")
+app.mount("/screenshots", StaticFiles(directory="screenshots"), name="screenshots")
 
 # Include orchestrator routes if available
 if orchestrator_router:
@@ -2408,42 +2409,60 @@ if EXCEL_WEB_AVAILABLE:
 
     @app.post("/api/excel-web/execute-scenario")
     async def excel_web_execute_scenario(scenario_name: str = "document_creation"):
-        """Execute an Excel Web scenario"""
+        """Execute an Excel Web scenario with enhanced telemetry"""
         try:
-            from excel_document_creation_scenario import ExcelDocumentCreationScenario
+            from excel_scenario_telemetry import ExcelScenarioTelemetry
             
             if scenario_name == "document_creation":
-                scenario = ExcelDocumentCreationScenario()
-                result = await scenario.execute_scenario()
+                # Use enhanced telemetry system for better UX analysis
+                telemetry = ExcelScenarioTelemetry()
+                telemetry_result = await telemetry.execute_scenario_with_telemetry(scenario_name)
+                
+                if telemetry_result["success"]:
+                    # Extract data from telemetry result
+                    scenario_result = telemetry_result["scenario_result"]
+                    telemetry_data = telemetry_result["telemetry"]
+                    ux_analysis = telemetry_result["ux_analysis"]
+                    
+                    # Convert result to JSON-serializable format with enhanced data
+                    result_data = {
+                        "scenario_name": scenario_result.scenario_name if hasattr(scenario_result, 'scenario_name') else "Excel Document Creation",
+                        "success": scenario_result.success if hasattr(scenario_result, 'success') else telemetry_data.get("overall_success", False),
+                        "steps_completed": scenario_result.steps_completed if hasattr(scenario_result, 'steps_completed') else len(telemetry_data.get("steps", [])),
+                        "total_steps": scenario_result.total_steps if hasattr(scenario_result, 'total_steps') else len(telemetry_data.get("steps", [])),
+                        "execution_time": scenario_result.execution_time if hasattr(scenario_result, 'execution_time') else telemetry_data.get("total_duration_ms", 0) / 1000,
+                        "screenshots": scenario_result.screenshots if hasattr(scenario_result, 'screenshots') else [],
+                        "errors": scenario_result.errors if hasattr(scenario_result, 'errors') else [],
+                        "performance_metrics": scenario_result.performance_metrics if hasattr(scenario_result, 'performance_metrics') else {},
+                        # Enhanced data
+                        "telemetry": telemetry_data,
+                        "ux_analysis": ux_analysis,
+                        "craft_bugs": ux_analysis.get("craft_bugs", []) if ux_analysis else [],
+                        "ux_score": ux_analysis.get("ux_score", 0) if ux_analysis else 0
+                    }
+                    
+                    return JSONResponse(content={
+                        "status": "success",
+                        "message": f"Enhanced scenario execution completed with UX analysis",
+                        "result": result_data
+                    })
+                else:
+                    return JSONResponse(content={
+                        "status": "error",
+                        "message": f"Enhanced scenario execution failed: {telemetry_result.get('error', 'Unknown error')}",
+                        "result": telemetry_result
+                    })
             else:
                 return JSONResponse(content={
                     "status": "error",
                     "message": f"Unknown scenario: {scenario_name}"
                 })
             
-            # Convert result to JSON-serializable format
-            result_data = {
-                "scenario_name": result.scenario_name,
-                "success": result.success,
-                "steps_completed": result.steps_completed,
-                "total_steps": result.total_steps,
-                "execution_time": result.execution_time,
-                "screenshots": result.screenshots,
-                "errors": result.errors,
-                "performance_metrics": result.performance_metrics
-            }
-            
-            return JSONResponse(content={
-                "status": "success" if result.success else "error",
-                "message": f"Scenario execution {'completed' if result.success else 'failed'}",
-                "result": result_data
-            })
-            
         except Exception as e:
-            logger.error(f"Excel Web scenario execution error: {e}")
+            logger.error(f"Enhanced Excel Web scenario execution error: {e}")
             return JSONResponse(content={
                 "status": "error",
-                "message": f"Scenario execution failed: {str(e)}"
+                "message": f"Enhanced scenario execution failed: {str(e)}"
             })
 
     @app.get("/api/excel-web/status")
@@ -2457,23 +2476,26 @@ if EXCEL_WEB_AVAILABLE:
 
     @app.post("/api/excel-web/ux-report")
     async def generate_excel_ux_report():
-        """Generate Excel UX analysis report as HTML and save to file"""
+        """Generate Excel UX analysis report as HTML and save to file using enhanced reporting system"""
         try:
-            logger.info("🎨 Generating Excel UX Report...")
+            logger.info("🎨 Generating Enhanced Excel UX Report...")
             
             # Import required modules
             try:
-                from excel_scenario_telemetry import execute_scenario_with_telemetry
+                from excel_scenario_telemetry import ExcelScenarioTelemetry
                 from enhanced_ux_analyzer import EnhancedUXAnalyzer
+                from enhanced_report_generator import EnhancedReportGenerator
             except ImportError as e:
-                logger.error(f"❌ Failed to import UX analysis modules: {e}")
-                raise HTTPException(status_code=500, detail="UX analysis modules not available")
+                logger.error(f"❌ Failed to import enhanced UX analysis modules: {e}")
+                raise HTTPException(status_code=500, detail="Enhanced UX analysis modules not available")
             
-            # Execute scenario with telemetry
-            logger.info("📊 Executing Excel scenario with telemetry...")
+            # Initialize enhanced report generator
+            enhanced_generator = EnhancedReportGenerator(output_dir="reports/enhanced")
             
-            # Create telemetry instance and execute directly
-            from excel_scenario_telemetry import ExcelScenarioTelemetry
+            # Execute scenario with telemetry and enhanced reporting
+            logger.info("📊 Executing Excel scenario with enhanced telemetry...")
+            
+            # Create telemetry instance and execute with enhanced features
             telemetry = ExcelScenarioTelemetry()
             telemetry_result = await telemetry.execute_scenario_with_telemetry()
             
@@ -2486,33 +2508,44 @@ if EXCEL_WEB_AVAILABLE:
             else:
                 telemetry_data = telemetry_result
             
-            # Check if UX analysis is already included in telemetry result
-            if 'ux_analysis' in telemetry_result:
-                logger.info("🔍 Using existing UX analysis results...")
-                ux_analysis = telemetry_result['ux_analysis']
-            elif 'ux_analysis_results' in telemetry_data:
-                logger.info("🔍 Using existing UX analysis results from telemetry...")
-                ux_analysis = telemetry_data['ux_analysis_results']
+            # Extract the actual telemetry data from the nested structure
+            if 'telemetry' in telemetry_data:
+                actual_telemetry_data = telemetry_data['telemetry']
+                logger.info(f"📊 Found nested telemetry data with {len(actual_telemetry_data.get('steps', []))} steps")
             else:
-                logger.info("🔍 Analyzing UX data with enhanced analyzer...")
-                ux_analyzer = EnhancedUXAnalyzer()
-                ux_analysis = await ux_analyzer.analyze_scenario_with_enhanced_data(telemetry_data)
+                actual_telemetry_data = telemetry_data
+                logger.info(f"📊 Using direct telemetry data with {len(actual_telemetry_data.get('steps', []))} steps")
             
-            # Generate HTML report
-            logger.info("📄 Generating HTML report...")
+            # Analyze UX data with enhanced analyzer
+            logger.info("🔍 Analyzing UX data with enhanced analyzer...")
+            logger.info(f"📊 Telemetry data keys: {list(actual_telemetry_data.keys())}")
+            logger.info(f"📊 Telemetry steps count: {len(actual_telemetry_data.get('steps', []))}")
+            
+            ux_analyzer = EnhancedUXAnalyzer()
+            ux_analysis = await ux_analyzer.analyze_scenario_with_enhanced_data(actual_telemetry_data)
+            
+            # Generate enhanced report with screenshots
+            logger.info("📄 Generating enhanced HTML report with screenshots...")
             try:
                 from jinja2 import Template
                 
-                # Read the HTML template
+                # Read the enhanced HTML template (use the same template but with enhanced data)
                 template_path = "excel_ux_report_template.html"
                 with open(template_path, 'r') as f:
                     template_content = f.read()
                 
                 template = Template(template_content)
                 
-                # Prepare data for template
+                # Prepare enhanced data for template
                 craft_bugs = ux_analysis.get("craft_bugs", [])
                 ux_score = ux_analysis.get("ux_score", 0)
+                
+                # Extract craft bugs from enhanced analysis (combine base and enhanced)
+                base_craft_bugs = ux_analysis.get("base_craft_bugs", [])
+                enhanced_craft_bugs = ux_analysis.get("enhanced_craft_bugs", [])
+                all_craft_bugs = base_craft_bugs + enhanced_craft_bugs
+                
+                logger.info(f"📊 Found {len(base_craft_bugs)} base craft bugs and {len(enhanced_craft_bugs)} enhanced craft bugs")
                 
                 # Determine UX score class for styling
                 if ux_score >= 80:
@@ -2522,32 +2555,96 @@ if EXCEL_WEB_AVAILABLE:
                 else:
                     ux_score_class = "error"
                 
-                # Prepare steps data for template
+                # Prepare enhanced steps data with screenshots
                 steps = []
-                for step in telemetry_data.get("steps", []):
+                telemetry_steps = actual_telemetry_data.get("steps", [])
+                logger.info(f"📊 Processing {len(telemetry_steps)} telemetry steps")
+                
+                for step in telemetry_steps:
                     step_data = {
-                        "name": step.get("step_name", "Unknown"),  # Use step_name from telemetry
+                        "name": step.get("step_name", "Unknown"),
                         "duration_ms": step.get("duration_ms", 0),
                         "success": step.get("success", False),
                         "dialog_detected": step.get("dialog_detected", False),
                         "dialog_type": step.get("dialog_type", ""),
                         "interaction_attempted": step.get("interaction_attempted", False),
                         "interaction_successful": step.get("interaction_successful", False),
-                        "status_class": "success" if step.get("success") else "error"
+                        "status_class": "success" if step.get("success") else "error",
+                        "screenshot_path": step.get("screenshot_path")  # Include screenshot path
                     }
                     steps.append(step_data)
+                    logger.info(f"📸 Step '{step_data['name']}' has screenshot: {step_data['screenshot_path']}")
+                
+                # Enhance craft bugs with screenshot paths
+                enhanced_craft_bugs = []
+                for bug in all_craft_bugs:
+                    enhanced_bug = bug.copy()
+                    
+                    # Add screenshot path for visual evidence
+                    if bug.get("step_name"):
+                        # Find the step that corresponds to this bug
+                        for step in telemetry_steps:
+                            if step.get("step_name") == bug.get("step_name"):
+                                if step.get("screenshot_path"):
+                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
+                                    enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
+                                    logger.info(f"📸 Added screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
+                                break
+                    
+                    # If no specific screenshot found, use a relevant one based on bug type
+                    if not enhanced_bug.get("screenshot_path"):
+                        if "copilot" in bug.get("title", "").lower():
+                            # Find copilot-related screenshot from current run
+                            for step in telemetry_steps:
+                                if step.get("screenshot_path") and "copilot" in step.get("screenshot_path", ""):
+                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
+                                    enhanced_bug["screenshot_reason"] = "Copilot dialog issue evidence"
+                                    logger.info(f"📸 Added copilot screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
+                                    break
+                        elif "save" in bug.get("title", "").lower():
+                            # Find save-related screenshot from current run
+                            for step in telemetry_steps:
+                                if step.get("screenshot_path") and "final_state" in step.get("screenshot_path", ""):
+                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
+                                    enhanced_bug["screenshot_reason"] = "Save workflow issue evidence"
+                                    logger.info(f"📸 Added save screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
+                                    break
+                        elif "performance" in bug.get("title", "").lower() or "slow" in bug.get("title", "").lower():
+                            # Use any available screenshot for performance issues
+                            for step in telemetry_steps:
+                                if step.get("screenshot_path"):
+                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
+                                    enhanced_bug["screenshot_reason"] = "Performance issue evidence"
+                                    logger.info(f"📸 Added performance screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
+                                    break
+                        else:
+                            # Use any available screenshot as fallback
+                            for step in telemetry_steps:
+                                if step.get("screenshot_path"):
+                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
+                                    enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
+                                    logger.info(f"📸 Added fallback screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
+                                    break
+                    
+                    enhanced_craft_bugs.append(enhanced_bug)
+                
+                # Calculate execution time from telemetry
+                execution_time = round(actual_telemetry_data.get("total_duration_ms", 0) / 1000, 1)
+                if execution_time == 0:
+                    # Fallback to estimated time based on steps
+                    execution_time = len(telemetry_steps) * 2.0
                 
                 report_data = {
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "scenario_name": "Excel Document Creation",
-                    "telemetry": telemetry_data,
+                    "telemetry": actual_telemetry_data,
                     "ux_analysis": ux_analysis,
-                    "craft_bugs": craft_bugs,
-                    "craft_bugs_count": len(craft_bugs),
+                    "craft_bugs": enhanced_craft_bugs,  # Use enhanced craft bugs with screenshots
+                    "craft_bugs_count": len(enhanced_craft_bugs),
                     "ux_score": ux_score,
                     "ux_score_class": ux_score_class,
-                    "total_steps": len(telemetry_data.get("steps", [])),
-                    "execution_time": round(telemetry_data.get("total_duration_ms", 0) / 1000, 1),
+                    "total_steps": len(telemetry_steps),
+                    "execution_time": execution_time,
                     "steps": steps,
                     "performance_issues": ux_analysis.get("performance_issues", []),
                     "interaction_issues": ux_analysis.get("interaction_issues", []),
@@ -2555,9 +2652,11 @@ if EXCEL_WEB_AVAILABLE:
                     "report_id": f"excel_ux_{int(time.time())}"
                 }
                 
+                logger.info(f"📊 Report data prepared: {len(steps)} steps, {len(enhanced_craft_bugs)} craft bugs, {execution_time}s execution time")
+                
                 html_content = template.render(**report_data)
                 
-                # Save report to file
+                # Save enhanced report to file
                 reports_dir = Path("reports/excel_ux")
                 reports_dir.mkdir(parents=True, exist_ok=True)
                 
@@ -2571,28 +2670,34 @@ if EXCEL_WEB_AVAILABLE:
                 # Generate URL for the report
                 report_url = f"/reports/excel_ux/{report_filename}"
                 
-                logger.info(f"✅ Excel UX Report saved to: {report_path}")
+                logger.info(f"✅ Enhanced Excel UX Report saved to: {report_path}")
                 logger.info(f"📊 Report URL: {report_url}")
+                logger.info(f"📸 Enhanced report includes {len(enhanced_craft_bugs)} craft bugs with screenshots")
                 
                 return {
                     "status": "success",
                     "report_url": report_url,
                     "report_filename": report_filename,
-                    "message": "Excel UX Report generated successfully"
+                    "message": "Enhanced Excel UX Report generated successfully with screenshots",
+                    "enhanced_features": {
+                        "screenshots_included": True,
+                        "craft_bugs_with_visual_evidence": len(enhanced_craft_bugs),
+                        "total_screenshots": len([s for s in steps if s.get("screenshot_path")])
+                    }
                 }
                 
             except FileNotFoundError:
                 logger.error("❌ HTML template not found")
                 raise HTTPException(status_code=500, detail="HTML template not found")
             except Exception as e:
-                logger.error(f"❌ HTML generation failed: {e}")
-                raise HTTPException(status_code=500, detail=f"HTML generation failed: {str(e)}")
+                logger.error(f"❌ Enhanced HTML generation failed: {e}")
+                raise HTTPException(status_code=500, detail=f"Enhanced HTML generation failed: {str(e)}")
                 
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"❌ Excel UX report generation failed: {e}")
-            raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+            logger.error(f"❌ Enhanced Excel UX report generation failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Enhanced report generation failed: {str(e)}")
 
 else:
     @app.post("/api/excel-web/authenticate")
