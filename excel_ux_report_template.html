@@ -259,6 +259,7 @@
         .badge.high { background: #fee2e2; color: #dc2626; }
         .badge.medium { background: #fef3c7; color: #d97706; }
         .badge.low { background: #fefce8; color: #ca8a04; }
+        .badge.secondary { background: #e5e7eb; color: #374151; }
         
         @media (max-width: 768px) {
             .container { padding: 10px; }
@@ -346,37 +347,235 @@
             </div>
         </div>
         
-        <!-- Craft Bug Analysis -->
+        <!-- Enhanced Craft Bug Analysis -->
         <div class="section">
-            <h2>🚨 Craft Bug Analysis</h2>
-            <p>Issues identified by the Synthetic UX Designer persona:</p>
+            <h2>🚨 Enhanced Craft Bug Analysis</h2>
+            <p>Comprehensive issues identified by the Synthetic UX Designer persona with detailed analysis:</p>
             
             {% for bug in craft_bugs %}
             <div class="craft-bug {{bug.severity.lower()}}">
-                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h4 style="margin: 0;">{{bug.title}}</h4>
-                    <span class="badge {{bug.severity.lower()}}">{{bug.severity}}</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span class="badge {{bug.severity.lower()}}">{{bug.severity}}</span>
+                        {% if bug.type %}
+                        <span class="badge secondary">{{bug.type}}</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <p><strong>Category:</strong> {{bug.category}}</p>
-                <p><strong>Description:</strong> {{bug.description}}</p>
-                {% if bug.step_name %}
-                <p><strong>Step:</strong> {{bug.step_name}}</p>
+                
+                <!-- Enhanced bug information display -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                    <div>
+                        <p><strong>Category:</strong> {{bug.category}}</p>
+                        <p><strong>Description:</strong> {{bug.description}}</p>
+                        {% if bug.step_name %}
+                        <p><strong>Step:</strong> {{bug.step_name}}</p>
+                        {% endif %}
+                        {% if bug.type %}
+                        <p><strong>Type:</strong> {{bug.type}}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if bug.location and bug.location.screen_position %}
+                        <p><strong>Location:</strong> {{bug.location.screen_position}}</p>
+                        {% endif %}
+                        {% if bug.location and bug.location.ui_path %}
+                        <p><strong>UI Path:</strong> {{bug.location.ui_path}}</p>
+                        {% endif %}
+                        {% if bug.location and bug.location.element %}
+                        <p><strong>Element:</strong> {{bug.location.element}}</p>
+                        {% endif %}
+                        {% if bug.context and bug.context.user_action %}
+                        <p><strong>User Action:</strong> {{bug.context.user_action}}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Enhanced location details -->
+                {% if bug.location %}
+                <div style="background: #e8f4fd; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0; color: #1976d2;">📍 Exact Location</h5>
+                    {% if bug.location.screen_position %}
+                    <p><strong>Screen Position:</strong> {{bug.location.screen_position}}</p>
+                    {% endif %}
+                    {% if bug.location.ui_path %}
+                    <p><strong>UI Path:</strong> {{bug.location.ui_path}}</p>
+                    {% endif %}
+                    {% if bug.location.element %}
+                    <p><strong>Element:</strong> {{bug.location.element}}</p>
+                    {% endif %}
+                    {% if bug.location.visual_context %}
+                    <p><strong>Visual Context:</strong> {{bug.location.visual_context}}</p>
+                    {% endif %}
+                    {% if bug.location.coordinates %}
+                    <p><strong>Coordinates:</strong> {{bug.location.coordinates}}</p>
+                    {% endif %}
+                </div>
                 {% endif %}
-                {% if bug.recommendation %}
+
+                <!-- Detailed context information -->
+                {% if bug.context %}
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0; color: #666;">📋 Step Context</h5>
+                    {% if bug.context.scenario_step %}
+                    <p><strong>Scenario Step:</strong> {{bug.context.scenario_step}}</p>
+                    {% endif %}
+                    {% if bug.context.user_action %}
+                    <p><strong>User Action:</strong> {{bug.context.user_action}}</p>
+                    {% endif %}
+                    {% if bug.context.expected_behavior %}
+                    <p><strong>Expected Behavior:</strong> {{bug.context.expected_behavior}}</p>
+                    {% endif %}
+                    {% if bug.context.actual_behavior %}
+                    <p><strong>Actual Behavior:</strong> {{bug.context.actual_behavior}}</p>
+                    {% endif %}
+                    {% if bug.context.timing_in_scenario %}
+                    <p><strong>Timing in Scenario:</strong> {{bug.context.timing_in_scenario}}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Precise measurements and technical details -->
+                {% if bug.measurements %}
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0; color: #1976d2;">📏 Precise Measurements</h5>
+                    {% if bug.measurements.interaction %}
+                    <p><strong>Interaction:</strong> {{bug.measurements.interaction}}</p>
+                    {% endif %}
+                    {% if bug.measurements.visual %}
+                    <p><strong>Visual:</strong> {{bug.measurements.visual}}</p>
+                    {% endif %}
+                    {% if bug.measurements.accessibility %}
+                    <p><strong>Accessibility:</strong> {{bug.measurements.accessibility}}</p>
+                    {% endif %}
+                    {% if bug.measurements.usability %}
+                    <p><strong>Usability:</strong> {{bug.measurements.usability}}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Enhanced reproduction steps -->
+                {% if bug.reproduction %}
+                <div style="background: #fff3e0; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0; color: #f57c00;">🔄 Reproduction Steps</h5>
+                    
+                    {% if bug.reproduction.prerequisites %}
+                    <div style="margin-bottom: 15px;">
+                        <h6 style="margin: 0 0 8px 0; color: #e65100;">Prerequisites:</h6>
+                        <div style="white-space: pre-line; font-family: monospace; font-size: 0.9em; background: #fff8e1; padding: 10px; border-radius: 4px;">
+                            {{bug.reproduction.prerequisites}}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if bug.reproduction.steps %}
+                    <div style="margin-bottom: 15px;">
+                        <h6 style="margin: 0 0 8px 0; color: #e65100;">Steps to Reproduce:</h6>
+                        <div style="white-space: pre-line; font-family: monospace; font-size: 0.9em; background: #fff8e1; padding: 10px; border-radius: 4px;">
+                            {{bug.reproduction.steps}}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if bug.reproduction.expected_result or bug.reproduction.actual_result %}
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        {% if bug.reproduction.expected_result %}
+                        <div>
+                            <h6 style="margin: 0 0 8px 0; color: #2e7d32;">Expected Result:</h6>
+                            <p style="margin: 0; background: #e8f5e8; padding: 8px; border-radius: 4px;">{{bug.reproduction.expected_result}}</p>
+                        </div>
+                        {% endif %}
+                        {% if bug.reproduction.actual_result %}
+                        <div>
+                            <h6 style="margin: 0 0 8px 0; color: #c62828;">Actual Result:</h6>
+                            <p style="margin: 0; background: #ffebee; padding: 8px; border-radius: 4px;">{{bug.reproduction.actual_result}}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if bug.reproduction.reproduction_rate %}
+                    <div style="margin-top: 15px;">
+                        <h6 style="margin: 0 0 8px 0; color: #e65100;">Reproduction Rate:</h6>
+                        <p style="margin: 0; font-weight: bold;">{{bug.reproduction.reproduction_rate}}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Persona impact -->
+                {% if bug.impact %}
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0; color: #7b1fa2;">👥 User Impact</h5>
+                    {% if bug.impact.novice_users %}
+                    <p><strong>Novice Users:</strong> {{bug.impact.novice_users}}</p>
+                    {% endif %}
+                    {% if bug.impact.power_users %}
+                    <p><strong>Power Users:</strong> {{bug.impact.power_users}}</p>
+                    {% endif %}
+                    {% if bug.impact.super_fans %}
+                    <p><strong>Super Fans:</strong> {{bug.impact.super_fans}}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Enhanced developer action -->
+                {% if bug.developer_action %}
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h5 style="margin: 0 0 10px 0; color: #388e3c;">🔧 Developer Action</h5>
+                    {% if bug.developer_action.immediate_fix %}
+                    <div style="margin-bottom: 12px;">
+                        <h6 style="margin: 0 0 6px 0; color: #2e7d32;">Immediate Fix:</h6>
+                        <p style="margin: 0; background: #f1f8e9; padding: 10px; border-radius: 4px; border-left: 3px solid #4caf50;">{{bug.developer_action.immediate_fix}}</p>
+                    </div>
+                    {% endif %}
+                    {% if bug.developer_action.code_location %}
+                    <div style="margin-bottom: 12px;">
+                        <h6 style="margin: 0 0 6px 0; color: #2e7d32;">Code Location:</h6>
+                        <p style="margin: 0; font-family: monospace; background: #f5f5f5; padding: 8px; border-radius: 4px;">{{bug.developer_action.code_location}}</p>
+                    </div>
+                    {% endif %}
+                    {% if bug.developer_action.performance_target %}
+                    <div style="margin-bottom: 12px;">
+                        <h6 style="margin: 0 0 6px 0; color: #2e7d32;">Performance Target:</h6>
+                        <p style="margin: 0; background: #e3f2fd; padding: 8px; border-radius: 4px;">{{bug.developer_action.performance_target}}</p>
+                    </div>
+                    {% endif %}
+                    {% if bug.developer_action.testing_approach %}
+                    <div style="margin-bottom: 12px;">
+                        <h6 style="margin: 0 0 6px 0; color: #2e7d32;">Testing Approach:</h6>
+                        <p style="margin: 0; background: #fff3e0; padding: 8px; border-radius: 4px;">{{bug.developer_action.testing_approach}}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Legacy recommendation fallback -->
+                {% if bug.recommendation and not bug.developer_action %}
                 <p><strong>Recommendation:</strong> {{bug.recommendation}}</p>
                 {% endif %}
                 
-                <!-- Bug-specific screenshot if available -->
-                {% if bug.screenshot_path %}
-                <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
-                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #666;">
-                        📸 Visual Evidence: {{bug.screenshot_reason}}
-                    </p>
-                    <img src="{{bug.screenshot_path}}" alt="Bug screenshot" 
-                         style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;"
-                         onclick="openImageModal(this.src)">
-                </div>
-                {% endif %}
+                                  <!-- Bug-specific screenshot if available -->
+                  {% if bug.screenshot_data %}
+                  <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                      <p style="margin: 0 0 10px 0; font-weight: bold; color: #666;">
+                          📸 Visual Evidence: {{bug.screenshot_reason}}
+                      </p>
+                      <img src="{{bug.screenshot_data}}" alt="Bug screenshot" 
+                           style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;"
+                           onclick="openImageModal(this.src)">
+                  </div>
+                  {% elif bug.screenshot_path %}
+                  <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                      <p style="margin: 0 0 10px 0; font-weight: bold; color: #666;">
+                          📸 Visual Evidence: {{bug.screenshot_reason}}
+                      </p>
+                      <img src="{{bug.screenshot_path}}" alt="Bug screenshot" 
+                           style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;"
+                           onclick="openImageModal(this.src)">
+                  </div>
+                  {% endif %}
             </div>
             {% endfor %}
         </div>

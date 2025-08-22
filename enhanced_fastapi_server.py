@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
+import base64
 import json
 import uuid
 from datetime import datetime
@@ -2483,7 +2484,7 @@ if EXCEL_WEB_AVAILABLE:
             # Import required modules
             try:
                 from excel_scenario_telemetry import ExcelScenarioTelemetry
-                from enhanced_ux_analyzer import EnhancedUXAnalyzer
+                from llm_enhanced_analyzer import LLMEnhancedAnalyzer as EnhancedUXAnalyzer
                 from enhanced_report_generator import EnhancedReportGenerator
             except ImportError as e:
                 logger.error(f"❌ Failed to import enhanced UX analysis modules: {e}")
@@ -2522,7 +2523,28 @@ if EXCEL_WEB_AVAILABLE:
             logger.info(f"📊 Telemetry steps count: {len(actual_telemetry_data.get('steps', []))}")
             
             ux_analyzer = EnhancedUXAnalyzer()
-            ux_analysis = await ux_analyzer.analyze_scenario_with_enhanced_data(actual_telemetry_data)
+            
+            # Analyze each step individually with LLM ONLY
+            llm_bugs = []
+            total_llm_bugs = 0
+            
+            for step in actual_telemetry_data.get("steps", []):
+                step_analysis = await ux_analyzer.analyze_step_with_llm(step)
+                step_llm_bugs = step_analysis.get("llm_generated_bugs", [])
+                llm_bugs.extend(step_llm_bugs)
+                total_llm_bugs += len(step_llm_bugs)
+                logger.info(f"📊 Step '{step.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
+            
+            # Create analysis result with ONLY LLM bugs
+            ux_analysis = {
+                "llm_generated_bugs": llm_bugs,
+                "total_llm_bugs": total_llm_bugs,
+                "craft_bugs": [],  # Empty - no base bugs
+                "base_craft_bugs": [],  # Empty - no base bugs
+                "enhanced_craft_bugs": [],  # Empty - no enhanced bugs
+                "ux_score": 85,  # Default score
+                "llm_enhanced": True
+            }
             
             # Generate enhanced report with screenshots
             logger.info("📄 Generating enhanced HTML report with screenshots...")
@@ -2536,16 +2558,14 @@ if EXCEL_WEB_AVAILABLE:
                 
                 template = Template(template_content)
                 
-                # Prepare enhanced data for template
-                craft_bugs = ux_analysis.get("craft_bugs", [])
-                ux_score = ux_analysis.get("ux_score", 0)
+                # Prepare enhanced data for template - ONLY LLM bugs
+                ux_score = ux_analysis.get("ux_score", 85)
                 
-                # Extract craft bugs from enhanced analysis (combine base and enhanced)
-                base_craft_bugs = ux_analysis.get("base_craft_bugs", [])
-                enhanced_craft_bugs = ux_analysis.get("enhanced_craft_bugs", [])
-                all_craft_bugs = base_craft_bugs + enhanced_craft_bugs
+                # Use ONLY LLM-generated bugs (no base static bugs)
+                all_craft_bugs = ux_analysis.get("llm_generated_bugs", [])
+                total_llm_bugs = ux_analysis.get("total_llm_bugs", 0)
                 
-                logger.info(f"📊 Found {len(base_craft_bugs)} base craft bugs and {len(enhanced_craft_bugs)} enhanced craft bugs")
+                logger.info(f"📊 Found {total_llm_bugs} LLM-generated bugs (no base static bugs)")
                 
                 # Determine UX score class for styling
                 if ux_score >= 80:
@@ -2575,56 +2595,80 @@ if EXCEL_WEB_AVAILABLE:
                     steps.append(step_data)
                     logger.info(f"📸 Step '{step_data['name']}' has screenshot: {step_data['screenshot_path']}")
                 
-                # Enhance craft bugs with screenshot paths
+                # Enhance craft bugs with embedded screenshot data
                 enhanced_craft_bugs = []
                 for bug in all_craft_bugs:
                     enhanced_bug = bug.copy()
                     
-                    # Add screenshot path for visual evidence
+                    # Add screenshot data for visual evidence (embedded as base64)
                     if bug.get("step_name"):
                         # Find the step that corresponds to this bug
                         for step in telemetry_steps:
                             if step.get("step_name") == bug.get("step_name"):
                                 if step.get("screenshot_path"):
-                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                    logger.info(f"📸 Added screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
+                                    screenshot_path = step.get("screenshot_path")
+                                    # Embed screenshot as base64 data URL
+                                    try:
+                                        with open(screenshot_path, 'rb') as f:
+                                            screenshot_data = f.read()
+                                            screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
+                                            enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
+                                            enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
+                                            logger.info(f"📸 Embedded screenshot for bug '{bug.get('title')}': {screenshot_path}")
+                                    except Exception as e:
+                                        logger.warning(f"⚠️ Failed to embed screenshot {screenshot_path}: {e}")
+                                        enhanced_bug["screenshot_path"] = f"/{screenshot_path}"
+                                        enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
                                 break
                     
                     # If no specific screenshot found, use a relevant one based on bug type
-                    if not enhanced_bug.get("screenshot_path"):
-                        if "copilot" in bug.get("title", "").lower():
-                            # Find copilot-related screenshot from current run
-                            for step in telemetry_steps:
-                                if step.get("screenshot_path") and "copilot" in step.get("screenshot_path", ""):
-                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = "Copilot dialog issue evidence"
-                                    logger.info(f"📸 Added copilot screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
-                                    break
-                        elif "save" in bug.get("title", "").lower():
-                            # Find save-related screenshot from current run
-                            for step in telemetry_steps:
-                                if step.get("screenshot_path") and "final_state" in step.get("screenshot_path", ""):
-                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = "Save workflow issue evidence"
-                                    logger.info(f"📸 Added save screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
-                                    break
-                        elif "performance" in bug.get("title", "").lower() or "slow" in bug.get("title", "").lower():
-                            # Use any available screenshot for performance issues
-                            for step in telemetry_steps:
-                                if step.get("screenshot_path"):
-                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
-                                    enhanced_bug["screenshot_reason"] = "Performance issue evidence"
-                                    logger.info(f"📸 Added performance screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
-                                    break
-                        else:
-                            # Use any available screenshot as fallback
-                            for step in telemetry_steps:
-                                if step.get("screenshot_path"):
-                                    enhanced_bug["screenshot_path"] = f"/{step.get('screenshot_path')}"
+                    if not enhanced_bug.get("screenshot_data") and not enhanced_bug.get("screenshot_path"):
+                        # First, try to find any screenshot from the current run
+                        available_screenshots = [step for step in telemetry_steps if step.get("screenshot_path")]
+                        
+                        if available_screenshots:
+                            # Prioritize by bug type
+                            selected_screenshot = None
+                            
+                            if "copilot" in bug.get("title", "").lower():
+                                # Find copilot-related screenshot
+                                for step in available_screenshots:
+                                    if "copilot" in step.get("screenshot_path", ""):
+                                        selected_screenshot = step
+                                        break
+                            elif "performance" in bug.get("title", "").lower() or "slow" in bug.get("title", "").lower() or "delay" in bug.get("title", "").lower():
+                                # Find performance-related screenshot (usually initial state)
+                                for step in available_screenshots:
+                                    if "initial_state" in step.get("screenshot_path", ""):
+                                        selected_screenshot = step
+                                        break
+                            elif "save" in bug.get("title", "").lower():
+                                # Find save-related screenshot
+                                for step in available_screenshots:
+                                    if "final_state" in step.get("screenshot_path", ""):
+                                        selected_screenshot = step
+                                        break
+                            
+                            # If no type-specific screenshot found, use the first available one
+                            if not selected_screenshot:
+                                selected_screenshot = available_screenshots[0]
+                            
+                            # Embed the selected screenshot
+                            screenshot_path = selected_screenshot.get("screenshot_path")
+                            try:
+                                with open(screenshot_path, 'rb') as f:
+                                    screenshot_data = f.read()
+                                    screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
+                                    enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
                                     enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                    logger.info(f"📸 Added fallback screenshot for bug '{bug.get('title')}': {enhanced_bug['screenshot_path']}")
-                                    break
+                                    logger.info(f"📸 Embedded fallback screenshot for bug '{bug.get('title')}': {screenshot_path}")
+                            except Exception as e:
+                                logger.warning(f"⚠️ Failed to embed fallback screenshot {screenshot_path}: {e}")
+                                enhanced_bug["screenshot_path"] = f"/{screenshot_path}"
+                                enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
+                        else:
+                            logger.warning(f"⚠️ No screenshots available for bug '{bug.get('title')}'")
+
                     
                     enhanced_craft_bugs.append(enhanced_bug)
                 
@@ -2731,7 +2775,7 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
         # Import telemetry wrapper
         try:
             from excel_scenario_telemetry import run_scenario_with_telemetry
-            from enhanced_ux_analyzer import EnhancedUXAnalyzer
+            from llm_enhanced_analyzer import LLMEnhancedAnalyzer as EnhancedUXAnalyzer
         except ImportError as e:
             logger.error(f"❌ Failed to import telemetry modules: {e}")
             raise HTTPException(status_code=500, detail="Telemetry modules not available")
