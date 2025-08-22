@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-def test_with_visual_issues():
+async def test_with_visual_issues():
     """Test with a screenshot that has visual issues"""
     
     print("🧪 TESTING WITH VISUAL ISSUES")
@@ -56,7 +56,7 @@ def test_with_visual_issues():
         analyzer = LLMEnhancedAnalyzer()
         print("🤖 Running analysis on screenshot with potential visual issues...")
         
-        llm_bugs = analyzer.analyze_step_with_llm(test_step)
+        llm_bugs = await analyzer.analyze_step_with_llm(test_step)
         
         print(f"📊 Found {len(llm_bugs)} bugs")
         
@@ -110,5 +110,6 @@ def test_with_visual_issues():
         traceback.print_exc()
 
 if __name__ == "__main__":
-    test_with_visual_issues()
+    import asyncio
+    asyncio.run(test_with_visual_issues())
 

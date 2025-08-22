@@ -375,6 +375,15 @@ class ExcelScenarioTelemetry:
             # Convert telemetry to UX analyzer format
             ux_data = self._prepare_ux_data()
             
+            # Add screenshot paths to the UX data for the enhanced analyzer
+            screenshot_paths = []
+            for step in self.telemetry.steps:
+                if hasattr(step, 'screenshot_path') and step.screenshot_path:
+                    screenshot_paths.append(step.screenshot_path)
+            
+            # Add screenshot paths to UX data
+            ux_data['screenshot_paths'] = screenshot_paths
+            
             # Run enhanced analysis
             results = await self.ux_analyzer.analyze_scenario_with_enhanced_data(ux_data)
             
@@ -409,7 +418,8 @@ class ExcelScenarioTelemetry:
                 "dialog_type": step.dialog_type,
                 "interaction_attempted": step.interaction_attempted,
                 "interaction_successful": step.interaction_successful,
-                "ui_signals": step.ui_signals or {}
+                "ui_signals": step.ui_signals or {},
+                "screenshot_path": getattr(step, 'screenshot_path', None)  # Add screenshot path
             }
             ux_data["steps"].append(step_data)
         

@@ -2522,18 +2522,28 @@ if EXCEL_WEB_AVAILABLE:
             logger.info(f"📊 Telemetry data keys: {list(actual_telemetry_data.keys())}")
             logger.info(f"📊 Telemetry steps count: {len(actual_telemetry_data.get('steps', []))}")
             
+            # Use the EXACT SAME working logic from enhanced_ux_analyzer.py
+            from enhanced_ux_analyzer import EnhancedUXAnalyzer
+            
+            # Create the same analyzer that's working
             ux_analyzer = EnhancedUXAnalyzer()
             
-            # Analyze each step individually with LLM ONLY
-            llm_bugs = []
-            total_llm_bugs = 0
+            # Use the EXACT SAME logic that's working in enhanced_ux_analyzer.py
+            # Convert telemetry data to the same format
+            telemetry_data = {
+                'steps': actual_telemetry_data.get('steps', []),
+                'scenario_name': actual_telemetry_data.get('scenario_name', 'Excel Document Creation'),
+                'total_duration_ms': actual_telemetry_data.get('total_duration_ms', 0)
+            }
             
-            for step in actual_telemetry_data.get("steps", []):
-                step_analysis = await ux_analyzer.analyze_step_with_llm(step)
-                step_llm_bugs = step_analysis.get("llm_generated_bugs", [])
-                llm_bugs.extend(step_llm_bugs)
-                total_llm_bugs += len(step_llm_bugs)
-                logger.info(f"📊 Step '{step.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
+            # Run the EXACT SAME analysis that's working
+            enhanced_analysis = await ux_analyzer.analyze_scenario_with_enhanced_data(telemetry_data)
+            
+            # Extract the LLM bugs from the working analysis
+            llm_bugs = enhanced_analysis.get('llm_generated_bugs', [])
+            total_llm_bugs = enhanced_analysis.get('total_llm_bugs', 0)
+            
+            logger.info(f"📊 Using working enhanced_ux_analyzer.py logic - found {total_llm_bugs} LLM bugs")
             
             # Create analysis result with ONLY LLM bugs
             ux_analysis = {
@@ -2617,7 +2627,7 @@ if EXCEL_WEB_AVAILABLE:
                                             logger.info(f"📸 Embedded screenshot for bug '{bug.get('title')}': {screenshot_path}")
                                     except Exception as e:
                                         logger.warning(f"⚠️ Failed to embed screenshot {screenshot_path}: {e}")
-                                        enhanced_bug["screenshot_path"] = f"/{screenshot_path}"
+                                        enhanced_bug["screenshot_path"] = screenshot_path
                                         enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
                                 break
                     
@@ -2664,7 +2674,7 @@ if EXCEL_WEB_AVAILABLE:
                                     logger.info(f"📸 Embedded fallback screenshot for bug '{bug.get('title')}': {screenshot_path}")
                             except Exception as e:
                                 logger.warning(f"⚠️ Failed to embed fallback screenshot {screenshot_path}: {e}")
-                                enhanced_bug["screenshot_path"] = f"/{screenshot_path}"
+                                enhanced_bug["screenshot_path"] = screenshot_path
                                 enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
                         else:
                             logger.warning(f"⚠️ No screenshots available for bug '{bug.get('title')}'")

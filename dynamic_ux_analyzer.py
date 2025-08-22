@@ -252,10 +252,10 @@ class DynamicUXAnalyzer:
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=800
+                temperature=float(os.getenv('OPENAI_TEMPERATURE', '0.3')),
+                max_tokens=int(os.getenv('OPENAI_MAX_TOKENS', '800'))
             )
             
             content = response.choices[0].message.content.strip()

@@ -33,7 +33,7 @@ class LLMEnhancedAnalyzer:
     def __init__(self):
         """Initialize the LLM-enhanced analyzer"""
         self.enable_llm = True
-        self.llm_model = "gpt-4o"
+        self.llm_model = "gpt-5-nano"
         self.llm_temperature = 0.1
         self.llm_max_tokens = 2000
         
@@ -54,157 +54,477 @@ class LLMEnhancedAnalyzer:
         return {
             'comprehensive_visual_analysis': """# COMPREHENSIVE STATIC VISUAL UX ANALYSIS
 
-You are analyzing a static screenshot of a web interface. You can ONLY report issues that are VISUALLY OBSERVABLE in this single image. Do NOT invent interactions, performance issues, or user actions that cannot be seen.
+You are an expert UX Designer with 15+ years at Microsoft analyzing Excel Web screenshots for craft bugs. Provide ACTIONABLE bug reports that developers can immediately act upon.
 
-## CONTEXT:
-- Step: {step_name}
-- Scenario: {scenario_description}
-- Persona: {persona_type}
-- Screenshot: Static image of the current UI state
+## SCREENSHOT CONTEXT:
+- Scenario: {scenario_name}
+- Step: {step_number} of {total_steps}
+- Action: {current_action}
+- Expected: {expected_behavior}
+- User Persona: {persona_type}
 
-## COMPREHENSIVE VISUAL ANALYSIS FOCUS:
+## ANALYZE FOR CRAFT BUGS WITH COMPLETE ACTIONABLE DETAILS:
 
-### 1. VISUAL CONSISTENCY & DESIGN SYSTEM ISSUES
-- **Alignment Problems**: Elements that appear misaligned, crooked, or uneven
-- **Spacing Issues**: Inconsistent padding, margins, or gaps between elements
-- **Color Inconsistencies**: Elements using wrong colors, poor contrast, or inconsistent color schemes
-- **Typography Issues**: Wrong font sizes, inconsistent font weights, or poor text hierarchy
-- **Fluent Design Compliance**: Elements following Microsoft's design system
-- **Elevation Problems**: Inconsistent shadows, depth, or layering
+═══════════════════════════════════════════════════════════════
 
-### 2. ACCESSIBILITY ISSUES (VISUAL ONLY)
-- **Color Contrast**: Text that's hard to read due to poor background contrast
-- **Focus Indicators**: Missing or unclear focus states (if visible)
-- **Text Readability**: Text that's too small, blurry, or hard to read
-- **Visual Hierarchy**: Poor organization that makes information hard to scan
+🎯 CRAFT BUG CATEGORIES TO DETECT
 
-### 3. LAYOUT & DESIGN ISSUES
-- **Element Positioning**: Elements that appear in wrong locations or overlap
-- **Responsive Design**: Elements that look broken or cramped
-- **Visual Balance**: Uneven distribution of elements or poor proportions
-- **Professional Appearance**: Elements that look unpolished or inconsistent
+VISUAL ISSUES (Primary Focus):
+- Misaligned elements (describe as slightly off, uneven, crooked)
+- Wrong colors (specify hex codes)
+- Incorrect spacing (describe as too much/little padding, uneven margins)
+- Typography errors (font size, weight, family)
+- Missing visual feedback
+- Inconsistent styling
+- Poor visual hierarchy
+- Layout problems (overlap, positioning)
 
-### 4. VISUAL INTERACTION DESIGN ISSUES
-- **Visual Affordance Issues**: Elements that don't look clickable/interactive
-- **Button State Problems**: Poor button states, unclear interactive areas
-- **Usability Indicators**: Elements that appear confusing or hard to use
+ACCESSIBILITY ISSUES (Visual Only):
+- Insufficient color contrast (specify ratio)
+- Missing alt text/labels (if visible in screenshot)
+- Poor visual focus indicators (if visible)
+- Screen reader compatibility issues (if detectable)
+- Text readability problems (size, contrast, clarity)
 
-## CRITICAL RULES:
-1. **NO INTERACTION ANALYSIS**: Do not report delays, responsiveness, or user actions
-2. **NO PERFORMANCE ISSUES**: Do not report loading times or speed problems
-3. **NO MADE-UP ACTIONS**: Do not invent clicks, hovers, or user interactions
-4. **VISUAL EVIDENCE ONLY**: Every issue must be clearly visible in the screenshot
-5. **BE SPECIFIC**: Point to exact elements and describe what's visually wrong
-6. **NO PIXEL MEASUREMENTS**: Use descriptive terms, not specific pixel values
+VISUAL INTERACTION DESIGN ISSUES (Static Analysis):
+- Elements that don't look clickable/interactive
+- Poor button states (if visible in screenshot)
+- Unclear affordances (visual cues)
+- Confusing visual navigation
+- Small click targets (appear too small to click)
+- Missing visual feedback states
 
-## OUTPUT FORMAT:
-For each VISUAL issue found, provide:
+AI/COPILOT VISUAL ISSUES:
+- Poor conversation flow layout
+- Unclear AI suggestions presentation
+- Missing trust indicators
+- Integration problems with grid (visual only)
+- Poor visual hierarchy in AI responses
+
+LAYOUT & DESIGN SYSTEM ISSUES:
+- Fluent Design compliance violations
+- Inconsistent spacing patterns
+- Poor visual balance
+- Unprofessional appearance
+- Responsive design problems (if visible)
+- Grid alignment issues
+
+═══════════════════════════════════════════════════════════════
+
+📋 REQUIRED OUTPUT FORMAT
+
+For each craft bug detected, provide this EXACT structure:
 
 CRAFT BUG #1
 
-**ISSUE SUMMARY:**
-- Type: Visual/Accessibility/Layout/Interaction Design
-- Severity: Red/Orange/Yellow/Green
-- Title: [Specific visual problem]
+ISSUE SUMMARY:
+- Type: [Visual|Accessibility|Interaction_Design|AI|Layout|Design_System]
+- Severity: [Red|Orange|Yellow] 
+- Title: [Concise descriptive title]
 
-**VISUAL EVIDENCE:**
-- Screen Position: [Where in the screenshot- keep this generic like top, top left, top right, center, bottom, bottom left, bottom right]
-- UI Path: [Element location- generic location no px reference]
-- Element: [Specific element name]
-- Visual Context: [What's around it]
+LOCATION & CONTEXT:
+- Screen Position: [Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center and specific area]
+- UI Path: [Ribbon > Tab > Section > Element]
+- Element: [Exact button/icon/field name]
+- Visual Context: [What's nearby for reference]
+- Scenario Step: Step {step_number} of {total_steps} - "{step_name}"
+- User Action: [What user was doing when issue occurred]
+- Expected Behavior: [What should have happened]
+- Actual Behavior: [What actually happened]
+- Visual Impact: [How this affects the user's visual experience]
 
-**VISUAL PROBLEM:**
-- What's Wrong: [Describe the visual issue]
-- Expected: [How it should look]
-- Impact: [Why it matters visually]
+VISUAL ANALYSIS:
+- Visual Issues: [Describe misalignments, spacing issues in generic terms]
+- Size: [Element dimensions if relevant - describe as too large/small]
+- Color: [Hex codes if color issues, contrast ratios]
+- Typography: [Font issues if relevant - describe as too large/small, wrong weight]
+- Spacing: [Describe padding/margin issues as too much/little, uneven, inconsistent]
 
-**MEASUREMENTS (if applicable):**
-- Visual: [No specific measurements like "2px misalignment- make it generic like slight misalignment, slight off position, off center etc."]
-- Colors: [Color values if relevant]
-- Typography: [Font sizes, weights if relevant]
-- Spacing: [Padding/margin issues if relevant]
+REPRODUCTION STEPS:
+Prerequisites:
+- Browser: [Chrome/Edge version]
+- Resolution: [Screen size and zoom]
+- Excel State: [Blank workbook/with data/etc]
 
-**REPRODUCTION:**
-- Prerequisites: [What state the UI needs to be in]
-- Visual Check: [What to look for in the screenshot]
-- Expected Result: [How it should appear]
-- Actual Result: [How it currently appears]
+Steps to Reproduce:
+1. [Exact step-by-step instructions]
+2. [Include navigation path]
+3. [Specify exact user actions]
+4. [How to observe the issue visually]
+5. [How to verify the visual problem]
 
-**DEVELOPER ACTION:**
-- Immediate Fix: [What needs to be changed visually]
-- Visual Target: [Specific visual improvement]
-- Testing Approach: [How to verify the fix]
+Expected Result: [What should happen visually]
+Actual Result: [What actually happens visually]
+Reproduction Rate: [How often this occurs]
 
-## EXAMPLE VALID ISSUES:
-✅ "Font size dropdown lower than adjacent icons"
-✅ "Share button has insufficient color contrast (ratio 2.1:1)"
-✅ "Copilot dialog box is misaligned with the page grid"
-✅ "Ribbon elements have inconsistent padding"
-✅ "Button appears disabled but should be enabled"
+PERSONA IMPACT:
+- Novice Users: [How this affects new users visually]
+- Power Users: [How this affects efficiency-focused users]  
+- Super Fans: [How this affects quality-obsessed users]
+- Frustration Level: [1-10 for each persona]
 
-## EXAMPLE INVALID ISSUES (DO NOT REPORT):
-❌ "User clicks button and there's a delay" (interaction)
-❌ "Page loads slowly" (performance)
-❌ "Button is unresponsive" (interaction)
-❌ "User enters text" (made-up action)
-❌ "dont report in actual pixels always report approximately in words"
+DEVELOPER ACTION:
+- Immediate Fix: [Specific visual change needed]
+- Code Location: [Which component/file likely needs updating]
+- Visual Target: [Specific visual improvement criteria]
+- Testing Approach: [How to verify the visual fix works]
 
-Focus ONLY on what you can SEE in this static screenshot. If no visual issues are apparent, report "No visual issues detected in this screenshot."
+═══════════════════════════════════════════════════════════════
+
+🎯 ANALYSIS INSTRUCTIONS
+
+1. EXAMINE EVERY VISIBLE ELEMENT
+   - Scan systematically: top-left to bottom-right
+   - Check alignment, spacing, colors, typography
+   - Verify visual consistency across similar elements
+   - Look for visual design system violations
+
+2. MEASURE APPROXIMATELY
+   - Use descriptive terms like "slightly off", "too much spacing", "uneven alignment"
+   - Compare similar elements for consistency
+   - Check against Microsoft Fluent Design standards
+   - Note visual quality and rendering issues
+
+3. CONSIDER USER JOURNEY
+   - How does this visual issue affect task completion?
+   - What would different user types think/feel about the visual design?
+   - How does this impact overall scenario success?
+   - What is the business/competitive visual impact?
+
+4. PROVIDE ACTIONABLE DETAILS
+   - Every finding must be visually reproducible
+   - Include exact steps developers can follow
+   - Specify measurable visual success criteria
+   - Give specific visual fix recommendations
+
+═══════════════════════════════════════════════════════════════
+
+🔄 DEDUPLICATION REQUIREMENTS
+
+IMPORTANT: This screenshot will be analyzed by multiple specialized prompts. To prevent duplicate bug reports:
+
+1. **FOCUS ON YOUR SPECIALTY**: This prompt focuses on COMPREHENSIVE VISUAL ANALYSIS. Only report issues that are primarily visual in nature.
+
+2. **AVOID OVERLAP**: 
+   - If an issue is primarily about visual quality/rendering → Let the Visual Quality prompt handle it
+   - If an issue is primarily about interaction design → Let the Interaction Design prompt handle it
+   - If an issue is primarily about accessibility → Let the Accessibility prompt handle it
+
+3. **UNIQUE IDENTIFIERS**: Each bug should have a unique combination of:
+   - Element location (UI Path)
+   - Issue type (Visual/Accessibility/Interaction/Quality)
+   - Specific problem description
+
+4. **CONSOLIDATE SIMILAR ISSUES**: If you find multiple instances of the same visual problem (e.g., multiple misaligned buttons), report them as ONE bug with multiple examples.
+
+5. **PRIORITIZE**: Report the most critical visual issues first. Don't duplicate minor issues that other prompts will catch.
+
+═══════════════════════════════════════════════════════════════
+
+EXAMPLE PERFECT RESPONSE:
+
+CRAFT BUG #1
+
+ISSUE SUMMARY:
+- Type: Visual
+- Severity: Orange
+- Title: Save Button Misaligned with Adjacent Elements
+
+LOCATION & CONTEXT:
+- Screen Position: Top-Right quadrant, main ribbon area
+- UI Path: File > Save button (leftmost in File menu)
+- Element: "Save" button with disk icon
+- Visual Context: Next to "Save As" and "Export" buttons
+- Scenario Step: Step 8 of 12 - "Save workbook with new chart"
+- User Action: Looking at File menu options
+- Expected Behavior: All buttons should be perfectly aligned
+- Actual Behavior: Save button appears slightly lower than adjacent buttons
+- Visual Impact: Creates visual inconsistency and feels unpolished
+
+VISUAL ANALYSIS:
+- Visual Issues: Save button appears slightly misaligned vertically with adjacent buttons
+- Size: Button size appears appropriate
+- Color: #0078d4 (correct Fluent Design blue)
+- Typography: Segoe UI appears correct size and weight
+- Spacing: Horizontal spacing between buttons appears consistent
+
+REPRODUCTION STEPS:
+Prerequisites:
+- Browser: Chrome 118+ or Edge 110+
+- Resolution: 1920x1080, 100% zoom
+- Excel State: Workbook with content ready to save
+
+Steps to Reproduce:
+1. Open Excel Web with any workbook containing data
+2. Navigate to File tab in ribbon (top-left)
+3. Observe Save button alignment with adjacent buttons
+4. Compare visual alignment across all buttons in the group
+5. Note any misalignment in the button row
+
+Expected Result: All buttons perfectly aligned horizontally
+Actual Result: Save button appears slightly lower than Save As and Export buttons
+Reproduction Rate: 10/10 attempts show this misalignment
+
+PERSONA IMPACT:
+- Novice Users: Mild confusion (3/10) - interface feels slightly off
+- Power Users: Noticeable frustration (6/10) - affects visual scanning
+- Super Fans: Quality concern (8/10) - feels unpolished vs desktop Excel
+- Business Impact: Reduces confidence in Excel Web visual quality
+
+DEVELOPER ACTION:
+- Immediate Fix: Adjust Save button vertical alignment to match adjacent buttons
+- Code Location: File ribbon component button alignment
+- Visual Target: Perfect horizontal alignment with no visible misalignment
+- Testing Approach: Visual regression testing on button alignment
+
+═══════════════════════════════════════════════════════════════
+
+CRITICAL REQUIREMENTS:
+- Find ALL visible issues, not just obvious ones
+- Provide EXACT locations developers can find
+- Include COMPLETE reproduction steps
+- Give SPECIFIC visual observations using descriptive terms only
+- Specify ACTIONABLE visual fixes, not generic suggestions
+- Consider impact on ALL user personas
+- Report ZERO issues only if screenshot is genuinely perfect
+- Focus ONLY on what you can SEE in this static screenshot
+- Do NOT report timing, performance, or interaction issues that cannot be observed visually
+- Use ONLY generic descriptions - NO pixel measurements or exact coordinates
+- Describe spacing as "too much", "too little", "uneven", "inconsistent"
+- Describe alignment as "slightly off", "misaligned", "crooked", "uneven"
+- FOCUS ON YOUR SPECIALTY: Report only comprehensive visual issues, avoid overlap with other prompts
+- CONSOLIDATE SIMILAR ISSUES: Group related problems into single bug reports
 
 Analyze the provided screenshot now using this comprehensive framework.""",
 
-            'performance_analysis': """# STATIC VISUAL PERFORMANCE ANALYSIS
+            'performance_analysis': """# STATIC VISUAL QUALITY ANALYSIS
 
-You are analyzing a static screenshot for VISUAL performance indicators only. Do NOT report timing, responsiveness, or interaction performance that cannot be observed in a static image.
+You are analyzing a static screenshot for VISUAL quality indicators only. Focus on rendering quality, visual artifacts, and display issues that can be observed in a static image.
 
 ## CONTEXT:
 - Step: {step_name}
 - Scenario: {scenario_description}
 - Screenshot: Static image of the current UI state
 
-## VISUAL PERFORMANCE INDICATORS TO LOOK FOR:
-1. **Loading States**: Visual indicators of loading (spinners, progress bars, skeleton screens)
-2. **Animation Quality**: Visible animation artifacts, stuttering, or poor rendering
-3. **Rendering Issues**: Blurry text, pixelated images, or visual glitches
-4. **Visual Responsiveness Indicators**: Elements that appear broken or incorrectly sized
-5. **Resource Loading**: Missing images, broken icons, or incomplete content
+## VISUAL QUALITY INDICATORS TO LOOK FOR:
+1. **Rendering Quality**: Blurry text, pixelated images, or visual artifacts
+2. **Display Issues**: Elements that appear broken, cut off, or incorrectly sized
+3. **Resource Loading**: Missing images, broken icons, or incomplete content
+4. **Visual Consistency**: Inconsistent rendering across similar elements
+5. **Color Accuracy**: Incorrect colors, poor contrast, or visual distortion
 
 ## CRITICAL RULES:
 - ONLY report what you can SEE in the screenshot
 - Do NOT invent timing information or interaction delays
 - Do NOT report performance issues that require user interaction
-- Focus on visual quality and rendering issues
+- Focus on visual quality and rendering issues only
+
+## 🔄 DEDUPLICATION REQUIREMENTS
+
+IMPORTANT: This screenshot will be analyzed by multiple specialized prompts. To prevent duplicate bug reports:
+
+1. **FOCUS ON YOUR SPECIALTY**: This prompt focuses on VISUAL QUALITY/RENDERING issues only. Only report issues related to rendering quality, display problems, or visual artifacts.
+
+2. **AVOID OVERLAP**: 
+   - If an issue is primarily about visual alignment/spacing → Let the Comprehensive Visual prompt handle it
+   - If an issue is primarily about interaction design → Let the Interaction Design prompt handle it
+   - If an issue is primarily about accessibility → Let the Accessibility prompt handle it
+
+3. **UNIQUE IDENTIFIERS**: Each bug should have a unique combination of:
+   - Element location (UI Path)
+   - Issue type (Quality/Rendering/Display)
+   - Specific problem description
+
+4. **CONSOLIDATE SIMILAR ISSUES**: If you find multiple instances of the same quality problem (e.g., multiple blurry elements), report them as ONE bug with multiple examples.
+
+5. **PRIORITIZE**: Report the most critical quality issues first. Don't duplicate minor issues that other prompts will catch.
 
 ## OUTPUT FORMAT:
-If visual performance issues are found, describe them specifically. If none are visible, report "No visual performance issues detected in this screenshot."
+If visual quality issues are found, describe them specifically. If none are visible, report "No visual quality issues detected in this screenshot."
 
-Analyze the screenshot for visual performance indicators only.""",
+Analyze the screenshot for visual quality indicators only.""",
 
-            'interaction_analysis': """# STATIC VISUAL INTERACTION ANALYSIS
+            'interaction_analysis': """# STATIC VISUAL INTERACTION DESIGN ANALYSIS
 
-You are analyzing a static screenshot for visual interaction design issues only. Focus on visual affordances and accessibility indicators.
+You are analyzing a static screenshot for visual interaction design issues only. Focus on visual affordances, button states, and interactive element design.
 
 ## CONTEXT:
 - Step: {step_name}
 - Scenario: {scenario_description}
 - Screenshot: Static image of the current UI state
 
-## VISUAL INTERACTION ISSUES TO CHECK:
+## VISUAL INTERACTION DESIGN ISSUES TO CHECK:
 1. **Visual Affordance Issues**: Elements that don't look clickable/interactive
-2. **Accessibility Indicators (Visual)**: Missing focus states, poor contrast for interactive elements
-3. **Interaction Design Issues (Visual)**: Poor button states, unclear interactive areas
-4. **Usability Indicators (Visual)**: Elements that appear confusing or hard to use
+2. **Button State Problems**: Poor button states, unclear interactive areas
+3. **Interactive Element Design**: Elements that appear confusing or hard to use
+4. **Visual Feedback Issues**: Missing or unclear visual feedback states
+5. **Click Target Size**: Elements that appear too small to click (<20px visible area)
 
 ## CRITICAL RULES:
 - ONLY report visual interaction design issues visible in the screenshot
 - Do NOT report actual interaction testing or responsiveness
 - Do NOT report delays or timing issues
-- Focus on visual design of interactive elements
+- Focus on visual design of interactive elements only
+
+## 🔄 DEDUPLICATION REQUIREMENTS
+
+IMPORTANT: This screenshot will be analyzed by multiple specialized prompts. To prevent duplicate bug reports:
+
+1. **FOCUS ON YOUR SPECIALTY**: This prompt focuses on VISUAL INTERACTION DESIGN issues only. Only report issues related to visual affordances, button states, and interactive element design.
+
+2. **AVOID OVERLAP**: 
+   - If an issue is primarily about visual alignment/spacing → Let the Comprehensive Visual prompt handle it
+   - If an issue is primarily about visual quality/rendering → Let the Visual Quality prompt handle it
+   - If an issue is primarily about accessibility → Let the Accessibility prompt handle it
+
+3. **UNIQUE IDENTIFIERS**: Each bug should have a unique combination of:
+   - Element location (UI Path)
+   - Issue type (Interaction/Affordance/Button State)
+   - Specific problem description
+
+4. **CONSOLIDATE SIMILAR ISSUES**: If you find multiple instances of the same interaction problem (e.g., multiple unclear buttons), report them as ONE bug with multiple examples.
+
+5. **PRIORITIZE**: Report the most critical interaction design issues first. Don't duplicate minor issues that other prompts will catch.
 
 ## OUTPUT FORMAT:
 If visual interaction design issues are found, describe them specifically. If none are visible, report "No visual interaction design issues detected in this screenshot."
 
-Analyze the screenshot for visual interaction design issues only."""
+Analyze the screenshot for visual interaction design issues only.""",
+
+            'expert_triager': """# EXPERT CRAFT BUG TRIAGER
+
+You are an expert UX triager with 15+ years at Microsoft specializing in craft bug analysis and prioritization. Your role is to evaluate, validate, and prioritize craft bugs based on their real-world impact and confidence level.
+
+## WHAT IS A CRAFT BUG?
+
+Craft bugs are issues that contribute to clunkiness, jarring, or janky user experiences. They include:
+
+### HIGH IMPACT CRAFT BUGS (Priority 1-3):
+- **Broken/unusable experiences** - Elements that prevent task completion
+- **Obvious visual inconsistencies** - Misaligned elements, wrong colors, inconsistent spacing
+- **Usability bugs** - Confusing interfaces, unclear affordances
+- **Non-actionable/misleading messaging** - Unclear labels, confusing instructions
+- **Accessibility violations** - Poor contrast, missing focus indicators
+- **Visual harmony issues** - Stray pixels, poor alignment, inconsistent styling
+- **Fluent Design violations** - Wrong corner radius, incorrect theming, improper z-ordering
+
+### MEDIUM IMPACT CRAFT BUGS (Priority 4-6):
+- **Minor visual inconsistencies** - Slight misalignments, small spacing issues
+- **Polish issues** - Elements that work but feel unrefined
+- **Secondary accessibility concerns** - Issues that don't block but reduce usability
+
+### LOW IMPACT CRAFT BUGS (Priority 7-9):
+- **Minor polish opportunities** - Very slight visual improvements
+- **Edge case issues** - Problems that rarely occur
+- **Subjective preferences** - Matters of taste rather than functionality
+
+## TRIAGING FRAMEWORK
+
+### CONFIDENCE SCORING (1-10):
+- **10**: Clear, obvious issue with undeniable evidence
+- **8-9**: Strong evidence, likely a real issue
+- **6-7**: Some evidence, but could be subjective
+- **4-5**: Weak evidence, might be hallucination
+- **1-3**: Very weak evidence, likely hallucination
+
+### IMPACT SCORING (1-10):
+- **10**: Blocks critical workflow, unusable
+- **8-9**: Significant user friction, major workflow impact
+- **6-7**: Noticeable friction, affects efficiency
+- **4-5**: Minor friction, slight workflow impact
+- **1-3**: Minimal impact, mostly cosmetic
+
+### PRIORITY CALCULATION:
+```
+Priority = (Impact Score × 0.7) + (Confidence Score × 0.3)
+```
+
+### PRIORITY LEVELS:
+- **P1 (Critical)**: Priority 8.5-10 - Must fix immediately
+- **P2 (High)**: Priority 7.0-8.4 - Fix in next sprint
+- **P3 (Medium)**: Priority 5.5-6.9 - Fix when possible
+- **P4 (Low)**: Priority 4.0-5.4 - Nice to have
+- **P5 (Reject)**: Priority <4.0 - Not actionable
+
+## VALIDATION CRITERIA
+
+### ACCEPT BUG IF:
+- ✅ Clear visual evidence in description
+- ✅ Specific location and element identified
+- ✅ Impact on user experience is clear
+- ✅ Issue is actionable and fixable
+- ✅ Confidence score ≥6
+
+### REJECT BUG IF:
+- ❌ No specific visual evidence
+- ❌ Vague or generic description
+- ❌ Subjective preference without UX impact
+- ❌ Issue cannot be observed in static screenshot
+- ❌ Confidence score <4
+- ❌ Impact score <3
+
+## OUTPUT FORMAT
+
+For each bug, provide:
+
+TRIAGED BUG #{bug_number}
+
+ORIGINAL BUG:
+[Copy the original bug description]
+
+TRIAGE ANALYSIS:
+- **Confidence Score**: [1-10] - [Reasoning]
+- **Impact Score**: [1-10] - [Reasoning]
+- **Calculated Priority**: [Score] - [P1/P2/P3/P4/P5]
+- **Validation**: [Accept/Reject] - [Reason]
+
+PRIORITY JUSTIFICATION:
+- **Why this matters**: [Impact on user experience]
+- **Evidence quality**: [How clear is the visual evidence]
+- **Actionability**: [How easy is it to fix]
+- **User segments affected**: [Who will notice this]
+
+RECOMMENDED ACTION:
+- **Immediate**: [What should be done right away]
+- **Follow-up**: [Additional investigation needed]
+- **Alternative**: [If rejected, what could make it actionable]
+
+## CRITICAL REQUIREMENTS
+
+1. **BE RUTHLESS**: Reject bugs with weak evidence or low impact
+2. **FOCUS ON REAL IMPACT**: Prioritize issues that actually affect users
+3. **VALIDATE EVIDENCE**: Ensure bugs have clear visual evidence
+4. **CONSIDER CONTEXT**: Understand the user scenario and workflow
+5. **AVOID HALLUCINATIONS**: Don't accept bugs that seem made up
+6. **PRIORITIZE OBJECTIVELY**: Use scoring system, not gut feeling
+
+## EXAMPLE TRIAGE
+
+TRIAGED BUG #1
+
+ORIGINAL BUG:
+- Type: Visual
+- Title: Save Button Misaligned with Adjacent Elements
+- Description: Save button appears slightly lower than adjacent buttons
+
+TRIAGE ANALYSIS:
+- **Confidence Score**: 8/10 - Clear visual misalignment described with specific location
+- **Impact Score**: 6/10 - Affects visual scanning and feels unpolished
+- **Calculated Priority**: 6.8 - P3 (Medium)
+- **Validation**: Accept - Clear evidence, actionable issue
+
+PRIORITY JUSTIFICATION:
+- **Why this matters**: Creates visual inconsistency that affects professional perception
+- **Evidence quality**: Specific element and location identified
+- **Actionability**: Simple CSS fix for alignment
+- **User segments affected**: All users will notice the visual inconsistency
+
+RECOMMENDED ACTION:
+- **Immediate**: Fix button alignment in File ribbon component
+- **Follow-up**: Check other button groups for similar issues
+- **Alternative**: N/A
+
+Analyze the provided bugs using this triaging framework."""
         }
     
     def _prepare_step_context(self, step_data: Dict) -> Dict:
@@ -222,12 +542,15 @@ Analyze the screenshot for visual interaction design issues only."""
             'total_steps': 1,  # Default for single step analysis
             'action_type': step_data.get('action_type', 'unknown'),
             'duration_ms': step_data.get('duration_ms', 0),
+            'scenario_name': step_data.get('scenario_description', 'Test Scenario'),  # Map to scenario_name for prompt
             'scenario_description': step_data.get('scenario_description', 'Test Scenario'),
             'persona_type': step_data.get('persona_type', 'User'),
-            'expected_behavior': step_data.get('expected_behavior', 'Expected behavior not specified')
+            'expected_behavior': step_data.get('expected_behavior', 'Expected behavior not specified'),
+            'current_action': step_data.get('action_type', 'unknown'),  # Add current_action for prompt
+            'interaction_timing': step_data.get('duration_ms', 0)  # Add interaction_timing for prompt
         }
     
-    def analyze_step_with_llm(self, step_data: Dict) -> List[Dict]:
+    async def analyze_step_with_llm(self, step_data: Dict) -> List[Dict]:
         """Analyze a step using LLM-enhanced detection - ONLY LLM bugs"""
         
         if not self.enable_llm:
@@ -236,13 +559,8 @@ Analyze the screenshot for visual interaction design issues only."""
         # Perform LLM analysis only
         print(f"🤖 LLM ANALYSIS: Starting analysis for step '{step_data.get('step_name')}'")
         
-        # Run async analysis in sync context
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            llm_analysis = loop.run_until_complete(self._perform_llm_analysis(step_data))
-        finally:
-            loop.close()
+        # Run async analysis directly
+        llm_analysis = await self._perform_llm_analysis(step_data)
         
         # Extract LLM-generated bugs from analysis
         llm_generated_bugs = self._extract_llm_bugs_from_analysis(llm_analysis, step_data)
@@ -276,26 +594,22 @@ Analyze the screenshot for visual interaction design issues only."""
                 print(f"⚠️ Screenshot not found: {screenshot_path}")
             
             # Perform different types of LLM analysis with screenshot
-            print("🔍 Starting craft bug analysis...")
-            craft_bug_analysis = await self._analyze_craft_bugs_with_llm(step_context, screenshot_base64)
-            print(f"✅ Craft bug analysis: {type(craft_bug_analysis)}")
+            print("🔍 Starting comprehensive visual analysis...")
+            comprehensive_analysis = await self._analyze_comprehensive_visual_with_llm(step_context, screenshot_base64)
+            print(f"✅ Comprehensive visual analysis: {type(comprehensive_analysis)}")
             
             print("🔍 Starting performance analysis...")
             performance_analysis = await self._analyze_performance_with_llm(step_context, screenshot_base64)
             print(f"✅ Performance analysis: {type(performance_analysis)}")
-            
-            print("🔍 Starting visual analysis...")
-            visual_analysis = await self._analyze_visual_consistency_with_llm(step_context, screenshot_base64)
-            print(f"✅ Visual analysis: {type(visual_analysis)}")
             
             print("🔍 Starting interaction analysis...")
             interaction_analysis = await self._analyze_interaction_with_llm(step_context, screenshot_base64)
             print(f"✅ Interaction analysis: {type(interaction_analysis)}")
             
             return {
-                'craft_bugs': craft_bug_analysis,
+                'craft_bugs': comprehensive_analysis,
                 'performance': performance_analysis,
-                'visual_consistency': visual_analysis,
+                'visual_consistency': comprehensive_analysis,  # Use comprehensive analysis for visual consistency too
                 'interaction': interaction_analysis,
                 'timestamp': datetime.now().isoformat()
             }
@@ -531,10 +845,10 @@ Analyze the screenshot for visual interaction design issues only."""
         
         return bugs
     
-    async def _analyze_craft_bugs_with_llm(self, context: Dict, screenshot_base64: Optional[str] = None) -> Dict:
-        """Analyze craft bugs using LLM with screenshot"""
+    async def _analyze_comprehensive_visual_with_llm(self, context: Dict, screenshot_base64: Optional[str] = None) -> Dict:
+        """Analyze comprehensive visual issues using LLM with screenshot"""
         
-        prompt = self.analysis_prompts['craft_bug_detection'].format(**context)
+        prompt = self.analysis_prompts['comprehensive_visual_analysis'].format(**context)
         
         try:
             messages = [{"role": "user", "content": prompt}]
@@ -567,6 +881,8 @@ Analyze the screenshot for visual interaction design issues only."""
                 'confidence': False,
                 'error': str(e)
             }
+    
+
     
     async def _analyze_performance_with_llm(self, context: Dict, screenshot_base64: Optional[str] = None) -> Dict:
         """Analyze performance using LLM with screenshot"""
@@ -608,7 +924,7 @@ Analyze the screenshot for visual interaction design issues only."""
     async def _analyze_visual_consistency_with_llm(self, context: Dict, screenshot_base64: Optional[str] = None) -> Dict:
         """Analyze visual consistency using LLM with screenshot"""
         
-        prompt = self.analysis_prompts['visual_consistency'].format(**context)
+        prompt = self.analysis_prompts['comprehensive_visual_analysis'].format(**context)
         
         try:
             messages = [{"role": "user", "content": prompt}]

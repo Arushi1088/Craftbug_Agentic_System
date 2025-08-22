@@ -61,7 +61,7 @@ def test_llm_analyzer_import():
     
     return True
 
-def test_simple_analysis():
+async def test_simple_analysis():
     """Test a simple analysis with one screenshot"""
     
     print("\n🔍 TESTING SIMPLE ANALYSIS")
@@ -98,7 +98,7 @@ def test_simple_analysis():
         analyzer = LLMEnhancedAnalyzer()
         print("🤖 Running simple analysis...")
         
-        llm_bugs = analyzer.analyze_step_with_llm(test_step)
+        llm_bugs = await analyzer.analyze_step_with_llm(test_step)
         
         print(f"📊 Found {len(llm_bugs)} bugs")
         
@@ -129,10 +129,11 @@ def test_simple_analysis():
         traceback.print_exc()
 
 if __name__ == "__main__":
+    import asyncio
     # Test import first
     if test_llm_analyzer_import():
         # If import works, test analysis
-        test_simple_analysis()
+        asyncio.run(test_simple_analysis())
     else:
         print("\n❌ Cannot proceed with analysis test due to import issues")
 
