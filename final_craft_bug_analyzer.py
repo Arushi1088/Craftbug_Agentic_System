@@ -639,11 +639,14 @@ You will receive images interleaved with their step captions in this order. Use 
 
     def _normalize_bugs_from_json(self, bugs_json: List[Dict], steps_data: List[Dict]) -> List[Dict]:
         """Normalize bugs from JSON format to our standard format"""
-        # Index real steps for quick lookup
+        # Index real steps for quick lookup - only include valid paths
         idx_to_path = {}
         idx_to_name = {}
         for i, s in enumerate(steps_data, start=1):
-            idx_to_path[i] = s.get("screenshot_path")
+            screenshot_path = s.get("screenshot_path")
+            # Only include paths that exist and are not None
+            if screenshot_path and os.path.exists(screenshot_path):
+                idx_to_path[i] = screenshot_path
             idx_to_name[i] = s.get("step_name", f"Step {i}")
 
         normalized = []
@@ -653,14 +656,14 @@ You will receive images interleaved with their step captions in this order. Use 
             for stepref in b.get("affected_steps", []):
                 idx = stepref.get("index")
                 sp = idx_to_path.get(idx)
-                if sp and os.path.exists(sp):
+                if sp:  # sp is already validated to exist
                     paths.append(sp)
 
-            if not paths:
+            if not paths and idx_to_path:
                 # last-resort: keep one image so report doesn't break
-                first = idx_to_path.get(1)
-                if first and os.path.exists(first):
-                    paths.append(first)
+                first_path = next(iter(idx_to_path.values()), None)
+                if first_path:
+                    paths.append(first_path)
 
             normalized.append({
                 "title": b.get("title", "Untitled"),
