@@ -33,7 +33,7 @@ class LLMEnhancedAnalyzer:
     def __init__(self):
         """Initialize the LLM-enhanced analyzer"""
         self.enable_llm = True
-        self.llm_model = "gpt-5-nano"
+        self.llm_model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
         self.llm_temperature = 0.1
         self.llm_max_tokens = 2000
         
@@ -52,250 +52,67 @@ class LLMEnhancedAnalyzer:
     def _load_current_prompts(self) -> Dict[str, str]:
         """Load the current analysis prompts"""
         return {
-            'comprehensive_visual_analysis': """# COMPREHENSIVE STATIC VISUAL UX ANALYSIS
+            'comprehensive_visual_analysis': """LITE PROMPT — STATIC VISUAL UX ANALYSIS (For GPT-4o-mini)
 
-You are an expert UX Designer with 15+ years at Microsoft analyzing Excel Web screenshots for craft bugs. Provide ACTIONABLE bug reports that developers can immediately act upon.
+You are an expert UX Designer with 15+ years at Microsoft.
+Analyze the provided screenshot for visual craft bugs and give developer-ready, actionable reports.
 
-## SCREENSHOT CONTEXT:
-- Scenario: {scenario_name}
-- Step: {step_number} of {total_steps}
-- Action: {current_action}
-- Expected: {expected_behavior}
-- User Persona: {persona_type}
+CONTEXT (Dynamic Input – injected per run)
 
-## ANALYZE FOR CRAFT BUGS WITH COMPLETE ACTIONABLE DETAILS:
+Scenario: {scenario_description}
 
-═══════════════════════════════════════════════════════════════
+Step: {step_number_and_description}
 
-🎯 CRAFT BUG CATEGORIES TO DETECT
+Persona: {persona_type}
 
-VISUAL ISSUES (Primary Focus):
-- Misaligned elements (describe as slightly off, uneven, crooked)
-- Wrong colors (specify hex codes)
-- Incorrect spacing (describe as too much/little padding, uneven margins)
-- Typography errors (font size, weight, family)
-- Missing visual feedback
-- Inconsistent styling
-- Poor visual hierarchy
-- Layout problems (overlap, positioning)
+🎯 DETECT ISSUES
 
-ACCESSIBILITY ISSUES (Visual Only):
-- Insufficient color contrast (specify ratio)
-- Missing alt text/labels (if visible in screenshot)
-- Poor visual focus indicators (if visible)
-- Screen reader compatibility issues (if detectable)
-- Text readability problems (size, contrast, clarity)
+Check for:
 
-VISUAL INTERACTION DESIGN ISSUES (Static Analysis):
-- Elements that don't look clickable/interactive
-- Poor button states (if visible in screenshot)
-- Unclear affordances (visual cues)
-- Confusing visual navigation
-- Small click targets (appear too small to click)
-- Missing visual feedback states
+Visual/Layout – misaligned elements, uneven spacing, wrong colors (include hex), typography errors, poor hierarchy.
 
-AI/COPILOT VISUAL ISSUES:
-- Poor conversation flow layout
-- Unclear AI suggestions presentation
-- Missing trust indicators
-- Integration problems with grid (visual only)
-- Poor visual hierarchy in AI responses
+Accessibility – color contrast, small/unreadable text, missing labels/alt text (if visible).
 
-LAYOUT & DESIGN SYSTEM ISSUES:
-- Fluent Design compliance violations
-- Inconsistent spacing patterns
-- Poor visual balance
-- Unprofessional appearance
-- Responsive design problems (if visible)
-- Grid alignment issues
+Interaction Affordance – unclear buttons, small click targets, confusing navigation, missing visual feedback.
 
-═══════════════════════════════════════════════════════════════
+AI/Copilot (if visible) – unclear suggestions, poor layout, missing trust indicators.
 
-📋 REQUIRED OUTPUT FORMAT
+Consistency/Design System – Fluent compliance, spacing/alignment patterns, professional balance.
 
-For each craft bug detected, provide this EXACT structure:
+📑 OUTPUT FORMAT
 
-CRAFT BUG #1
+For each issue, use this structure:
 
-ISSUE SUMMARY:
-- Type: [Visual|Accessibility|Interaction_Design|AI|Layout|Design_System]
-- Severity: [Red|Orange|Yellow] 
-- Title: [Concise descriptive title]
+CRAFT BUG #X
 
-LOCATION & CONTEXT:
-- Screen Position: [Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center and specific area]
-- UI Path: [Ribbon > Tab > Section > Element]
-- Element: [Exact button/icon/field name]
-- Visual Context: [What's nearby for reference]
-- Scenario Step: Step {step_number} of {total_steps} - "{step_name}"
-- User Action: [What user was doing when issue occurred]
-- Expected Behavior: [What should have happened]
-- Actual Behavior: [What actually happened]
-- Visual Impact: [How this affects the user's visual experience]
+Type: [Visual|Accessibility|Interaction|AI|Design]
 
-VISUAL ANALYSIS:
-- Visual Issues: [Describe misalignments, spacing issues in generic terms]
-- Size: [Element dimensions if relevant - describe as too large/small]
-- Color: [Hex codes if color issues, contrast ratios]
-- Typography: [Font issues if relevant - describe as too large/small, wrong weight]
-- Spacing: [Describe padding/margin issues as too much/little, uneven, inconsistent]
+Severity: [Red|Orange|Yellow]
 
-REPRODUCTION STEPS:
-Prerequisites:
-- Browser: [Chrome/Edge version]
-- Resolution: [Screen size and zoom]
-- Excel State: [Blank workbook/with data/etc]
+Title: [Concise description]
 
-Steps to Reproduce:
-1. [Exact step-by-step instructions]
-2. [Include navigation path]
-3. [Specify exact user actions]
-4. [How to observe the issue visually]
-5. [How to verify the visual problem]
+Location: [Top/Bottom/Center + nearby element]
 
-Expected Result: [What should happen visually]
-Actual Result: [What actually happens visually]
-Reproduction Rate: [How often this occurs]
+Expected: [Correct state]
 
-PERSONA IMPACT:
-- Novice Users: [How this affects new users visually]
-- Power Users: [How this affects efficiency-focused users]  
-- Super Fans: [How this affects quality-obsessed users]
-- Frustration Level: [1-10 for each persona]
+Actual: [Observed issue]
 
-DEVELOPER ACTION:
-- Immediate Fix: [Specific visual change needed]
-- Code Location: [Which component/file likely needs updating]
-- Visual Target: [Specific visual improvement criteria]
-- Testing Approach: [How to verify the visual fix works]
+Impact: [Effect on user experience]
 
-═══════════════════════════════════════════════════════════════
+Fix: [Specific action e.g., adjust margin, increase contrast, align text]
 
-🎯 ANALYSIS INSTRUCTIONS
+If no issues:
+"No visible craft bugs in screenshot."
 
-1. EXAMINE EVERY VISIBLE ELEMENT
-   - Scan systematically: top-left to bottom-right
-   - Check alignment, spacing, colors, typography
-   - Verify visual consistency across similar elements
-   - Look for visual design system violations
+RULES
 
-2. MEASURE APPROXIMATELY
-   - Use descriptive terms like "slightly off", "too much spacing", "uneven alignment"
-   - Compare similar elements for consistency
-   - Check against Microsoft Fluent Design standards
-   - Note visual quality and rendering issues
+Only analyze what is visible in the screenshot.
 
-3. CONSIDER USER JOURNEY
-   - How does this visual issue affect task completion?
-   - What would different user types think/feel about the visual design?
-   - How does this impact overall scenario success?
-   - What is the business/competitive visual impact?
+If something is unclear, mark as [Not Observable].
 
-4. PROVIDE ACTIONABLE DETAILS
-   - Every finding must be visually reproducible
-   - Include exact steps developers can follow
-   - Specify measurable visual success criteria
-   - Give specific visual fix recommendations
+Group similar issues into one bug.
 
-═══════════════════════════════════════════════════════════════
-
-🔄 DEDUPLICATION REQUIREMENTS
-
-IMPORTANT: This screenshot will be analyzed by multiple specialized prompts. To prevent duplicate bug reports:
-
-1. **FOCUS ON YOUR SPECIALTY**: This prompt focuses on COMPREHENSIVE VISUAL ANALYSIS. Only report issues that are primarily visual in nature.
-
-2. **AVOID OVERLAP**: 
-   - If an issue is primarily about visual quality/rendering → Let the Visual Quality prompt handle it
-   - If an issue is primarily about interaction design → Let the Interaction Design prompt handle it
-   - If an issue is primarily about accessibility → Let the Accessibility prompt handle it
-
-3. **UNIQUE IDENTIFIERS**: Each bug should have a unique combination of:
-   - Element location (UI Path)
-   - Issue type (Visual/Accessibility/Interaction/Quality)
-   - Specific problem description
-
-4. **CONSOLIDATE SIMILAR ISSUES**: If you find multiple instances of the same visual problem (e.g., multiple misaligned buttons), report them as ONE bug with multiple examples.
-
-5. **PRIORITIZE**: Report the most critical visual issues first. Don't duplicate minor issues that other prompts will catch.
-
-═══════════════════════════════════════════════════════════════
-
-EXAMPLE PERFECT RESPONSE:
-
-CRAFT BUG #1
-
-ISSUE SUMMARY:
-- Type: Visual
-- Severity: Orange
-- Title: Save Button Misaligned with Adjacent Elements
-
-LOCATION & CONTEXT:
-- Screen Position: Top-Right quadrant, main ribbon area
-- UI Path: File > Save button (leftmost in File menu)
-- Element: "Save" button with disk icon
-- Visual Context: Next to "Save As" and "Export" buttons
-- Scenario Step: Step 8 of 12 - "Save workbook with new chart"
-- User Action: Looking at File menu options
-- Expected Behavior: All buttons should be perfectly aligned
-- Actual Behavior: Save button appears slightly lower than adjacent buttons
-- Visual Impact: Creates visual inconsistency and feels unpolished
-
-VISUAL ANALYSIS:
-- Visual Issues: Save button appears slightly misaligned vertically with adjacent buttons
-- Size: Button size appears appropriate
-- Color: #0078d4 (correct Fluent Design blue)
-- Typography: Segoe UI appears correct size and weight
-- Spacing: Horizontal spacing between buttons appears consistent
-
-REPRODUCTION STEPS:
-Prerequisites:
-- Browser: Chrome 118+ or Edge 110+
-- Resolution: 1920x1080, 100% zoom
-- Excel State: Workbook with content ready to save
-
-Steps to Reproduce:
-1. Open Excel Web with any workbook containing data
-2. Navigate to File tab in ribbon (top-left)
-3. Observe Save button alignment with adjacent buttons
-4. Compare visual alignment across all buttons in the group
-5. Note any misalignment in the button row
-
-Expected Result: All buttons perfectly aligned horizontally
-Actual Result: Save button appears slightly lower than Save As and Export buttons
-Reproduction Rate: 10/10 attempts show this misalignment
-
-PERSONA IMPACT:
-- Novice Users: Mild confusion (3/10) - interface feels slightly off
-- Power Users: Noticeable frustration (6/10) - affects visual scanning
-- Super Fans: Quality concern (8/10) - feels unpolished vs desktop Excel
-- Business Impact: Reduces confidence in Excel Web visual quality
-
-DEVELOPER ACTION:
-- Immediate Fix: Adjust Save button vertical alignment to match adjacent buttons
-- Code Location: File ribbon component button alignment
-- Visual Target: Perfect horizontal alignment with no visible misalignment
-- Testing Approach: Visual regression testing on button alignment
-
-═══════════════════════════════════════════════════════════════
-
-CRITICAL REQUIREMENTS:
-- Find ALL visible issues, not just obvious ones
-- Provide EXACT locations developers can find
-- Include COMPLETE reproduction steps
-- Give SPECIFIC visual observations using descriptive terms only
-- Specify ACTIONABLE visual fixes, not generic suggestions
-- Consider impact on ALL user personas
-- Report ZERO issues only if screenshot is genuinely perfect
-- Focus ONLY on what you can SEE in this static screenshot
-- Do NOT report timing, performance, or interaction issues that cannot be observed visually
-- Use ONLY generic descriptions - NO pixel measurements or exact coordinates
-- Describe spacing as "too much", "too little", "uneven", "inconsistent"
-- Describe alignment as "slightly off", "misaligned", "crooked", "uneven"
-- FOCUS ON YOUR SPECIALTY: Report only comprehensive visual issues, avoid overlap with other prompts
-- CONSOLIDATE SIMILAR ISSUES: Group related problems into single bug reports
-
-Analyze the provided screenshot now using this comprehensive framework.""",
+Keep responses short, precise, developer-ready.""",
 
             'performance_analysis': """# STATIC VISUAL QUALITY ANALYSIS
 
@@ -340,7 +157,13 @@ IMPORTANT: This screenshot will be analyzed by multiple specialized prompts. To 
 5. **PRIORITIZE**: Report the most critical quality issues first. Don't duplicate minor issues that other prompts will catch.
 
 ## OUTPUT FORMAT:
-If visual quality issues are found, describe them specifically. If none are visible, report "No visual quality issues detected in this screenshot."
+If visual quality issues are found, describe them specifically with details about:
+- What element has the issue
+- Where it's located in the UI
+- What the problem looks like
+- How it affects the user experience
+
+If no visual quality issues are found, respond with: "No visual quality issues detected in this screenshot."
 
 Analyze the screenshot for visual quality indicators only.""",
 
@@ -387,7 +210,13 @@ IMPORTANT: This screenshot will be analyzed by multiple specialized prompts. To 
 5. **PRIORITIZE**: Report the most critical interaction design issues first. Don't duplicate minor issues that other prompts will catch.
 
 ## OUTPUT FORMAT:
-If visual interaction design issues are found, describe them specifically. If none are visible, report "No visual interaction design issues detected in this screenshot."
+If visual interaction design issues are found, describe them specifically with details about:
+- What interactive element has the issue
+- Where it's located in the UI
+- What makes it confusing or hard to use
+- How it affects user interaction
+
+If no visual interaction design issues are found, respond with: "No visual interaction design issues detected in this screenshot."
 
 Analyze the screenshot for visual interaction design issues only.""",
 
@@ -536,6 +365,9 @@ Analyze the provided bugs using this triaging framework."""
             if match:
                 step_number = int(match.group(1))
         
+        # Create step_number_and_description for the new prompt format
+        step_number_and_description = f"{step_number} - {step_data.get('step_name', 'Unknown Step')}"
+        
         return {
             'step_name': step_data.get('step_name', 'Unknown Step'),
             'step_number': step_number,
@@ -547,7 +379,8 @@ Analyze the provided bugs using this triaging framework."""
             'persona_type': step_data.get('persona_type', 'User'),
             'expected_behavior': step_data.get('expected_behavior', 'Expected behavior not specified'),
             'current_action': step_data.get('action_type', 'unknown'),  # Add current_action for prompt
-            'interaction_timing': step_data.get('duration_ms', 0)  # Add interaction_timing for prompt
+            'interaction_timing': step_data.get('duration_ms', 0),  # Add interaction_timing for prompt
+            'step_number_and_description': step_number_and_description  # New format for lite prompt
         }
     
     async def analyze_step_with_llm(self, step_data: Dict) -> List[Dict]:
@@ -660,43 +493,18 @@ Analyze the provided bugs using this triaging framework."""
         
         for i, section in enumerate(bug_sections, 1):
             try:
-                # Extract basic fields
-                title = self._extract_field(section, "Title:")
+                # Extract basic fields for new lite format
                 bug_type = self._extract_field(section, "Type:")
                 severity = self._extract_field(section, "Severity:")
-                
-                # Extract location details
-                screen_position = self._extract_field(section, "Screen Position:")
-                ui_path = self._extract_field(section, "UI Path:")
-                element = self._extract_field(section, "Element:")
-                visual_context = self._extract_field(section, "Visual Context:")
-                coordinates = self._extract_field(section, "Coordinates:")
-                
-                # Extract problem details
-                what_wrong = self._extract_field(section, "What's Wrong:")
+                title = self._extract_field(section, "Title:")
+                location = self._extract_field(section, "Location:")
                 expected = self._extract_field(section, "Expected:")
+                actual = self._extract_field(section, "Actual:")
                 impact = self._extract_field(section, "Impact:")
-                
-                # Extract measurements
-                visual_measurement = self._extract_field(section, "Visual:")
-                color_measurement = self._extract_field(section, "Colors:")
-                typography_measurement = self._extract_field(section, "Typography:")
-                spacing_measurement = self._extract_field(section, "Spacing:")
-                
-                # Extract reproduction details
-                prerequisites = self._extract_field(section, "Prerequisites:")
-                visual_check = self._extract_field(section, "Visual Check:")
-                expected_result = self._extract_field(section, "Expected Result:")
-                actual_result = self._extract_field(section, "Actual Result:")
-                
-                # Extract developer action
-                immediate_fix = self._extract_field(section, "Immediate Fix:")
-                code_location = self._extract_field(section, "Code Location:")
-                visual_target = self._extract_field(section, "Visual Target:")
-                testing_approach = self._extract_field(section, "Testing Approach:")
+                fix = self._extract_field(section, "Fix:")
                 
                 # Construct description from available fields
-                description = f"{what_wrong} when viewing the interface. Expected: {expected}"
+                description = f"{actual} when viewing the interface. Expected: {expected}"
                 
                 bug = {
                     'title': f"LLM Detected: {title}",
@@ -706,40 +514,44 @@ Analyze the provided bugs using this triaging framework."""
                     'category': 'Craft Bugs',
                     'analysis_type': analysis_type,
                     
-                    # Location details
-                    'screen_position': screen_position,
-                    'ui_path': ui_path,
-                    'element': element,
-                    'visual_context': visual_context,
-                    'coordinates': coordinates,
+                    # Location details (simplified)
+                    'screen_position': location,
+                    'ui_path': location,
+                    'element': title,
+                    'visual_context': location,
+                    'coordinates': '',
                     
-                    # Problem details
-                    'what_wrong': what_wrong,
+                    # Problem details (simplified)
+                    'what_wrong': actual,
                     'expected': expected,
                     'impact': impact,
                     
-                    # Measurements
-                    'visual_measurement': visual_measurement,
-                    'color_measurement': color_measurement,
-                    'typography_measurement': typography_measurement,
-                    'spacing_measurement': spacing_measurement,
+                    # Measurements (simplified)
+                    'visual_measurement': actual,
+                    'color_measurement': '',
+                    'typography_measurement': '',
+                    'spacing_measurement': '',
                     
-                    # Reproduction
-                    'prerequisites': prerequisites,
-                    'visual_check': visual_check,
-                    'expected_result': expected_result,
-                    'actual_result': actual_result,
+                    # Reproduction (simplified)
+                    'prerequisites': '',
+                    'visual_check': '',
+                    'expected_result': expected,
+                    'actual_result': actual,
                     
-                    # Developer action
-                    'immediate_fix': immediate_fix,
-                    'code_location': code_location,
-                    'visual_target': visual_target,
-                    'testing_approach': testing_approach,
+                    # Developer action (simplified)
+                    'immediate_fix': fix,
+                    'code_location': '',
+                    'visual_target': expected,
+                    'testing_approach': '',
                     
                     # Context
                     'step_name': step_data.get('step_name', 'Unknown'),
                     'scenario': step_data.get('scenario_description', 'Unknown'),
-                    'persona': step_data.get('persona_type', 'User')
+                    'persona': step_data.get('persona_type', 'User'),
+                    
+                    # Screenshot association - CRITICAL for proper bug-to-screenshot mapping
+                    'screenshot_path': step_data.get('screenshot_path', ''),
+                    'step_index': step_data.get('step_index', 0)
                 }
                 
                 bugs.append(bug)
@@ -800,13 +612,52 @@ Analyze the provided bugs using this triaging framework."""
         
         bugs = []
         
-        # Filter out problematic phrases
+        # Filter out problematic phrases and "no issues" responses
         problematic_phrases = [
             "i'm sorry", "i can't", "cannot", "unable to", "no visible",
             "guide you", "step-by-step", "approach", "framework",
             "check for", "note any", "assess how", "include exact",
-            "ensure you", "provide exact", "analyze the", "focus only"
+            "ensure you", "provide exact", "analyze the", "focus only",
+            "no visual quality issues detected", "no visual interaction design issues detected",
+            "no visual issues detected", "no issues detected", "no problems found",
+            "appears to be working correctly", "looks good", "no problems observed"
         ]
+        
+        # Check if the entire response is ONLY a "no issues" message (not mixed with actual issues)
+        analysis_lower = analysis_text.lower()
+        no_issues_indicators = [
+            "no visual quality issues detected",
+            "no visual interaction design issues detected", 
+            "no visual issues detected",
+            "no issues detected",
+            "no problems found",
+            "appears to be working correctly",
+            "looks good",
+            "no problems observed"
+        ]
+        
+        # Only filter out if the response is EXCLUSIVELY a "no issues" message
+        # Check if the response contains ONLY these phrases and nothing else substantial
+        has_only_no_issues = False
+        for indicator in no_issues_indicators:
+            if indicator in analysis_lower:
+                # Check if this is the ONLY substantial content in the response
+                # Remove the indicator and see if there's any other meaningful content
+                temp_text = analysis_lower.replace(indicator, "").strip()
+                # Remove common filler words
+                temp_text = re.sub(r'\b(the|a|an|and|or|but|in|on|at|to|for|of|with|by)\b', '', temp_text)
+                temp_text = re.sub(r'\s+', ' ', temp_text).strip()
+                
+                if len(temp_text) < 20:  # If very little content remains, it's likely just a "no issues" response
+                    has_only_no_issues = True
+                    break
+        
+        if has_only_no_issues:
+            # Only filter out if the response is exclusively "no issues"
+            return []
+        
+        # Debug: Print the actual LLM response for troubleshooting
+        print(f"🔍 DEBUG LLM Response ({analysis_type}): {analysis_text[:200]}...")
         
         # Split into lines and look for issues
         lines = analysis_text.split('\n')
@@ -839,7 +690,11 @@ Analyze the provided bugs using this triaging framework."""
                         'analysis_type': analysis_type,
                         'step_name': step_data.get('step_name', 'Unknown'),
                         'scenario': step_data.get('scenario_description', 'Unknown'),
-                        'persona': step_data.get('persona_type', 'User')
+                        'persona': step_data.get('persona_type', 'User'),
+                        
+                        # Screenshot association - CRITICAL for proper bug-to-screenshot mapping
+                        'screenshot_path': step_data.get('screenshot_path', ''),
+                        'step_index': step_data.get('step_index', 0)
                     }
                     bugs.append(bug)
         
@@ -863,8 +718,8 @@ Analyze the provided bugs using this triaging framework."""
             response = await self.llm_client.chat.completions.create(
                 model=self.llm_model,
                 messages=messages,
-                temperature=self.llm_temperature,
-                max_tokens=self.llm_max_tokens
+                
+                max_completion_tokens=self.llm_max_tokens
             )
             
             content = response.choices[0].message.content.strip()
@@ -902,8 +757,8 @@ Analyze the provided bugs using this triaging framework."""
             response = await self.llm_client.chat.completions.create(
                 model=self.llm_model,
                 messages=messages,
-                temperature=self.llm_temperature,
-                max_tokens=self.llm_max_tokens
+                
+                max_completion_tokens=self.llm_max_tokens
             )
             
             content = response.choices[0].message.content.strip()
@@ -939,8 +794,8 @@ Analyze the provided bugs using this triaging framework."""
             response = await self.llm_client.chat.completions.create(
                 model=self.llm_model,
                 messages=messages,
-                temperature=self.llm_temperature,
-                max_tokens=self.llm_max_tokens
+                
+                max_completion_tokens=self.llm_max_tokens
             )
             
             content = response.choices[0].message.content.strip()
@@ -976,8 +831,8 @@ Analyze the provided bugs using this triaging framework."""
             response = await self.llm_client.chat.completions.create(
                 model=self.llm_model,
                 messages=messages,
-                temperature=self.llm_temperature,
-                max_tokens=self.llm_max_tokens
+                
+                max_completion_tokens=self.llm_max_tokens
             )
             
             content = response.choices[0].message.content.strip()

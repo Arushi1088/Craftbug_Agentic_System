@@ -2543,7 +2543,7 @@ if EXCEL_WEB_AVAILABLE:
             llm_bugs = enhanced_analysis.get('llm_generated_bugs', [])
             total_llm_bugs = enhanced_analysis.get('total_llm_bugs', 0)
             
-            logger.info(f"📊 Using working enhanced_ux_analyzer.py logic - found {total_llm_bugs} LLM bugs")
+            logger.info(f"📊 Using LLM-only analysis - found {total_llm_bugs} LLM-generated bugs")
             
             # Create analysis result with ONLY LLM bugs
             ux_analysis = {
@@ -2610,26 +2610,42 @@ if EXCEL_WEB_AVAILABLE:
                 for bug in all_craft_bugs:
                     enhanced_bug = bug.copy()
                     
-                    # Add screenshot data for visual evidence (embedded as base64)
-                    if bug.get("step_name"):
-                        # Find the step that corresponds to this bug
-                        for step in telemetry_steps:
-                            if step.get("step_name") == bug.get("step_name"):
-                                if step.get("screenshot_path"):
-                                    screenshot_path = step.get("screenshot_path")
-                                    # Embed screenshot as base64 data URL
-                                    try:
-                                        with open(screenshot_path, 'rb') as f:
-                                            screenshot_data = f.read()
-                                            screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
-                                            enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
+                    # Use the screenshot path that's already associated with the bug (from LLM analysis)
+                    screenshot_path = bug.get("screenshot_path")
+                    
+                    if screenshot_path and os.path.exists(screenshot_path):
+                        # Embed screenshot as base64 data URL
+                        try:
+                            with open(screenshot_path, 'rb') as f:
+                                screenshot_data = f.read()
+                                screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
+                                enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
+                                enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
+                                logger.info(f"📸 Embedded step-specific screenshot for bug '{bug.get('title')}': {screenshot_path}")
+                        except Exception as e:
+                            logger.warning(f"⚠️ Failed to embed screenshot {screenshot_path}: {e}")
+                            enhanced_bug["screenshot_path"] = screenshot_path
+                            enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
+                    else:
+                        # Fallback: Find the step that corresponds to this bug
+                        if bug.get("step_name"):
+                            for step in telemetry_steps:
+                                if step.get("step_name") == bug.get("step_name"):
+                                    if step.get("screenshot_path"):
+                                        screenshot_path = step.get("screenshot_path")
+                                        # Embed screenshot as base64 data URL
+                                        try:
+                                            with open(screenshot_path, 'rb') as f:
+                                                screenshot_data = f.read()
+                                                screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
+                                                enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
+                                                enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
+                                                logger.info(f"📸 Embedded fallback screenshot for bug '{bug.get('title')}': {screenshot_path}")
+                                        except Exception as e:
+                                            logger.warning(f"⚠️ Failed to embed screenshot {screenshot_path}: {e}")
+                                            enhanced_bug["screenshot_path"] = screenshot_path
                                             enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                            logger.info(f"📸 Embedded screenshot for bug '{bug.get('title')}': {screenshot_path}")
-                                    except Exception as e:
-                                        logger.warning(f"⚠️ Failed to embed screenshot {screenshot_path}: {e}")
-                                        enhanced_bug["screenshot_path"] = screenshot_path
-                                        enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                break
+                                    break
                     
                     # If no specific screenshot found, use a relevant one based on bug type
                     if not enhanced_bug.get("screenshot_data") and not enhanced_bug.get("screenshot_path"):
@@ -2659,9 +2675,38 @@ if EXCEL_WEB_AVAILABLE:
                                         selected_screenshot = step
                                         break
                             
-                            # If no type-specific screenshot found, use the first available one
+                            # If no type-specific screenshot found, use a different screenshot to avoid duplicates
                             if not selected_screenshot:
-                                selected_screenshot = available_screenshots[0]
+                                # Track screenshot usage across all bugs processed so far
+                                if not hasattr(self, '_screenshot_usage'):
+                                    self._screenshot_usage = {}
+                                
+                                # Find the least used screenshot
+                                least_used_path = None
+                                min_usage = float('inf')
+                                
+                                for step in available_screenshots:
+                                    path = step.get("screenshot_path", "")
+                                    current_usage = self._screenshot_usage.get(path, 0)
+                                    if current_usage < min_usage:
+                                        min_usage = current_usage
+                                        least_used_path = path
+                                
+                                # Select the least used screenshot
+                                if least_used_path:
+                                    for step in available_screenshots:
+                                        if step.get("screenshot_path", "") == least_used_path:
+                                            selected_screenshot = step
+                                            # Increment usage count
+                                            self._screenshot_usage[least_used_path] = self._screenshot_usage.get(least_used_path, 0) + 1
+                                            break
+                                
+                                # If still no selection, use the first available
+                                if not selected_screenshot:
+                                    selected_screenshot = available_screenshots[0]
+                                    # Increment usage count for the first screenshot too
+                                    first_path = selected_screenshot.get("screenshot_path", "")
+                                    self._screenshot_usage[first_path] = self._screenshot_usage.get(first_path, 0) + 1
                             
                             # Embed the selected screenshot
                             screenshot_path = selected_screenshot.get("screenshot_path")

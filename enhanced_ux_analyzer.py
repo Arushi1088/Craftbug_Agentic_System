@@ -679,73 +679,59 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
         llm_bugs = []
         total_llm_bugs = 0
         
-        for step in telemetry_data.get('steps', []):
-            # Run enhanced analysis
-            step_analysis = await self.analyze_step_with_enhanced_data(step)
-            enhanced_analysis_data = step_analysis.get('enhanced_analysis', {})
-            enhanced_bugs = enhanced_analysis_data.get('enhanced_craft_bugs', [])
+        for step_index, step in enumerate(telemetry_data.get('steps', [])):
+            # Skip basic enhanced analysis - we only want LLM-generated bugs
+            enhanced_bugs = []  # No basic enhanced bugs - only LLM bugs
             
-            # Ensure EVERY step gets a screenshot for LLM analysis
+            # Get the screenshot for this specific step
             screenshot_path = step.get('screenshot_path')
             
             # If this step doesn't have a screenshot, assign one based on step type
             if not screenshot_path and all_screenshots:
                 step_name = step.get('name', step.get('step_name', '')).lower()
                 
-                # Map step names to appropriate screenshots with better logic
-                if 'copilot' in step_name or 'dialog' in step_name:
-                    # Use copilot screenshot for dialog-related steps
-                    for path in all_screenshots:
-                        if 'copilot' in path.lower():
-                            screenshot_path = path
-                            break
-                elif 'initial' in step_name:
-                    # Use initial screenshot for initial state steps
-                    for path in all_screenshots:
-                        if 'initial' in path.lower():
-                            screenshot_path = path
-                            break
-                elif 'data' in step_name or 'enter' in step_name:
-                    # Use data screenshot for data entry steps
-                    for path in all_screenshots:
-                        if 'data' in path.lower():
-                            screenshot_path = path
-                            break
-                elif 'final' in step_name or 'save' in step_name:
-                    # Use final screenshot for save/final steps
-                    for path in all_screenshots:
-                        if 'final' in path.lower():
-                            screenshot_path = path
-                            break
-                elif 'wait' in step_name or 'launch' in step_name:
-                    # Use data screenshot for wait/launch steps (shows the interface)
-                    for path in all_screenshots:
-                        if 'data' in path.lower():
-                            screenshot_path = path
-                            break
-                elif 'click' in step_name and 'workbook' in step_name:
-                    # Use initial screenshot for workbook creation steps
-                    for path in all_screenshots:
-                        if 'initial' in path.lower():
-                            screenshot_path = path
-                            break
-                elif 'navigate' in step_name:
-                    # Use copilot screenshot for navigation steps (shows the interface)
-                    for path in all_screenshots:
-                        if 'copilot' in path.lower():
-                            screenshot_path = path
+                # Create a mapping of step types to screenshot patterns
+                screenshot_mapping = {
+                    'copilot': 'copilot',
+                    'dialog': 'copilot', 
+                    'initial': 'initial',
+                    'data': 'data',
+                    'enter': 'data',
+                    'final': 'final',
+                    'save': 'final',
+                    'wait': 'data',
+                    'launch': 'data',
+                    'workbook': 'initial',
+                    'navigate': 'copilot'
+                }
+                
+                # Find the most appropriate screenshot based on step content
+                best_match = None
+                for keyword, pattern in screenshot_mapping.items():
+                    if keyword in step_name:
+                        # Look for screenshot with this pattern
+                        for path in all_screenshots:
+                            if pattern in path.lower():
+                                screenshot_path = path
+                                best_match = pattern
+                                break
+                        if screenshot_path:
                             break
                 
-                # If still no screenshot, use a more intelligent fallback
+                # If no keyword match, use step order-based assignment
                 if not screenshot_path:
-                    # Use the most appropriate screenshot based on step order
-                    step_index = telemetry_data.get('steps', []).index(step)
+                    # Use step index to pick appropriate screenshot
                     if step_index < len(all_screenshots):
                         screenshot_path = all_screenshots[step_index]
-                    else:
+                    elif all_screenshots:
+                        # Use the first available screenshot as fallback
                         screenshot_path = all_screenshots[0]
                 
-                print(f"🔍 DEBUG: Assigned screenshot '{screenshot_path}' to step '{step_name}' (index: {step_index if 'step_index' in locals() else 'N/A'})")
+                # Final fallback - if still no screenshot
+                if not screenshot_path and all_screenshots:
+                    screenshot_path = all_screenshots[0]
+                
+                print(f"🔍 DEBUG: Assigned screenshot '{screenshot_path}' to step '{step_name}' (index: {step_index})")
             
             # Run LLM analysis for comprehensive bug detection
             step_data_for_llm = {
@@ -755,7 +741,8 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
                 "success": step.get('success', True),
                 "dialog_detected": step.get('dialog_detected', False),
                 "dialog_type": step.get('dialog_type', None),
-                "screenshot_path": screenshot_path
+                "screenshot_path": screenshot_path,
+                "step_index": step_index  # Add step index for better tracking
             }
             
             # Run LLM analysis on this step
@@ -764,68 +751,19 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
             total_llm_bugs += len(step_llm_bugs)
             print(f"🤖 Step '{step.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
             
-            # Capture screenshots for bugs that need them
-            for bug in enhanced_bugs:
-                if bug.get('needs_screenshot', False):
-                    # First try to use the step's own screenshot
-                    screenshot_path = self._capture_bug_specific_screenshot(bug, step)
-                    if not screenshot_path:
-                        # If no screenshot in this step, find a relevant one
-                        bug_title = bug.get('title', '').lower()
-                        step_name = step.get('step_name', '').lower()
-                        
-                        if 'copilot' in bug_title or ('dialog' in bug_title and 'copilot' in step_name):
-                            print(f"🔍 DEBUG: Processing Copilot dialog bug: {bug_title}")
-                            # For Copilot dialog bugs, we need to find the most relevant screenshot
-                            # Since we now have a dedicated "Take Screenshot - Copilot Dialog" step,
-                            # we should use that screenshot which shows the actual dialog
-                            
-                            # Look for any screenshot with 'copilot' in the filename
-                            screenshot_path = None
-                            for path in all_screenshots:
-                                if 'copilot' in path.lower():
-                                    screenshot_path = path
-                                    print(f"🔍 DEBUG: Found Copilot screenshot by filename: {path}")
-                                    break
-                            
-                            # If still not available, look for any screenshot with 'initial' in the filename
-                            if not screenshot_path:
-                                for path in all_screenshots:
-                                    if 'initial' in path.lower():
-                                        screenshot_path = path
-                                        print(f"🔍 DEBUG: Found initial screenshot: {path}")
-                                        break
-                            
-                            # If still no screenshot, use the first available one as fallback
-                            if not screenshot_path and all_screenshots:
-                                screenshot_path = all_screenshots[0]
-                                print(f"🔍 DEBUG: Using fallback screenshot: {screenshot_path}")
-                            
-                            print(f"🔍 DEBUG: Final screenshot assigned for Copilot dialog: {screenshot_path}")
-                        elif 'save' in bug_title or 'save' in step_name:
-                            # Use final state screenshot for save issues
-                            screenshot_path = None
-                            for path in all_screenshots:
-                                if 'final' in path.lower():
-                                    screenshot_path = path
-                                    break
-                        else:
-                            # Use any available screenshot
-                            screenshot_path = next(iter(all_screenshots.values()), None)
-                    
-                    if screenshot_path:
-                        bug['screenshot_path'] = screenshot_path
+            # Skip enhanced bugs processing - we only use LLM bugs now
+            # Enhanced bugs screenshot processing removed
             
-            all_enhanced_bugs.extend(enhanced_bugs)
+            # Skip adding enhanced bugs - we only want LLM bugs
+            # all_enhanced_bugs.extend(enhanced_bugs)
         
-        # Combine enhanced and LLM bugs
-        all_enhanced_bugs.extend(llm_bugs)
-        enhanced_analysis['enhanced_craft_bugs'] = all_enhanced_bugs
-        enhanced_analysis['enhanced_craft_bug_count'] = len(all_enhanced_bugs)
+        # Only use LLM bugs - no enhanced bugs
+        enhanced_analysis['enhanced_craft_bugs'] = llm_bugs
+        enhanced_analysis['enhanced_craft_bug_count'] = len(llm_bugs)
         enhanced_analysis['llm_generated_bugs'] = llm_bugs
         enhanced_analysis['total_llm_bugs'] = total_llm_bugs
         
-        print(f"🎉 Total bugs found: {len(all_enhanced_bugs)} (Enhanced: {len(all_enhanced_bugs) - total_llm_bugs}, LLM: {total_llm_bugs})")
+        print(f"🎉 Total bugs found: {len(llm_bugs)} (LLM-generated only)")
         
         # Add design compliance summary
         compliance_scores = []
