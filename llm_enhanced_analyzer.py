@@ -33,7 +33,7 @@ class LLMEnhancedAnalyzer:
     def __init__(self):
         """Initialize the LLM-enhanced analyzer"""
         self.enable_llm = True
-        self.llm_model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+        self.llm_model = os.getenv('OPENAI_MODEL', 'gpt-4o')
         self.llm_temperature = 0.1
         self.llm_max_tokens = 2000
         
@@ -52,7 +52,7 @@ class LLMEnhancedAnalyzer:
     def _load_current_prompts(self) -> Dict[str, str]:
         """Load the current analysis prompts"""
         return {
-            'comprehensive_visual_analysis': """LITE PROMPT — STATIC VISUAL UX ANALYSIS (For GPT-4o-mini)
+            'comprehensive_visual_analysis': """LITE PROMPT — STATIC VISUAL UX ANALYSIS (For GPT-4o)
 
 You are an expert UX Designer with 15+ years at Microsoft.
 Analyze the provided screenshot for visual craft bugs and give developer-ready, actionable reports.

@@ -198,7 +198,7 @@ class FinalCraftBugAnalyzer:
         self.llm_client = AsyncOpenAI(api_key=api_key)
         
         # Enhanced JSON-first prompt with ADO examples and Figma tokens
-        self.final_prompt = """You are a senior UX designer analyzing Excel Web screenshots for **visual craft bugs only**.
+        self.final_prompt = """You are a senior UX designer analyzing screenshots for **static visual craft bugs** only.
 
 SCENARIO: {scenario_description}
 PERSONA: {persona_type}
@@ -206,86 +206,46 @@ PERSONA: {persona_type}
 STEPS_CATALOG (choose only from this list; do not invent steps):
 {steps_catalog_json}
 
-REFERENCE_MATERIALS (use as ground truth; do not hallucinate):
-- ADO Reference Bugs (style and phrasing examples):
-{ado_reference_examples}
+REFERENCE_MATERIALS:
+- ADO examples (style anchors) and Figma tokens may be provided above. Use them only when visible evidence supports a violation. Do not guess.
 
-- Figma Design Tokens (validate against these):
-{figma_tokens_json}
+OUTPUT CONTRACT (STRICT):
+- Return JSON ONLY: {{"bugs":[ ... ], "meta":{{ ... }}}} — no prose, no preamble, no trailing text.
 
-EVIDENCE RULES
-- Only include a step in `affected_steps` if the element is VISIBLE in that screenshot.
-- For each step listed, add `"evidence_reason"` explaining why that image shows the bug.
-- Avoid blanket linking; prefer the minimum set of screenshots that clearly show the issue.
+BUG REQUIREMENTS (each item in "bugs"):
+- title
+- type: one of [Color, Spacing, Typography, Alignment, Layout, Hierarchy, Component, Design_System, AI]
+- severity: one of [Red, Orange, Yellow]
+- confidence: one of [High, Medium, Low]  // include low-confidence items instead of dropping them
+- description: what is wrong (must be visible in the screenshots)
+- expected: the correct visual state
+- actual: what is seen
+- affected_steps: [ {{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "<why this step shows the issue>" }} ]  // at least 1
+- ui_path: string or "Not Observable"
+- screen_position: one of [Top-Left, Top-Right, Bottom-Left, Bottom-Right, Center]
+- visual_analysis: {{ "alignment": "...", "spacing": "...", "color": "...", "typography": "...", "border_radius": "...", "shadow": "..." }}
+- design_system_compliance: {{ "expected_token": "<token or 'N/A'>", "actual_value": "<observed value or 'N/A'>", "score": <0-100> }}
+- developer_action: {{ "what_to_correct": "...", "likely_surface": "...", "visual_target": "...", "qa": "..." }}
 
-OUTPUT RULES
-- Return **JSON ONLY** in this exact schema (no extra text):
-{{
-  "bugs": [
-    {{
-      "title": "Concise bug title",
-      "type": "Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI",
-      "severity": "Red|Orange|Yellow",
-      "confidence": "High|Medium|Low",
-      "confidence_reason": "Why this confidence level",
-      "description": "What is visibly wrong (specific, avoid boilerplate)",
-      "expected": "Correct visual state (token-aligned if applicable)",
-      "actual": "What is seen in the screenshot(s)",
-      "affected_steps": [
-        {{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "Why this step shows the issue" }}
-      ],
-      "ui_path": "Ribbon > Tab > Element OR 'Not Observable'",
-      "screen_position": "Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center",
-      "visual_analysis": {{
-        "alignment": "...",
-        "spacing": "...",
-        "color": "...",
-        "typography": "...",
-        "border_radius": "...",
-        "shadow": "..."
-      }},
-      "design_system_compliance": {{
-        "expected_token": "<closest figma token or 'Not Found'>",
-        "actual_value": "<hex/size/weight seen>",
-        "compliance_score": 0-100
-      }},
-      "persona_impact": {{
-        "novice": "Impact + frustration 1-10",
-        "power": "Impact + frustration 1-10",
-        "super_fans": "Impact + frustration 1-10"
-      }},
-      "developer_action": {{
-        "what_to_correct": "Specific CSS/HTML/component update",
-        "likely_surface": "Likely component/file or area",
-        "visual_target": "How it should look after fix (token-aligned)",
-        "qa": "How to visually verify the fix"
-      }}
-    }}
+GLOBAL RULES (be expansive but precise):
+- **Return ALL visible issues**. Prefer **6–10 bugs minimum** across all screenshots.
+- Include **minor/polish items** (slight misalignment, faint borders, small font inconsistencies, weak hierarchy). If unsure, include with **confidence: "Low"**.
+- **Ensure category coverage**: attempt to find issues (if present) in each category: Color, Spacing, Typography, Alignment, Layout, Hierarchy, Component, Design_System, AI.
+- **Do not collapse diverse issues**: If two different elements or locations are affected, report as separate bugs.
+- **Consolidate only exact duplicates** of the same issue across multiple steps by merging their `affected_steps`.
+- Bind every bug to real evidence via `affected_steps` (no invisible claims).
+
+META REQUIREMENTS:
+"meta": {{
+  "categories_checked": ["Color","Spacing","Typography","Alignment","Layout","Hierarchy","Component","Design_System","AI"],
+  "categories_with_findings": ["..."],
+  "categories_no_findings_with_reason": [
+    {{ "category": "Alignment", "reason": "Reviewed headers, ribbon, sheet tabs; no visible misalignment at given resolution." }}
   ],
-  "meta": {{
-    "scenario": "{scenario_description}",
-    "persona": "{persona_type}",
-    "total_bugs": <int>,
-    "severity_distribution": {{ "red": <int>, "orange": <int>, "yellow": <int> }},
-    "notes": "Use 'Sparse' if only a few clear issues are visible"
-  }}
+  "notes": "e.g., Included low-confidence items for completeness."
 }}
 
-SCORING & MATCHING
-- When reporting **Color / Typography / Spacing / Border / Shadow** issues:
-  - Attempt a **token match** from the Figma list. If ambiguous, pick the **closest** and state the ambiguity in `confidence_reason`.
-  - If no token fits, set `expected_token="Not Found"` and `compliance_score=0`.
-- Phrase issues in a style consistent with the ADO examples.
-
-CONSOLIDATION
-- Merge duplicates across steps into a single bug with multiple `affected_steps`.
-
-SOFT FLOOR RULES (for sparse screens)
-- If fewer than 2 bugs satisfy strict evidence rules, include up to 2 additional clearly visible minor issues with "confidence":"Low" and set "confidence_reason" to explain the limitation (e.g., element partially occluded or small in frame).
-- If no relevant design token applies to a visible issue, set design_system_compliance.expected_token="Not Applicable" and still report the issue with a clear visual rationale.
-- Only consolidate bugs when title, type, and visual_analysis indicate the same underlying defect on the same primary element. Do not merge issues across different primary elements (e.g., Ribbon vs Copilot dialog).
-
-You will receive images interleaved with their step captions. Bind bugs to steps strictly using the catalog. Produce JSON only."""
+You will receive images interleaved with their step captions (e.g., "Step 2: Click New Workbook → excel_initial_state.png"). Use these captions to bind bugs to steps. Produce **valid JSON only**."""
 
     async def analyze_screenshots(self, steps_data: List[Dict]) -> List[Dict]:
         """
@@ -518,14 +478,27 @@ You will receive images interleaved with their step captions. Bind bugs to steps
                 logger.warning(f"Failed to parse bug section {i}: {e}")
                 continue
         
-        # Final deduplication
+        # Final deduplication - use (title + type + affected_steps) as key to prevent over-merging
         unique_bugs = []
-        seen_titles = set()
+        seen_keys = set()
         
         for bug in bugs:
-            title = bug.get('title', '').lower().strip()
-            if title and title not in seen_titles:
-                seen_titles.add(title)
+            title = bug.get('title', '').strip()
+            bug_type = bug.get('type', '').strip()
+            affected_steps = bug.get('affected_steps', [])
+            
+            # Create unique key: (normalized_title + type + sorted_step_indices)
+            step_indices = [str(s.get('index', -1)) for s in affected_steps]
+            step_indices.sort()
+            
+            key = (
+                title.lower() + '|' +
+                bug_type.lower() + '|' +
+                ','.join(step_indices)
+            )
+            
+            if key not in seen_keys:
+                seen_keys.add(key)
                 unique_bugs.append(bug)
         
         if len(unique_bugs) < len(bugs):
