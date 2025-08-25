@@ -53,8 +53,8 @@ def build_messages(final_prompt_text: str, ordered_steps: List[Dict]) -> List[Di
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{s['base64']}"}})
     return [{"role": "user", "content": content}]
 
-def load_ado_examples(path="ado_bugs_fast_analysis.json", max_per_bucket=3):
-    """Load ADO bug examples for reference (compact sampling)"""
+def load_ado_examples(path="ado_bugs_fast_analysis.json", max_per_bucket=2):
+    """Load ADO bug examples for reference (expanded categories)"""
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -64,14 +64,38 @@ def load_ado_examples(path="ado_bugs_fast_analysis.json", max_per_bucket=3):
         if not examples:
             return {"examples": {}}
         
-        # Sample and truncate for token efficiency
-        buckets = {"save_issues": [], "ui_issues": [], "spacing_issues": [], "color_issues": []}
+        # Expanded categories for better coverage
+        buckets = {
+            "color_contrast": [],
+            "spacing_alignment": [], 
+            "typography": [],
+            "border_radius": [],
+            "dialog_layout": [],
+            "ribbon_consistency": []
+        }
         
+        # Categorize bugs by content
         for category, bugs in examples.items():
-            if category == "save_issues" and bugs:
-                buckets["save_issues"] = [{"id": b.get("id"), "title": b.get("title", "")[:120], "tags": b.get("tags", "")} for b in bugs[:max_per_bucket]]
-            elif category == "ui_issues" and bugs:
-                buckets["ui_issues"] = [{"id": b.get("id"), "title": b.get("title", "")[:120], "tags": b.get("tags", "")} for b in bugs[:max_per_bucket]]
+            if not bugs:
+                continue
+                
+            for bug in bugs[:max_per_bucket]:
+                title = bug.get("title", "").lower()
+                tags = (bug.get("tags", "") or "").lower()
+                
+                # Categorize based on content
+                if any(word in title for word in ["color", "contrast", "hex", "rgb"]):
+                    buckets["color_contrast"].append({"id": bug.get("id"), "title": bug.get("title", "")[:120], "tags": bug.get("tags", "")})
+                elif any(word in title for word in ["spacing", "padding", "margin", "gap", "alignment"]):
+                    buckets["spacing_alignment"].append({"id": bug.get("id"), "title": bug.get("title", "")[:120], "tags": bug.get("tags", "")})
+                elif any(word in title for word in ["font", "text", "typography", "size", "weight"]):
+                    buckets["typography"].append({"id": bug.get("id"), "title": bug.get("title", "")[:120], "tags": bug.get("tags", "")})
+                elif any(word in title for word in ["border", "radius", "corner", "rounded"]):
+                    buckets["border_radius"].append({"id": bug.get("id"), "title": bug.get("title", "")[:120], "tags": bug.get("tags", "")})
+                elif any(word in title for word in ["dialog", "modal", "popup", "overlay"]):
+                    buckets["dialog_layout"].append({"id": bug.get("id"), "title": bug.get("title", "")[:120], "tags": bug.get("tags", "")})
+                elif any(word in title for word in ["ribbon", "toolbar", "menu", "button"]):
+                    buckets["ribbon_consistency"].append({"id": bug.get("id"), "title": bug.get("title", "")[:120], "tags": bug.get("tags", "")})
         
         return {"examples": buckets}
     except Exception as e:
@@ -224,6 +248,11 @@ SCORING & MATCHING
 
 CONSOLIDATION
 - Merge duplicates across steps into a single bug with multiple `affected_steps`.
+
+SOFT FLOOR RULES (for sparse screens)
+- If fewer than 2 bugs satisfy strict evidence rules, include up to 2 additional clearly visible minor issues with "confidence":"Low" and set "confidence_reason" to explain the limitation (e.g., element partially occluded or small in frame).
+- If no relevant design token applies to a visible issue, set design_system_compliance.expected_token="Not Applicable" and still report the issue with a clear visual rationale.
+- Only consolidate bugs when title, type, and visual_analysis indicate the same underlying defect on the same primary element. Do not merge issues across different primary elements (e.g., Ribbon vs Copilot dialog).
 
 You will receive images interleaved with their step captions. Bind bugs to steps strictly using the catalog. Produce JSON only."""
 
