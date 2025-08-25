@@ -12,6 +12,7 @@ import os
 import base64
 import asyncio
 import logging
+import json
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from pathlib import Path
@@ -28,6 +29,30 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Helper functions for JSON-first analyzer
+def make_steps_catalog(steps_data: List[Dict]) -> List[Dict]:
+    """Build a dynamic catalog (no hardcoding) for the prompt."""
+    catalog = []
+    for idx, s in enumerate(steps_data, start=1):
+        catalog.append({
+            "index": idx,
+            "name": s.get("step_name", f"Step {idx}"),
+            "screenshot": os.path.basename(s.get("screenshot_path", f"screenshot_{idx}.png"))
+        })
+    return catalog
+
+def build_messages(final_prompt_text: str, ordered_steps: List[Dict]) -> List[Dict]:
+    """
+    Interleave caption → image so the model binds bugs to the correct step.
+    ordered_steps items must include: index, name, screenshot_path, base64
+    """
+    content = [{"type": "text", "text": final_prompt_text}]
+    for s in ordered_steps:
+        caption = f"Step {s['index']}: {s['name']} → {os.path.basename(s['screenshot_path'])}"
+        content.append({"type": "text", "text": caption})
+        content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{s['base64']}"}})
+    return [{"role": "user", "content": content}]
+
 class FinalCraftBugAnalyzer:
     """Final detection-only craft bug analyzer"""
     
@@ -43,37 +68,30 @@ class FinalCraftBugAnalyzer:
         
         self.llm_client = AsyncOpenAI(api_key=api_key)
         
-        # Final detection-only prompt - "LOOSE" VARIANT with confidence tags
-        self.final_prompt = """You are a UX designer analyzing Excel Web screenshots for visual craft bugs.
+        # JSON-first prompt with dynamic catalog and strict schema
+        self.final_prompt = """You are a senior UX designer analyzing screenshots for visual craft bugs only.
 
-Look at each screenshot carefully and find ALL visual issues you can see, including:
-- Color contrast problems
-- Spacing inconsistencies  
-- Typography mismatches
-- Alignment issues
-- Component styling problems
-- Layout problems
-- Visual hierarchy issues
-- Any other visual defects
+SCENARIO: {scenario_description}
+PERSONA: {persona_type}
 
-Be thorough and find as many issues as possible. Don't be conservative.
-Use confidence tags to indicate how certain you are about each issue.
+STEPS_CATALOG (choose only from this list; do not invent steps):
+{steps_catalog_json}
 
-Format each bug as:
-CRAFT BUG #X
-Type: [Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy]
-Severity: [Red|Orange|Yellow]
-Confidence: [High|Medium|Low]
-Title: [Brief description]
-Description: [What's wrong]
-Expected: [What should be correct]
-Actual: [What's currently wrong]
+RULES
+- Return JSON ONLY: {{"bugs":[ ... ], "meta":{{...}}}} — no extra text.
+- Each bug MUST include:
+  - title, type (Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI),
+  - severity (Red|Orange|Yellow), confidence (High|Medium|Low),
+  - description (what is wrong, visible), expected (correct visual), actual (what is seen),
+  - affected_steps: [{{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>" }}] (at least 1),
+  - ui_path (or "Not Observable"), screen_position (Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center),
+  - visual_analysis: {{alignment, spacing, color, typography, border_radius, shadow}},
+  - developer_action: {{what_to_correct, likely_surface, visual_target, qa}}
+- Consolidate duplicates across steps; include all affected steps in one bug.
+- Prefer 2–6 strong bugs total across all images. Do not add filler. No boilerplate like "Current implementation has issues".
+- If few issues are visible: output fewer bugs and set meta.notes="Sparse".
 
-Find at least 5-8 bugs per screenshot. Be detailed and specific about what you see in the images.
-If you see similar issues across multiple screenshots, mention which screenshots they appear in.
-
-Analyzing {num_screenshots} screenshots:
-{step_descriptions}"""
+You will receive images interleaved with their step captions in this order. Use the captions to bind bugs to steps. Produce JSON only."""
 
     async def analyze_screenshots(self, steps_data: List[Dict]) -> List[Dict]:
         """
@@ -100,23 +118,30 @@ Analyzing {num_screenshots} screenshots:
         context = self._prepare_context(unique_steps)
         
         # Prepare images with actual image data (not file paths)
-        image_data_list = await self._prepare_images_with_data(unique_steps)
+        ordered_steps = await self._prepare_images_with_data(unique_steps)
         
-        if not image_data_list:
+        if not ordered_steps:
             print("❌ No valid images could be loaded for analysis")
             return []
         
         # Run analysis with actual image data
-        analysis_text = await self._run_analysis_with_images(context, image_data_list)
+        analysis_text = await self._run_analysis_with_images(context, ordered_steps)
         
         if not analysis_text:
             print("❌ Analysis failed")
             return []
         
-        # Parse results
+        # JSON first
+        data = self._try_parse_json(analysis_text)
+        if data:
+            bugs = self._normalize_bugs_from_json(data["bugs"], unique_steps)
+            print(f"✅ Final analysis complete (JSON): {len(bugs)} craft bugs detected")
+            return bugs
+
+        # Fallback to legacy regex parser
+        print("ℹ️ JSON parse failed — using legacy regex parser")
         bugs = self._parse_bugs(analysis_text, unique_steps)
-        
-        print(f"✅ Final analysis complete: {len(bugs)} craft bugs detected")
+        print(f"✅ Final analysis complete (legacy): {len(bugs)} craft bugs detected")
         return bugs
 
     def _deduplicate_and_validate_steps(self, steps_data: List[Dict]) -> List[Dict]:
@@ -162,44 +187,35 @@ Analyzing {num_screenshots} screenshots:
         scenario_description = steps_data[0].get('scenario_description', 'Excel Web Scenario')
         persona_type = steps_data[0].get('persona_type', 'User')
         
-        # Build step descriptions
-        step_descriptions = []
-        for i, step in enumerate(steps_data, 1):
-            step_name = step.get('step_name', f'Step {i}')
-            step_desc = step.get('step_description', f'Step {i}')
-            screenshot_name = os.path.basename(step.get('screenshot_path', f'screenshot_{i}.png'))
-            step_descriptions.append(f"Step {i}: {step_name} - {step_desc} → {screenshot_name}")
-        
         return {
             'scenario_description': scenario_description,
-            'persona_type': persona_type,
-            'step_descriptions': step_descriptions,
-            'num_screenshots': len(steps_data)
+            'persona_type': persona_type
         }
 
-    async def _prepare_images_with_data(self, steps_data: List[Dict]) -> List[Tuple[str, bytes, str]]:
-        """Prepare images with actual image data for analysis"""
-        image_data_list = []
-        
-        for step in steps_data:
+    async def _prepare_images_with_data(self, steps_data: List[Dict]) -> List[Dict]:
+        """Return ordered steps with base64 image payload for interleaving."""
+        ordered = []
+        for idx, step in enumerate(steps_data, start=1):
             screenshot_path = step.get('screenshot_path')
-            step_name = step.get('step_name', 'Unknown')
-            
             if not screenshot_path or not os.path.exists(screenshot_path):
-                print(f"⚠️ Skipping {step_name}: File not found")
+                print(f"⚠️ Skipping: missing screenshot for {step.get('step_name','Unknown')}")
                 continue
-            
             try:
-                compressed_image = await self._compress_image(screenshot_path)
-                if compressed_image:
-                    image_data_list.append((step_name, compressed_image, screenshot_path))
-                    print(f"✅ Loaded image for {step_name}: {len(compressed_image)} bytes")
-                else:
-                    print(f"❌ Failed to compress image for {step_name}")
+                # Prefer PNG or high-quality JPEG
+                img_bytes = await self._compress_image(screenshot_path)
+                if not img_bytes:
+                    continue
+                b64 = base64.b64encode(img_bytes).decode('utf-8')
+                ordered.append({
+                    "index": idx,
+                    "name": step.get("step_name", f"Step {idx}"),
+                    "screenshot_path": screenshot_path,
+                    "base64": b64
+                })
+                print(f"✅ Loaded image for {step.get('step_name', f'Step {idx}')}: {len(img_bytes)} bytes")
             except Exception as e:
-                print(f"❌ Error loading image for {step_name}: {e}")
-        
-        return image_data_list
+                print(f"❌ Image load error for {screenshot_path}: {e}")
+        return ordered
 
     async def _compress_image(self, image_path: str) -> Optional[bytes]:
         """Compress image for analysis"""
@@ -222,54 +238,36 @@ Analyzing {num_screenshots} screenshots:
             logger.error(f"Error compressing image {image_path}: {e}")
             return None
 
-    async def _run_analysis_with_images(self, context: Dict, image_data_list: List[Tuple[str, bytes, str]]) -> str:
-        """Run the final craft bug analysis with actual image data"""
+    async def _run_analysis_with_images(self, context: Dict, ordered_steps_with_b64: List[Dict]) -> str:
+        """Run the final craft bug analysis with interleaved captions and images"""
         try:
-            # Format the prompt with context
-            step_descriptions = "\n".join(context['step_descriptions'])
-            
-            prompt = self.final_prompt.format(
-                num_screenshots=context['num_screenshots'],
-                step_descriptions=step_descriptions
+            # Build dynamic STEPS_CATALOG
+            steps_catalog = make_steps_catalog([
+                {"step_name": s["name"], "screenshot_path": s["screenshot_path"]} for s in ordered_steps_with_b64
+            ])
+            steps_catalog_json = json.dumps(steps_catalog, indent=2)
+
+            # Fill prompt
+            prompt_text = self.final_prompt.format(
+                scenario_description=context.get('scenario_description', 'Excel Web Scenario'),
+                persona_type=context.get('persona_type', 'User'),
+                steps_catalog_json=steps_catalog_json
             )
-            
-            # Prepare messages with actual image data
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt}
-                    ]
-                }
-            ]
-            
-            # Add actual image data (not file paths)
-            for step_name, image_data, screenshot_path in image_data_list:
-                base64_image = base64.b64encode(image_data).decode('utf-8')
-                messages[0]["content"].append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}"
-                    }
-                })
-                print(f"📸 Added image data for {step_name}: {len(image_data)} bytes")
-            
-            print(f"🚀 Running final craft bug analysis with {len(image_data_list)} screenshots...")
-            print(f"📊 Sending {len(messages[0]['content'])} content items (1 text + {len(image_data_list)} images)")
-            
-            # Make API call with rate limiting
+
+            # Interleave captions + images
+            messages = build_messages(prompt_text, ordered_steps_with_b64)
+
+            print(f"🚀 Sending {len(ordered_steps_with_b64)} images with captions (interleaved)")
             response = await self._make_api_call_with_retry(messages)
-            
             if not response:
                 return ""
-            
-            analysis_text = response.choices[0].message.content
-            print(f"✅ Final analysis complete: {len(analysis_text)} characters")
-            
-            return analysis_text
-            
+            text = response.choices[0].message.content or ""
+            print(f"✅ LLM returned {len(text)} chars")
+            return text
         except Exception as e:
             logger.error(f"Final analysis failed: {e}")
+            import traceback
+            traceback.print_exc()
             return ""
 
     async def _make_api_call_with_retry(self, messages: List[Dict], max_retries: int = 3) -> Optional[object]:
@@ -589,6 +587,101 @@ Analyzing {num_screenshots} screenshots:
             logger.error(f"Error assigning screenshots by content: {e}")
         
         return paths
+
+    def _try_parse_json(self, text: str) -> Optional[Dict]:
+        """Try to parse JSON response from LLM"""
+        try:
+            # First try direct JSON parsing
+            data = json.loads(text)
+            if isinstance(data, dict) and "bugs" in data:
+                return data
+        except Exception:
+            pass
+        
+        try:
+            # Try to extract JSON from markdown code blocks
+            if "```json" in text:
+                start = text.find("```json") + 7
+                end = text.find("```", start)
+                if end > start:
+                    json_text = text[start:end].strip()
+                    data = json.loads(json_text)
+                    if isinstance(data, dict) and "bugs" in data:
+                        return data
+        except Exception:
+            pass
+        
+        try:
+            # Try to find JSON object in the text
+            if '{"bugs"' in text:
+                start = text.find('{"bugs"')
+                # Find the matching closing brace
+                brace_count = 0
+                end = start
+                for i, char in enumerate(text[start:], start):
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            end = i + 1
+                            break
+                
+                if end > start:
+                    json_text = text[start:end]
+                    data = json.loads(json_text)
+                    if isinstance(data, dict) and "bugs" in data:
+                        return data
+        except Exception:
+            pass
+        
+        return None
+
+    def _normalize_bugs_from_json(self, bugs_json: List[Dict], steps_data: List[Dict]) -> List[Dict]:
+        """Normalize bugs from JSON format to our standard format"""
+        # Index real steps for quick lookup
+        idx_to_path = {}
+        idx_to_name = {}
+        for i, s in enumerate(steps_data, start=1):
+            idx_to_path[i] = s.get("screenshot_path")
+            idx_to_name[i] = s.get("step_name", f"Step {i}")
+
+        normalized = []
+        for b in bugs_json:
+            # Map affected_steps to real file paths (validate catalog picks)
+            paths = []
+            for stepref in b.get("affected_steps", []):
+                idx = stepref.get("index")
+                sp = idx_to_path.get(idx)
+                if sp and os.path.exists(sp):
+                    paths.append(sp)
+
+            if not paths:
+                # last-resort: keep one image so report doesn't break
+                first = idx_to_path.get(1)
+                if first and os.path.exists(first):
+                    paths.append(first)
+
+            normalized.append({
+                "title": b.get("title", "Untitled"),
+                "type": b.get("type", "Visual"),
+                "severity": b.get("severity", "Yellow"),
+                "confidence": b.get("confidence", "Medium"),
+                "description": b.get("description", ""),
+                "expected": b.get("expected", ""),
+                "actual": b.get("actual", ""),
+                "ui_path": b.get("ui_path", "Not Observable"),
+                "screen_position": b.get("screen_position", ""),
+                "visual_measurement": json.dumps(b.get("visual_analysis", {})),
+                "what_to_correct": b.get("developer_action", {}).get("what_to_correct", ""),
+                "likely_surface": b.get("developer_action", {}).get("likely_surface", ""),
+                "visual_target": b.get("developer_action", {}).get("visual_target", ""),
+                "qa_verification": b.get("developer_action", {}).get("qa", ""),
+                "screenshot_paths": paths,
+                "screenshot_path": paths[0] if paths else None,
+                "affected_steps": b.get("affected_steps", [])
+            })
+        return normalized
 
     def _calculate_compliance_score(self, expected: str, actual: str) -> int:
         """Calculate design system compliance score"""
