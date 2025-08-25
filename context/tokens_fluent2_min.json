@@ -1,0 +1,24 @@
+{
+  "colors": {
+    "primary_blue":"#0078d4",
+    "primary_blue_hover":"#106ebe",
+    "primary_blue_pressed":"#005a9e",
+    "neutral_white":"#ffffff",
+    "neutral_gray_80":"#a19f9d",
+    "neutral_gray_100":"#605e5c",
+    "semantic_error":"#d13438",
+    "semantic_success":"#107c10"
+  },
+  "typography": {
+    "family":"Segoe UI",
+    "sizes":{"xs":10,"sm":12,"md":14,"lg":16,"xl":18,"xxl":20,"xxxl":24},
+    "weights":{"regular":400,"medium":500,"semibold":600}
+  },
+  "spacing":[4,8,12,16,20,24,32],
+  "radius":{"sm":2,"md":4,"lg":8},
+  "shadows":{
+    "sm":"0 1px 2px rgba(0,0,0,.1)",
+    "md":"0 2px 4px rgba(0,0,0,.1)",
+    "lg":"0 4px 8px rgba(0,0,0,.1)"
+  }
+}

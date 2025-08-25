@@ -1,0 +1,24 @@
+{
+  "color_contrast": [
+    {"id": 1001, "title": "[Accessibility] Low contrast in dialog body text against neutral background"},
+    {"id": 1002, "title": "[Accessibility] Gridline contrast below WCAG threshold at default zoom"}
+  ],
+  "spacing_alignment": [
+    {"id": 1101, "title": "[Fluent] Ribbon icon spacing inconsistent with spacing scale"},
+    {"id": 1102, "title": "[Fluent] Copilot card misaligned; uneven padding left/right"}
+  ],
+  "typography": [
+    {"id": 1201, "title": "[Typography] Mixed weights in ribbon; labels should be medium (500)"},
+    {"id": 1202, "title": "[Typography] Button uses 16px; token specifies md=14px"}
+  ],
+  "border_radius": [
+    {"id": 1301, "title": "[Fluent] Dropdown radius 8px; token requires md=4px"}
+  ],
+  "dialog_layout": [
+    {"id": 1401, "title": "[Dialog] Modal not centered; violates layout guidance"},
+    {"id": 1402, "title": "[Dialog] Action area padding exceeds spacing scale"}
+  ],
+  "ribbon_consistency": [
+    {"id": 1501, "title": "[Ribbon] Mixed icon sizes; should be standardized per spec"}
+  ]
+}

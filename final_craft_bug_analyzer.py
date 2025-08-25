@@ -198,7 +198,7 @@ class FinalCraftBugAnalyzer:
         self.llm_client = AsyncOpenAI(api_key=api_key)
         
         # Enhanced JSON-first prompt with ADO examples and Figma tokens
-        self.final_prompt = """You are a senior UX designer analyzing screenshots for **static visual craft bugs** only.
+        self.final_prompt = """You are a senior UX designer analyzing Excel Web screenshots for visual craft bugs only.
 
 SCENARIO: {scenario_description}
 PERSONA: {persona_type}
@@ -206,46 +206,31 @@ PERSONA: {persona_type}
 STEPS_CATALOG (choose only from this list; do not invent steps):
 {steps_catalog_json}
 
-REFERENCE_MATERIALS:
-- ADO examples (style anchors) and Figma tokens may be provided above. Use them only when visible evidence supports a violation. Do not guess.
+REFERENCE CONTEXT:
+- FIGMA TOKENS: {figma_tokens_json}
+- ADO BUG EXAMPLES (style guide for phrasing):
+{ado_reference_examples}
 
-OUTPUT CONTRACT (STRICT):
-- Return JSON ONLY: {{"bugs":[ ... ], "meta":{{ ... }}}} — no prose, no preamble, no trailing text.
+RULES:
+- Return JSON ONLY: {{"bugs":[ ... ], "meta":{{...}}}} — no extra text.
+- Each bug MUST include:
+  - title (phrased in ADO bug style), 
+  - type (Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI),
+  - severity (Red|Orange|Yellow), confidence (High|Medium|Low),
+  - description (what is wrong, visible), expected (correct visual, reference Figma tokens if possible), actual (what is seen),
+  - affected_steps: [{{"index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "<why this screenshot shows the issue>"}}] (≥1 required),
+  - ui_path (or "Not Observable"), screen_position (Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center),
+  - visual_analysis: {{alignment, spacing, color, typography, border_radius, shadow}},
+  - developer_action: {{what_to_correct, likely_surface, visual_target, qa}},
+  - persona_impact: {{novice: 1-10, power: 1-10, superfans: 1-10}},
+  - design_system_compliance: {{expected_token, actual_value, compliance_score (0–100)}}
 
-BUG REQUIREMENTS (each item in "bugs"):
-- title
-- type: one of [Color, Spacing, Typography, Alignment, Layout, Hierarchy, Component, Design_System, AI]
-- severity: one of [Red, Orange, Yellow]
-- confidence: one of [High, Medium, Low]  // include low-confidence items instead of dropping them
-- description: what is wrong (must be visible in the screenshots)
-- expected: the correct visual state
-- actual: what is seen
-- affected_steps: [ {{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "<why this step shows the issue>" }} ]  // at least 1
-- ui_path: string or "Not Observable"
-- screen_position: one of [Top-Left, Top-Right, Bottom-Left, Bottom-Right, Center]
-- visual_analysis: {{ "alignment": "...", "spacing": "...", "color": "...", "typography": "...", "border_radius": "...", "shadow": "..." }}
-- design_system_compliance: {{ "expected_token": "<token or 'N/A'>", "actual_value": "<observed value or 'N/A'>", "score": <0-100> }}
-- developer_action: {{ "what_to_correct": "...", "likely_surface": "...", "visual_target": "...", "qa": "..." }}
+- Consolidate duplicates across steps; include all affected steps in one bug.
+- Prefer 4–8 strong bugs across all images (not filler). No boilerplate like "Current implementation has issues".
+- Validate bugs against FIGMA TOKENS where applicable (e.g. incorrect color hex, wrong font size, inconsistent spacing tokens).
+- Phrase bug titles & descriptions following ADO bug style for consistency.
 
-GLOBAL RULES (be expansive but precise):
-- **Return ALL visible issues**. Prefer **6–10 bugs minimum** across all screenshots.
-- Include **minor/polish items** (slight misalignment, faint borders, small font inconsistencies, weak hierarchy). If unsure, include with **confidence: "Low"**.
-- **Ensure category coverage**: attempt to find issues (if present) in each category: Color, Spacing, Typography, Alignment, Layout, Hierarchy, Component, Design_System, AI.
-- **Do not collapse diverse issues**: If two different elements or locations are affected, report as separate bugs.
-- **Consolidate only exact duplicates** of the same issue across multiple steps by merging their `affected_steps`.
-- Bind every bug to real evidence via `affected_steps` (no invisible claims).
-
-META REQUIREMENTS:
-"meta": {{
-  "categories_checked": ["Color","Spacing","Typography","Alignment","Layout","Hierarchy","Component","Design_System","AI"],
-  "categories_with_findings": ["..."],
-  "categories_no_findings_with_reason": [
-    {{ "category": "Alignment", "reason": "Reviewed headers, ribbon, sheet tabs; no visible misalignment at given resolution." }}
-  ],
-  "notes": "e.g., Included low-confidence items for completeness."
-}}
-
-You will receive images interleaved with their step captions (e.g., "Step 2: Click New Workbook → excel_initial_state.png"). Use these captions to bind bugs to steps. Produce **valid JSON only**."""
+You will receive images interleaved with their step captions in this order. Use the captions to bind bugs to steps. Produce JSON only."""
 
     async def analyze_screenshots(self, steps_data: List[Dict]) -> List[Dict]:
         """
@@ -401,12 +386,11 @@ You will receive images interleaved with their step captions (e.g., "Step 2: Cli
             ])
             steps_catalog_json = json.dumps(steps_catalog, indent=2)
 
-            # Load ADO examples and Figma tokens
-            ado_ref = load_ado_examples()
-            figma_ref = load_figma_tokens()
+            # Load ADO examples and Figma tokens using safe utility functions
+            from utils.context_payloads import load_ado_examples_safe, load_figma_tokens_safe
             
-            ado_reference_examples = json.dumps(ado_ref, indent=2)
-            figma_tokens_json = json.dumps(figma_ref, indent=2)
+            ado_reference_examples = load_ado_examples_safe()
+            figma_tokens_json = load_figma_tokens_safe()
 
             # Fill prompt with enhanced context
             prompt_text = self.final_prompt.format(
@@ -421,7 +405,7 @@ You will receive images interleaved with their step captions (e.g., "Step 2: Cli
             messages = build_messages(prompt_text, ordered_steps_with_b64)
 
             print(f"🚀 Sending {len(ordered_steps_with_b64)} images with captions (interleaved)")
-            print(f"📊 Enhanced with {len(ado_ref.get('examples', {}))} ADO examples and {len(figma_ref.get('design_tokens', {}))} Figma token categories")
+            print(f"📊 Enhanced with ADO examples and Figma tokens for token validation")
             response = await self._make_api_call_with_retry(messages)
             if not response:
                 return ""
