@@ -15,6 +15,7 @@ from simple_ux_analyzer import SimpleExcelUXAnalyzer
 from enhanced_real_data_integration import EnhancedRealDataIntegration
 from load_env import load_env_file
 from llm_enhanced_analyzer import LLMEnhancedAnalyzer
+from final_craft_bug_analyzer import FinalCraftBugAnalyzer
 
 class EnhancedUXAnalyzer(SimpleExcelUXAnalyzer):
     """Enhanced UX analyzer with real data integration"""
@@ -39,6 +40,9 @@ class EnhancedUXAnalyzer(SimpleExcelUXAnalyzer):
         
         # Initialize LLM analyzer for comprehensive bug detection
         self.llm_analyzer = LLMEnhancedAnalyzer()
+        
+        # Initialize final craft bug analyzer (loose variant)
+        self.final_analyzer = FinalCraftBugAnalyzer()
     
     def _load_enhanced_data(self):
         """Load the most recent enhanced data file"""
@@ -675,14 +679,14 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
         print(f"🔍 DEBUG: Total screenshots found: {len(all_screenshots)}")
         print(f"🔍 DEBUG: Screenshots: {all_screenshots}")
         
-        # Second pass: analyze steps and assign screenshots
+        # Second pass: analyze steps using multi-screenshot approach
         llm_bugs = []
         total_llm_bugs = 0
         
+        # Prepare all steps with screenshots for multi-screenshot analysis
+        steps_for_multi_analysis = []
+        
         for step_index, step in enumerate(telemetry_data.get('steps', [])):
-            # Skip basic enhanced analysis - we only want LLM-generated bugs
-            enhanced_bugs = []  # No basic enhanced bugs - only LLM bugs
-            
             # Get the screenshot for this specific step
             screenshot_path = step.get('screenshot_path')
             
@@ -733,8 +737,8 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
                 
                 print(f"🔍 DEBUG: Assigned screenshot '{screenshot_path}' to step '{step_name}' (index: {step_index})")
             
-            # Run LLM analysis for comprehensive bug detection
-            step_data_for_llm = {
+            # Prepare step data for multi-screenshot analysis
+            step_data_for_multi = {
                 "step_name": step.get('name', step.get('step_name', '')),
                 "description": step.get('description', ''),
                 "timing": step.get('timing', 0),
@@ -742,20 +746,83 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
                 "dialog_detected": step.get('dialog_detected', False),
                 "dialog_type": step.get('dialog_type', None),
                 "screenshot_path": screenshot_path,
-                "step_index": step_index  # Add step index for better tracking
+                "step_index": step_index,
+                "scenario_description": telemetry_data.get('scenario_name', 'Excel Web Scenario'),
+                "persona_type": "User"
             }
             
-            # Run LLM analysis on this step
-            step_llm_bugs = await self.llm_analyzer.analyze_step_with_llm(step_data_for_llm)
-            llm_bugs.extend(step_llm_bugs)
-            total_llm_bugs += len(step_llm_bugs)
-            print(f"🤖 Step '{step.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
+            steps_for_multi_analysis.append(step_data_for_multi)
+        
+        # Try final craft bug analyzer first (loose variant)
+        try:
+            print(f"🚀 Attempting final craft bug analysis with {len(steps_for_multi_analysis)} steps...")
+            final_bugs = await self.final_analyzer.analyze_screenshots(steps_for_multi_analysis)
             
-            # Skip enhanced bugs processing - we only use LLM bugs now
-            # Enhanced bugs screenshot processing removed
-            
-            # Skip adding enhanced bugs - we only want LLM bugs
-            # all_enhanced_bugs.extend(enhanced_bugs)
+            if final_bugs:
+                llm_bugs = final_bugs
+                total_llm_bugs = len(final_bugs)
+                print(f"✅ Final craft bug analysis successful: {len(final_bugs)} bugs found")
+            else:
+                print("ℹ️ Final craft bug analysis found no bugs, falling back to multi-screenshot analysis")
+                # Fall back to multi-screenshot analysis
+                try:
+                    from multi_screenshot_analyzer import MultiScreenshotAnalyzer
+                    multi_analyzer = MultiScreenshotAnalyzer()
+                    
+                    multi_bugs = await multi_analyzer.analyze_multiple_screenshots(steps_for_multi_analysis)
+                    
+                    if multi_bugs:
+                        llm_bugs = multi_bugs
+                        total_llm_bugs = len(multi_bugs)
+                        print(f"✅ Multi-screenshot analysis successful: {len(multi_bugs)} bugs found")
+                    else:
+                        print("ℹ️ Multi-screenshot analysis found no bugs, falling back to individual analysis")
+                        # Fall back to individual analysis
+                        for step_data in steps_for_multi_analysis:
+                            step_llm_bugs = await self.llm_analyzer.analyze_step_with_llm(step_data)
+                            llm_bugs.extend(step_llm_bugs)
+                            total_llm_bugs += len(step_llm_bugs)
+                            print(f"🤖 Step '{step_data.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
+                        
+                except ImportError:
+                    print("⚠️ Multi-screenshot analyzer not available, using individual analysis")
+                    # Fall back to individual analysis
+                    for step_data in steps_for_multi_analysis:
+                        step_llm_bugs = await self.llm_analyzer.analyze_step_with_llm(step_data)
+                        llm_bugs.extend(step_llm_bugs)
+                        total_llm_bugs += len(step_llm_bugs)
+                        print(f"🤖 Step '{step_data.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
+                    
+        except Exception as e:
+            print(f"⚠️ Final craft bug analyzer failed: {e}, falling back to multi-screenshot analysis")
+            # Fall back to multi-screenshot analysis
+            try:
+                from multi_screenshot_analyzer import MultiScreenshotAnalyzer
+                multi_analyzer = MultiScreenshotAnalyzer()
+                
+                multi_bugs = await multi_analyzer.analyze_multiple_screenshots(steps_for_multi_analysis)
+                
+                if multi_bugs:
+                    llm_bugs = multi_bugs
+                    total_llm_bugs = len(multi_bugs)
+                    print(f"✅ Multi-screenshot analysis successful: {len(multi_bugs)} bugs found")
+                else:
+                    print("ℹ️ Multi-screenshot analysis found no bugs, falling back to individual analysis")
+                    # Fall back to individual analysis
+                    for step_data in steps_for_multi_analysis:
+                        step_llm_bugs = await self.llm_analyzer.analyze_step_with_llm(step_data)
+                        llm_bugs.extend(step_llm_bugs)
+                        total_llm_bugs += len(step_llm_bugs)
+                        print(f"🤖 Step '{step_data.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
+                    
+            except ImportError:
+                print("⚠️ Multi-screenshot analyzer not available, using individual analysis")
+                # Fall back to individual analysis
+                for step_data in steps_for_multi_analysis:
+                    step_llm_bugs = await self.llm_analyzer.analyze_step_with_llm(step_data)
+                    llm_bugs.extend(step_llm_bugs)
+                    total_llm_bugs += len(step_llm_bugs)
+                    print(f"🤖 Step '{step_data.get('step_name')}' generated {len(step_llm_bugs)} LLM bugs")
         
         # Only use LLM bugs - no enhanced bugs
         enhanced_analysis['enhanced_craft_bugs'] = llm_bugs

@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Consolidated Bug Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .bug { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .meta { color: #666; margin-bottom: 10px; }
+        .description { margin-bottom: 10px; }
+        .fix { background: #e8f5e8; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Consolidated Bug Report</h1>
+    <p><strong>Original bugs:</strong> 3 | <strong>Consolidated:</strong> 2</p>
+
+    <div class="bug">
+        <div class="title">Consolidated: Insufficient Color Contrast in Toolbar and Dialog Text</div>
+        <div class="meta">Type: Accessibility | Severity: Red</div>
+        <div class="description"><strong>Issue:</strong> Text elements in the toolbar and dialog have insufficient contrast against their backgrounds. when viewing the interface. Expected: Text should have a contrast ratio that meets WCAG guidelines for readability.</div>
+        <div class="description"><strong>Impact:</strong> Makes content difficult to read for users with visual impairments, potentially blocking task completion.</div>
+        <div class="fix"><strong>Fix:</strong> Adjust CSS to increase text contrast ratio to meet WCAG guidelines.</div>
+    </div>
+
+    <div class="bug">
+        <div class="title">Consolidated: Dialog Positioning Obstructs Content</div>
+        <div class="meta">Type: Layout | Severity: Red</div>
+        <div class="description"><strong>Issue:</strong> Dialog appears in a position that obscures underlying spreadsheet data. when viewing the interface. Expected: Dialog should be positioned in a way that does not obscure important content.</div>
+        <div class="description"><strong>Impact:</strong> Users can't see important content, blocking task completion.</div>
+        <div class="fix"><strong>Fix:</strong> Adjust dialog positioning logic to ensure it does not cover critical content.</div>
+    </div>
+
+</body>
+</html>

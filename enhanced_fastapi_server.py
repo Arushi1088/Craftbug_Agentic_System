@@ -2522,22 +2522,39 @@ if EXCEL_WEB_AVAILABLE:
             logger.info(f"📊 Telemetry data keys: {list(actual_telemetry_data.keys())}")
             logger.info(f"📊 Telemetry steps count: {len(actual_telemetry_data.get('steps', []))}")
             
-            # Use the EXACT SAME working logic from enhanced_ux_analyzer.py
-            from enhanced_ux_analyzer import EnhancedUXAnalyzer
+            # Use the new FinalCraftBugAnalyzer for better results
+            from final_craft_bug_analyzer import FinalCraftBugAnalyzer
             
-            # Create the same analyzer that's working
-            ux_analyzer = EnhancedUXAnalyzer()
+            # Create the new analyzer that generates better bugs
+            ux_analyzer = FinalCraftBugAnalyzer()
             
-            # Use the EXACT SAME logic that's working in enhanced_ux_analyzer.py
-            # Convert telemetry data to the same format
-            telemetry_data = {
-                'steps': actual_telemetry_data.get('steps', []),
-                'scenario_name': actual_telemetry_data.get('scenario_name', 'Excel Document Creation'),
-                'total_duration_ms': actual_telemetry_data.get('total_duration_ms', 0)
+            # Use the new FinalCraftBugAnalyzer interface
+            # Convert telemetry data to the format expected by FinalCraftBugAnalyzer
+            steps_data = []
+            for step in actual_telemetry_data.get('steps', []):
+                step_data = {
+                    'step_name': step.get('step_name', 'Unknown'),
+                    'description': step.get('description', ''),
+                    'screenshot_path': step.get('screenshot_path', ''),
+                    'scenario_description': actual_telemetry_data.get('scenario_name', 'Excel Document Creation'),
+                    'persona_type': 'Power User'
+                }
+                steps_data.append(step_data)
+            
+            # Run the new analysis with FinalCraftBugAnalyzer
+            all_craft_bugs = await ux_analyzer.analyze_screenshots(steps_data)
+            total_llm_bugs = len(all_craft_bugs)
+            
+            # Create analysis result with the new bugs
+            enhanced_analysis = {
+                "llm_generated_bugs": all_craft_bugs,
+                "total_llm_bugs": total_llm_bugs,
+                "craft_bugs": [],
+                "base_craft_bugs": [],
+                "enhanced_craft_bugs": [],
+                "ux_score": 85,
+                "llm_enhanced": True
             }
-            
-            # Run the EXACT SAME analysis that's working
-            enhanced_analysis = await ux_analyzer.analyze_scenario_with_enhanced_data(telemetry_data)
             
             # Extract the LLM bugs from the working analysis
             llm_bugs = enhanced_analysis.get('llm_generated_bugs', [])
@@ -2556,211 +2573,32 @@ if EXCEL_WEB_AVAILABLE:
                 "llm_enhanced": True
             }
             
-            # Generate enhanced report with screenshots
-            logger.info("📄 Generating enhanced HTML report with screenshots...")
+            # Generate comprehensive report with beautiful HTML format
+            logger.info("📄 Generating comprehensive HTML report with beautiful format...")
             try:
-                from jinja2 import Template
-                
-                # Read the enhanced HTML template (use the same template but with enhanced data)
-                template_path = "excel_ux_report_template.html"
-                with open(template_path, 'r') as f:
-                    template_content = f.read()
-                
-                template = Template(template_content)
-                
-                # Prepare enhanced data for template - ONLY LLM bugs
-                ux_score = ux_analysis.get("ux_score", 85)
-                
                 # Use ONLY LLM-generated bugs (no base static bugs)
                 all_craft_bugs = ux_analysis.get("llm_generated_bugs", [])
                 total_llm_bugs = ux_analysis.get("total_llm_bugs", 0)
                 
-                logger.info(f"📊 Found {total_llm_bugs} LLM-generated bugs (no base static bugs)")
+                logger.info(f"📊 Found {total_llm_bugs} LLM-generated bugs for comprehensive report")
                 
-                # Determine UX score class for styling
-                if ux_score >= 80:
-                    ux_score_class = "success"
-                elif ux_score >= 60:
-                    ux_score_class = "warning"
-                else:
-                    ux_score_class = "error"
+                # Get scenario name
+                scenario_name = actual_telemetry_data.get("scenario_name", "Excel Web Analysis")
                 
-                # Prepare enhanced steps data with screenshots
-                steps = []
-                telemetry_steps = actual_telemetry_data.get("steps", [])
-                logger.info(f"📊 Processing {len(telemetry_steps)} telemetry steps")
+                # Generate comprehensive HTML report using the beautiful format
+                from comprehensive_report_generator import generate_comprehensive_html_report
                 
-                for step in telemetry_steps:
-                    step_data = {
-                        "name": step.get("step_name", "Unknown"),
-                        "duration_ms": step.get("duration_ms", 0),
-                        "success": step.get("success", False),
-                        "dialog_detected": step.get("dialog_detected", False),
-                        "dialog_type": step.get("dialog_type", ""),
-                        "interaction_attempted": step.get("interaction_attempted", False),
-                        "interaction_successful": step.get("interaction_successful", False),
-                        "status_class": "success" if step.get("success") else "error",
-                        "screenshot_path": step.get("screenshot_path")  # Include screenshot path
-                    }
-                    steps.append(step_data)
-                    logger.info(f"📸 Step '{step_data['name']}' has screenshot: {step_data['screenshot_path']}")
-                
-                # Enhance craft bugs with embedded screenshot data
-                enhanced_craft_bugs = []
-                for bug in all_craft_bugs:
-                    enhanced_bug = bug.copy()
-                    
-                    # Use the screenshot path that's already associated with the bug (from LLM analysis)
-                    screenshot_path = bug.get("screenshot_path")
-                    
-                    if screenshot_path and os.path.exists(screenshot_path):
-                        # Embed screenshot as base64 data URL
-                        try:
-                            with open(screenshot_path, 'rb') as f:
-                                screenshot_data = f.read()
-                                screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
-                                enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
-                                enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                logger.info(f"📸 Embedded step-specific screenshot for bug '{bug.get('title')}': {screenshot_path}")
-                        except Exception as e:
-                            logger.warning(f"⚠️ Failed to embed screenshot {screenshot_path}: {e}")
-                            enhanced_bug["screenshot_path"] = screenshot_path
-                            enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                    else:
-                        # Fallback: Find the step that corresponds to this bug
-                        if bug.get("step_name"):
-                            for step in telemetry_steps:
-                                if step.get("step_name") == bug.get("step_name"):
-                                    if step.get("screenshot_path"):
-                                        screenshot_path = step.get("screenshot_path")
-                                        # Embed screenshot as base64 data URL
-                                        try:
-                                            with open(screenshot_path, 'rb') as f:
-                                                screenshot_data = f.read()
-                                                screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
-                                                enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
-                                                enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                                logger.info(f"📸 Embedded fallback screenshot for bug '{bug.get('title')}': {screenshot_path}")
-                                        except Exception as e:
-                                            logger.warning(f"⚠️ Failed to embed screenshot {screenshot_path}: {e}")
-                                            enhanced_bug["screenshot_path"] = screenshot_path
-                                            enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                    break
-                    
-                    # If no specific screenshot found, use a relevant one based on bug type
-                    if not enhanced_bug.get("screenshot_data") and not enhanced_bug.get("screenshot_path"):
-                        # First, try to find any screenshot from the current run
-                        available_screenshots = [step for step in telemetry_steps if step.get("screenshot_path")]
-                        
-                        if available_screenshots:
-                            # Prioritize by bug type
-                            selected_screenshot = None
-                            
-                            if "copilot" in bug.get("title", "").lower():
-                                # Find copilot-related screenshot
-                                for step in available_screenshots:
-                                    if "copilot" in step.get("screenshot_path", ""):
-                                        selected_screenshot = step
-                                        break
-                            elif "performance" in bug.get("title", "").lower() or "slow" in bug.get("title", "").lower() or "delay" in bug.get("title", "").lower():
-                                # Find performance-related screenshot (usually initial state)
-                                for step in available_screenshots:
-                                    if "initial_state" in step.get("screenshot_path", ""):
-                                        selected_screenshot = step
-                                        break
-                            elif "save" in bug.get("title", "").lower():
-                                # Find save-related screenshot
-                                for step in available_screenshots:
-                                    if "final_state" in step.get("screenshot_path", ""):
-                                        selected_screenshot = step
-                                        break
-                            
-                            # If no type-specific screenshot found, use a different screenshot to avoid duplicates
-                            if not selected_screenshot:
-                                # Track screenshot usage across all bugs processed so far
-                                if not hasattr(self, '_screenshot_usage'):
-                                    self._screenshot_usage = {}
-                                
-                                # Find the least used screenshot
-                                least_used_path = None
-                                min_usage = float('inf')
-                                
-                                for step in available_screenshots:
-                                    path = step.get("screenshot_path", "")
-                                    current_usage = self._screenshot_usage.get(path, 0)
-                                    if current_usage < min_usage:
-                                        min_usage = current_usage
-                                        least_used_path = path
-                                
-                                # Select the least used screenshot
-                                if least_used_path:
-                                    for step in available_screenshots:
-                                        if step.get("screenshot_path", "") == least_used_path:
-                                            selected_screenshot = step
-                                            # Increment usage count
-                                            self._screenshot_usage[least_used_path] = self._screenshot_usage.get(least_used_path, 0) + 1
-                                            break
-                                
-                                # If still no selection, use the first available
-                                if not selected_screenshot:
-                                    selected_screenshot = available_screenshots[0]
-                                    # Increment usage count for the first screenshot too
-                                    first_path = selected_screenshot.get("screenshot_path", "")
-                                    self._screenshot_usage[first_path] = self._screenshot_usage.get(first_path, 0) + 1
-                            
-                            # Embed the selected screenshot
-                            screenshot_path = selected_screenshot.get("screenshot_path")
-                            try:
-                                with open(screenshot_path, 'rb') as f:
-                                    screenshot_data = f.read()
-                                    screenshot_base64 = base64.b64encode(screenshot_data).decode('utf-8')
-                                    enhanced_bug["screenshot_data"] = f"data:image/png;base64,{screenshot_base64}"
-                                    enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                                    logger.info(f"📸 Embedded fallback screenshot for bug '{bug.get('title')}': {screenshot_path}")
-                            except Exception as e:
-                                logger.warning(f"⚠️ Failed to embed fallback screenshot {screenshot_path}: {e}")
-                                enhanced_bug["screenshot_path"] = screenshot_path
-                                enhanced_bug["screenshot_reason"] = f"{bug.get('title', 'Issue')} evidence"
-                        else:
-                            logger.warning(f"⚠️ No screenshots available for bug '{bug.get('title')}'")
-
-                    
-                    enhanced_craft_bugs.append(enhanced_bug)
-                
-                # Calculate execution time from telemetry
-                execution_time = round(actual_telemetry_data.get("total_duration_ms", 0) / 1000, 1)
-                if execution_time == 0:
-                    # Fallback to estimated time based on steps
-                    execution_time = len(telemetry_steps) * 2.0
-                
-                report_data = {
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "scenario_name": "Excel Document Creation",
-                    "telemetry": actual_telemetry_data,
-                    "ux_analysis": ux_analysis,
-                    "craft_bugs": enhanced_craft_bugs,  # Use enhanced craft bugs with screenshots
-                    "craft_bugs_count": len(enhanced_craft_bugs),
-                    "ux_score": ux_score,
-                    "ux_score_class": ux_score_class,
-                    "total_steps": len(telemetry_steps),
-                    "execution_time": execution_time,
-                    "steps": steps,
-                    "performance_issues": ux_analysis.get("performance_issues", []),
-                    "interaction_issues": ux_analysis.get("interaction_issues", []),
-                    "recommendations": ux_analysis.get("recommendations", []),
-                    "report_id": f"excel_ux_{int(time.time())}"
-                }
-                
-                logger.info(f"📊 Report data prepared: {len(steps)} steps, {len(enhanced_craft_bugs)} craft bugs, {execution_time}s execution time")
-                
-                html_content = template.render(**report_data)
-                
-                # Save enhanced report to file
+                html_content = generate_comprehensive_html_report(
+                    bugs=all_craft_bugs,
+                    telemetry_data=actual_telemetry_data,
+                    scenario_name=scenario_name
+                )
+                # Save comprehensive report to file
                 reports_dir = Path("reports/excel_ux")
                 reports_dir.mkdir(parents=True, exist_ok=True)
                 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                report_filename = f"excel_ux_report_{timestamp}.html"
+                report_filename = f"comprehensive_excel_ux_report_{timestamp}.html"
                 report_path = reports_dir / report_filename
                 
                 with open(report_path, 'w', encoding='utf-8') as f:
@@ -2769,19 +2607,20 @@ if EXCEL_WEB_AVAILABLE:
                 # Generate URL for the report
                 report_url = f"/reports/excel_ux/{report_filename}"
                 
-                logger.info(f"✅ Enhanced Excel UX Report saved to: {report_path}")
+                logger.info(f"✅ Comprehensive Excel UX Report saved to: {report_path}")
                 logger.info(f"📊 Report URL: {report_url}")
-                logger.info(f"📸 Enhanced report includes {len(enhanced_craft_bugs)} craft bugs with screenshots")
+                logger.info(f"📸 Comprehensive report includes {len(all_craft_bugs)} craft bugs with beautiful format")
                 
                 return {
                     "status": "success",
                     "report_url": report_url,
                     "report_filename": report_filename,
-                    "message": "Enhanced Excel UX Report generated successfully with screenshots",
+                    "message": "Comprehensive Excel UX Report generated successfully with beautiful format",
                     "enhanced_features": {
                         "screenshots_included": True,
-                        "craft_bugs_with_visual_evidence": len(enhanced_craft_bugs),
-                        "total_screenshots": len([s for s in steps if s.get("screenshot_path")])
+                        "craft_bugs_with_visual_evidence": len(all_craft_bugs),
+                        "comprehensive_format": True,
+                        "beautiful_design": True
                     }
                 }
                 
@@ -2789,8 +2628,8 @@ if EXCEL_WEB_AVAILABLE:
                 logger.error("❌ HTML template not found")
                 raise HTTPException(status_code=500, detail="HTML template not found")
             except Exception as e:
-                logger.error(f"❌ Enhanced HTML generation failed: {e}")
-                raise HTTPException(status_code=500, detail=f"Enhanced HTML generation failed: {str(e)}")
+                logger.error(f"❌ Comprehensive HTML generation failed: {e}")
+                raise HTTPException(status_code=500, detail=f"Comprehensive HTML generation failed: {str(e)}")
                 
         except HTTPException:
             raise

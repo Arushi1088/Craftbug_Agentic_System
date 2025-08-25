@@ -1,0 +1,705 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figma Design System Specifications - 2025-08-25</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .header .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #0078d4;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .system-section {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        
+        .system-header {
+            background: #f8f9fa;
+            padding: 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .system-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .system-stats {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .tokens-section {
+            padding: 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .token-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .token-category {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .category-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+        }
+        
+        .token-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .token-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .token-name {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #333;
+        }
+        
+        .token-value {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #0078d4;
+            font-weight: bold;
+        }
+        
+        .components-section {
+            padding: 25px;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .component-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .component-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .component-properties {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .property-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .property-name {
+            color: #666;
+        }
+        
+        .property-value {
+            font-family: 'Courier New', monospace;
+            color: #0078d4;
+            font-weight: bold;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .token-categories {
+                grid-template-columns: 1fr;
+            }
+            
+            .component-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Figma Design System Specifications</h1>
+            <div class="subtitle">Comprehensive Design Tokens & Components from Excel Web Figma Files</div>
+            <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                Generated on August 25, 2025 at 12:10 PM
+            </div>
+        </div>
+        
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Design Systems</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">57</div>
+                <div class="stat-label">Total Design Tokens</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Total Components</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">Figma</div>
+                <div class="stat-label">Data Source</div>
+            </div>
+        </div>
+
+        <div class="system-section">
+            <div class="system-header">
+                <div class="system-title">🎯 Excel Web Fluent 2</div>
+                <div class="system-stats">
+                    <span>📊 57 Design Tokens</span>
+                    <span>🔧 3 Components</span>
+                    <span>📁 5 Token Categories</span>
+                </div>
+            </div>
+
+            <div class="tokens-section">
+                <div class="section-title">🎨 Design Tokens</div>
+                <div class="token-categories">
+
+                    <div class="token-category">
+                        <div class="category-title">Colors</div>
+                        <div class="token-list">
+
+                            <div class="token-item">
+                                <span class="token-name">primary_blue</span>
+                                <span class="token-value">#0078d4</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">primary_blue_hover</span>
+                                <span class="token-value">#106ebe</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">primary_blue_pressed</span>
+                                <span class="token-value">#005a9e</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_white</span>
+                                <span class="token-value">#ffffff</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_10</span>
+                                <span class="token-value">#faf9f8</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_20</span>
+                                <span class="token-value">#f3f2f1</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_30</span>
+                                <span class="token-value">#edebe9</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_40</span>
+                                <span class="token-value">#e1dfdd</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_50</span>
+                                <span class="token-value">#d2d0ce</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_60</span>
+                                <span class="token-value">#c8c6c4</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_70</span>
+                                <span class="token-value">#b3b0ad</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_80</span>
+                                <span class="token-value">#a19f9d</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_90</span>
+                                <span class="token-value">#8a8886</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_100</span>
+                                <span class="token-value">#605e5c</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_110</span>
+                                <span class="token-value">#3b3a39</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_120</span>
+                                <span class="token-value">#323130</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_130</span>
+                                <span class="token-value">#292827</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_140</span>
+                                <span class="token-value">#201f1e</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_150</span>
+                                <span class="token-value">#1b1a19</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_gray_160</span>
+                                <span class="token-value">#161514</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">neutral_black</span>
+                                <span class="token-value">#000000</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">semantic_error</span>
+                                <span class="token-value">#d13438</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">semantic_warning</span>
+                                <span class="token-value">#ffaa44</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">semantic_success</span>
+                                <span class="token-value">#107c10</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">semantic_info</span>
+                                <span class="token-value">#0078d4</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="token-category">
+                        <div class="category-title">Typography</div>
+                        <div class="token-list">
+
+                            <div class="token-item">
+                                <span class="token-name">font_family_primary</span>
+                                <span class="token-value">Segoe UI</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_family_monospace</span>
+                                <span class="token-value">Consolas</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_size_xs</span>
+                                <span class="token-value">10px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_size_sm</span>
+                                <span class="token-value">12px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_size_md</span>
+                                <span class="token-value">14px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_size_lg</span>
+                                <span class="token-value">16px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_size_xl</span>
+                                <span class="token-value">18px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_size_xxl</span>
+                                <span class="token-value">20px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_size_xxxl</span>
+                                <span class="token-value">24px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_weight_regular</span>
+                                <span class="token-value">400</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_weight_medium</span>
+                                <span class="token-value">500</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_weight_semibold</span>
+                                <span class="token-value">600</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">font_weight_bold</span>
+                                <span class="token-value">700</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">line_height_tight</span>
+                                <span class="token-value">1.2</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">line_height_normal</span>
+                                <span class="token-value">1.4</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">line_height_relaxed</span>
+                                <span class="token-value">1.6</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="token-category">
+                        <div class="category-title">Spacing</div>
+                        <div class="token-list">
+
+                            <div class="token-item">
+                                <span class="token-name">xs</span>
+                                <span class="token-value">4px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">sm</span>
+                                <span class="token-value">8px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">md</span>
+                                <span class="token-value">12px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">lg</span>
+                                <span class="token-value">16px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">xl</span>
+                                <span class="token-value">20px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">xxl</span>
+                                <span class="token-value">24px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">xxxl</span>
+                                <span class="token-value">32px</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="token-category">
+                        <div class="category-title">Border Radius</div>
+                        <div class="token-list">
+
+                            <div class="token-item">
+                                <span class="token-name">none</span>
+                                <span class="token-value">0px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">sm</span>
+                                <span class="token-value">2px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">md</span>
+                                <span class="token-value">4px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">lg</span>
+                                <span class="token-value">8px</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">xl</span>
+                                <span class="token-value">12px</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="token-category">
+                        <div class="category-title">Shadows</div>
+                        <div class="token-list">
+
+                            <div class="token-item">
+                                <span class="token-name">sm</span>
+                                <span class="token-value">0 1px 2px rgba(0, 0, 0, 0.1)</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">md</span>
+                                <span class="token-value">0 2px 4px rgba(0, 0, 0, 0.1)</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">lg</span>
+                                <span class="token-value">0 4px 8px rgba(0, 0, 0, 0.1)</span>
+                            </div>
+
+                            <div class="token-item">
+                                <span class="token-name">xl</span>
+                                <span class="token-value">0 8px 16px rgba(0, 0, 0, 0.1)</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="components-section">
+                <div class="section-title">🔧 Component Specifications</div>
+                <div class="component-grid">
+
+                    <div class="component-card">
+                        <div class="component-name">button</div>
+                        <div class="component-properties">
+
+                            <div class="property-item">
+                                <span class="property-name">background</span>
+                                <span class="property-value">transparent</span>
+                            </div>
+
+                            <div class="property-item">
+                                <span class="property-name">color</span>
+                                <span class="property-value">var(--color-primary-blue)</span>
+                            </div>
+
+                            <div class="property-item">
+                                <span class="property-name">border</span>
+                                <span class="property-value">1px solid var(--color-primary-blue)</span>
+                            </div>
+
+                            <div class="property-item">
+                                <span class="property-name">border_radius</span>
+                                <span class="property-value">var(--border-radius-md)</span>
+                            </div>
+
+                            <div class="property-item">
+                                <span class="property-name">padding</span>
+                                <span class="property-value">var(--spacing-sm) var(--spacing-md)</span>
+                            </div>
+
+                            <div class="property-item">
+                                <span class="property-name">font_size</span>
+                                <span class="property-value">var(--font-size-md)</span>
+                            </div>
+
+                            <div class="property-item">
+                                <span class="property-name">font_weight</span>
+                                <span class="property-value">var(--font-weight-medium)</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="component-card">
+                        <div class="component-name">input</div>
+                        <div class="component-properties">
+
+                        </div>
+                    </div>
+
+                    <div class="component-card">
+                        <div class="component-name">dialog</div>
+                        <div class="component-properties">
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="system-section">
+            <div class="system-header">
+                <div class="system-title">🎯 Office Icons</div>
+                <div class="system-stats">
+                    <span>📊 0 Design Tokens</span>
+                    <span>🔧 0 Components</span>
+                    <span>📁 0 Token Categories</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="system-section">
+            <div class="system-header">
+                <div class="system-title">🎯 Excel Copilot UI Kit</div>
+                <div class="system-stats">
+                    <span>📊 0 Design Tokens</span>
+                    <span>🔧 0 Components</span>
+                    <span>📁 0 Token Categories</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <p><strong>Source:</strong> Figma Design System Files</p>
+            <p><strong>Analysis Date:</strong> August 25, 2025 at 12:10 PM</p>
+            <p><strong>Total Design Systems:</strong> {len(design_systems)} | <strong>Total Tokens:</strong> {sum(len(data['tokens']) for data in all_data.values())} | <strong>Total Components:</strong> {sum(len(data['components']) for data in all_data.values())}</p>
+        </div>
+    </div>
+</body>
+</html>
