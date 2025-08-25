@@ -648,6 +648,11 @@ You will receive images interleaved with their step captions in this order. Use 
             if screenshot_path and os.path.exists(screenshot_path):
                 idx_to_path[i] = screenshot_path
             idx_to_name[i] = s.get("step_name", f"Step {i}")
+        
+        # Ensure we have at least one valid path
+        if not idx_to_path:
+            print("⚠️ No valid screenshot paths found in steps_data")
+            return []
 
         normalized = []
         for b in bugs_json:
@@ -662,8 +667,11 @@ You will receive images interleaved with their step captions in this order. Use 
             if not paths and idx_to_path:
                 # last-resort: keep one image so report doesn't break
                 first_path = next(iter(idx_to_path.values()), None)
-                if first_path:
+                if first_path and os.path.exists(first_path):
                     paths.append(first_path)
+                    print(f"🔄 Using fallback screenshot: {os.path.basename(first_path)}")
+                else:
+                    print("⚠️ No valid fallback screenshot available")
 
             normalized.append({
                 "title": b.get("title", "Untitled"),
@@ -681,9 +689,15 @@ You will receive images interleaved with their step captions in this order. Use 
                 "visual_target": b.get("developer_action", {}).get("visual_target", ""),
                 "qa_verification": b.get("developer_action", {}).get("qa", ""),
                 "screenshot_paths": paths,
-                "screenshot_path": paths[0] if paths else None,
+                "screenshot_path": paths[0] if paths and len(paths) > 0 else (list(idx_to_path.values())[0] if idx_to_path else None),
                 "affected_steps": b.get("affected_steps", [])
             })
+            
+            # Final safety check - ensure screenshot_path is never None
+            if normalized[-1]["screenshot_path"] is None and idx_to_path:
+                normalized[-1]["screenshot_path"] = list(idx_to_path.values())[0]
+                print(f"🛡️ Applied final safety fix for screenshot_path")
+        
         return normalized
 
     def _calculate_compliance_score(self, expected: str, actual: str) -> int:

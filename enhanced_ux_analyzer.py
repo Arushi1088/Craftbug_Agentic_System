@@ -667,7 +667,7 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
         all_enhanced_bugs = []
         all_screenshots = {}  # Collect all available screenshots
         
-        # First pass: collect all available screenshots
+        # First pass: collect all available screenshots (LIMIT TO CURRENT SCENARIO)
         all_screenshots = []
         for step in telemetry_data.get('steps', []):
             if step.get('screenshot_path'):
@@ -676,7 +676,12 @@ Remember: You are a trained UX designer with access to real-world Craft bug patt
                     all_screenshots.append(screenshot_path)
                     print(f"🔍 DEBUG: Found screenshot: {screenshot_path}")
         
-        print(f"🔍 DEBUG: Total screenshots found: {len(all_screenshots)}")
+        # LIMIT: Only process up to 10 screenshots to prevent API overload
+        if len(all_screenshots) > 10:
+            print(f"⚠️ WARNING: Found {len(all_screenshots)} screenshots, limiting to 10 for analysis")
+            all_screenshots = all_screenshots[:10]
+        
+        print(f"🔍 DEBUG: Total screenshots for analysis: {len(all_screenshots)}")
         print(f"🔍 DEBUG: Screenshots: {all_screenshots}")
         
         # Second pass: analyze steps using multi-screenshot approach

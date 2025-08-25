@@ -2668,7 +2668,7 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
         
         # Import telemetry wrapper
         try:
-            from excel_scenario_telemetry import run_scenario_with_telemetry
+            from excel_scenario_telemetry import execute_scenario_with_telemetry
             from llm_enhanced_analyzer import LLMEnhancedAnalyzer as EnhancedUXAnalyzer
         except ImportError as e:
             logger.error(f"❌ Failed to import telemetry modules: {e}")
@@ -2676,7 +2676,7 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
         
         # Run scenario with telemetry
         logger.info("📊 Running Excel scenario with telemetry...")
-        telemetry_result = run_scenario_with_telemetry(scenario_id)
+        telemetry_result = execute_scenario_with_telemetry()
         
         if not telemetry_result or not telemetry_result.get("success"):
             error_msg = telemetry_result.get("error", "Unknown error") if telemetry_result else "No result returned"
