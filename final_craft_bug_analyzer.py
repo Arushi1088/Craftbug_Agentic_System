@@ -53,6 +53,80 @@ def build_messages(final_prompt_text: str, ordered_steps: List[Dict]) -> List[Di
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{s['base64']}"}})
     return [{"role": "user", "content": content}]
 
+def load_ado_examples(path="ado_bugs_fast_analysis.json", max_per_bucket=3):
+    """Load ADO bug examples for reference (compact sampling)"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        # Extract examples from the JSON structure
+        examples = data.get("examples", {})
+        if not examples:
+            return {"examples": {}}
+        
+        # Sample and truncate for token efficiency
+        buckets = {"save_issues": [], "ui_issues": [], "spacing_issues": [], "color_issues": []}
+        
+        for category, bugs in examples.items():
+            if category == "save_issues" and bugs:
+                buckets["save_issues"] = [{"id": b.get("id"), "title": b.get("title", "")[:120], "tags": b.get("tags", "")} for b in bugs[:max_per_bucket]]
+            elif category == "ui_issues" and bugs:
+                buckets["ui_issues"] = [{"id": b.get("id"), "title": b.get("title", "")[:120], "tags": b.get("tags", "")} for b in bugs[:max_per_bucket]]
+        
+        return {"examples": buckets}
+    except Exception as e:
+        logging.warning(f"Failed to load ADO examples: {e}")
+        return {"examples": {}}
+
+def load_figma_tokens():
+    """Load compact Figma design tokens"""
+    try:
+        # Compact Excel Web Fluent 2 tokens
+        tokens = {
+            "colors": {
+                "primary_blue": "#0078d4",
+                "primary_blue_hover": "#106ebe", 
+                "primary_blue_pressed": "#005a9e",
+                "neutral_white": "#ffffff",
+                "neutral_gray_10": "#faf9f8",
+                "neutral_gray_20": "#f3f2f1",
+                "neutral_gray_30": "#edebe9",
+                "neutral_gray_40": "#e1dfdd",
+                "neutral_gray_50": "#d2d0ce",
+                "neutral_gray_60": "#c7c6c4",
+                "neutral_gray_70": "#b3b0ad",
+                "neutral_gray_80": "#a19f9d",
+                "neutral_gray_90": "#8a8886",
+                "neutral_gray_100": "#605e5c",
+                "neutral_gray_110": "#3b3a39",
+                "neutral_gray_120": "#323130",
+                "neutral_gray_130": "#292827",
+                "neutral_gray_140": "#201f1e",
+                "neutral_gray_150": "#1b1a19",
+                "neutral_gray_160": "#161514",
+                "neutral_gray_170": "#0c0b0a",
+                "neutral_gray_180": "#000000"
+            },
+            "typography": {
+                "font_family": "Segoe UI",
+                "font_sizes": [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42, 48, 54, 60, 68, 80],
+                "font_weights": [400, 500, 600, 700],
+                "line_heights": [14, 16, 20, 22, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 68, 80]
+            },
+            "spacing": [0, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128],
+            "border_radius": [0, 2, 4, 8, 12, 16, 20, 24, 32],
+            "shadows": {
+                "sm": "0 1px 2px rgba(0,0,0,0.1)",
+                "md": "0 2px 4px rgba(0,0,0,0.1)", 
+                "lg": "0 4px 8px rgba(0,0,0,0.1)",
+                "xl": "0 8px 16px rgba(0,0,0,0.1)"
+            }
+        }
+        return {"design_tokens": tokens}
+    except Exception as e:
+        logging.warning(f"Failed to load Figma tokens: {e}")
+        return {"design_tokens": {}}
+
 class FinalCraftBugAnalyzer:
     """Final detection-only craft bug analyzer"""
     
@@ -68,8 +142,8 @@ class FinalCraftBugAnalyzer:
         
         self.llm_client = AsyncOpenAI(api_key=api_key)
         
-        # JSON-first prompt with dynamic catalog and strict schema
-        self.final_prompt = """You are a senior UX designer analyzing screenshots for visual craft bugs only.
+        # Enhanced JSON-first prompt with ADO examples and Figma tokens
+        self.final_prompt = """You are a senior UX designer analyzing Excel Web screenshots for **visual craft bugs only**.
 
 SCENARIO: {scenario_description}
 PERSONA: {persona_type}
@@ -77,21 +151,81 @@ PERSONA: {persona_type}
 STEPS_CATALOG (choose only from this list; do not invent steps):
 {steps_catalog_json}
 
-RULES
-- Return JSON ONLY: {{"bugs":[ ... ], "meta":{{...}}}} — no extra text.
-- Each bug MUST include:
-  - title, type (Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI),
-  - severity (Red|Orange|Yellow), confidence (High|Medium|Low),
-  - description (what is wrong, visible), expected (correct visual), actual (what is seen),
-  - affected_steps: [{{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>" }}] (at least 1),
-  - ui_path (or "Not Observable"), screen_position (Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center),
-  - visual_analysis: {{alignment, spacing, color, typography, border_radius, shadow}},
-  - developer_action: {{what_to_correct, likely_surface, visual_target, qa}}
-- Consolidate duplicates across steps; include all affected steps in one bug.
-- Prefer 2–6 strong bugs total across all images. Do not add filler. No boilerplate like "Current implementation has issues".
-- If few issues are visible: output fewer bugs and set meta.notes="Sparse".
+REFERENCE_MATERIALS (use as ground truth; do not hallucinate):
+- ADO Reference Bugs (style and phrasing examples):
+{ado_reference_examples}
 
-You will receive images interleaved with their step captions in this order. Use the captions to bind bugs to steps. Produce JSON only."""
+- Figma Design Tokens (validate against these):
+{figma_tokens_json}
+
+EVIDENCE RULES
+- Only include a step in `affected_steps` if the element is VISIBLE in that screenshot.
+- For each step listed, add `"evidence_reason"` explaining why that image shows the bug.
+- Avoid blanket linking; prefer the minimum set of screenshots that clearly show the issue.
+
+OUTPUT RULES
+- Return **JSON ONLY** in this exact schema (no extra text):
+{{
+  "bugs": [
+    {{
+      "title": "Concise bug title",
+      "type": "Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI",
+      "severity": "Red|Orange|Yellow",
+      "confidence": "High|Medium|Low",
+      "confidence_reason": "Why this confidence level",
+      "description": "What is visibly wrong (specific, avoid boilerplate)",
+      "expected": "Correct visual state (token-aligned if applicable)",
+      "actual": "What is seen in the screenshot(s)",
+      "affected_steps": [
+        {{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "Why this step shows the issue" }}
+      ],
+      "ui_path": "Ribbon > Tab > Element OR 'Not Observable'",
+      "screen_position": "Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center",
+      "visual_analysis": {{
+        "alignment": "...",
+        "spacing": "...",
+        "color": "...",
+        "typography": "...",
+        "border_radius": "...",
+        "shadow": "..."
+      }},
+      "design_system_compliance": {{
+        "expected_token": "<closest figma token or 'Not Found'>",
+        "actual_value": "<hex/size/weight seen>",
+        "compliance_score": 0-100
+      }},
+      "persona_impact": {{
+        "novice": "Impact + frustration 1-10",
+        "power": "Impact + frustration 1-10",
+        "super_fans": "Impact + frustration 1-10"
+      }},
+      "developer_action": {{
+        "what_to_correct": "Specific CSS/HTML/component update",
+        "likely_surface": "Likely component/file or area",
+        "visual_target": "How it should look after fix (token-aligned)",
+        "qa": "How to visually verify the fix"
+      }}
+    }}
+  ],
+  "meta": {{
+    "scenario": "{scenario_description}",
+    "persona": "{persona_type}",
+    "total_bugs": <int>,
+    "severity_distribution": {{ "red": <int>, "orange": <int>, "yellow": <int> }},
+    "notes": "Use 'Sparse' if only a few clear issues are visible"
+  }}
+}}
+
+SCORING & MATCHING
+- When reporting **Color / Typography / Spacing / Border / Shadow** issues:
+  - Attempt a **token match** from the Figma list. If ambiguous, pick the **closest** and state the ambiguity in `confidence_reason`.
+  - If no token fits, set `expected_token="Not Found"` and `compliance_score=0`.
+- Phrase issues in a style consistent with the ADO examples.
+
+CONSOLIDATION
+- Merge duplicates across steps into a single bug with multiple `affected_steps`.
+
+You will receive images interleaved with their step captions. Bind bugs to steps strictly using the catalog. Produce JSON only."""
 
     async def analyze_screenshots(self, steps_data: List[Dict]) -> List[Dict]:
         """
@@ -247,17 +381,27 @@ You will receive images interleaved with their step captions in this order. Use 
             ])
             steps_catalog_json = json.dumps(steps_catalog, indent=2)
 
-            # Fill prompt
+            # Load ADO examples and Figma tokens
+            ado_ref = load_ado_examples()
+            figma_ref = load_figma_tokens()
+            
+            ado_reference_examples = json.dumps(ado_ref, indent=2)
+            figma_tokens_json = json.dumps(figma_ref, indent=2)
+
+            # Fill prompt with enhanced context
             prompt_text = self.final_prompt.format(
                 scenario_description=context.get('scenario_description', 'Excel Web Scenario'),
                 persona_type=context.get('persona_type', 'User'),
-                steps_catalog_json=steps_catalog_json
+                steps_catalog_json=steps_catalog_json,
+                ado_reference_examples=ado_reference_examples,
+                figma_tokens_json=figma_tokens_json
             )
 
             # Interleave captions + images
             messages = build_messages(prompt_text, ordered_steps_with_b64)
 
             print(f"🚀 Sending {len(ordered_steps_with_b64)} images with captions (interleaved)")
+            print(f"📊 Enhanced with {len(ado_ref.get('examples', {}))} ADO examples and {len(figma_ref.get('design_tokens', {}))} Figma token categories")
             response = await self._make_api_call_with_retry(messages)
             if not response:
                 return ""
