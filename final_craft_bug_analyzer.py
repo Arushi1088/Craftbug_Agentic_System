@@ -189,7 +189,7 @@ class FinalCraftBugAnalyzer:
         """Initialize the final analyzer"""
         self.llm_model = "gpt-4o"
         self.llm_max_tokens = 8000
-        self.llm_temperature = 0.1
+        self.llm_temperature = 0.2
         
         api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
@@ -197,8 +197,8 @@ class FinalCraftBugAnalyzer:
         
         self.llm_client = AsyncOpenAI(api_key=api_key)
         
-        # Enhanced JSON-first prompt with ADO examples and Figma tokens
-        self.final_prompt = """You are a senior UX designer analyzing Excel Web screenshots for visual craft bugs only.
+        # Enhanced JSON-first prompt with inline Figma tokens and ADO examples
+        self.final_prompt = """You are a senior UX designer analyzing Excel Web screenshots for *visual craft bugs only*.
 
 SCENARIO: {scenario_description}
 PERSONA: {persona_type}
@@ -207,28 +207,37 @@ STEPS_CATALOG (choose only from this list; do not invent steps):
 {steps_catalog_json}
 
 REFERENCE CONTEXT:
-- FIGMA TOKENS: {figma_tokens_json}
-- ADO BUG EXAMPLES (style guide for phrasing):
-{ado_reference_examples}
+- ADO bug style: Microsoft bugs often use concise phrasing like 
+  "Ribbon icons misaligned, inconsistent with Fluent spacing scale" or 
+  "Save dialog not following Fluent typography hierarchy."
+- Figma tokens (Excel Web Fluent 2):
+  Colors: primary_blue #0078d4, primary_blue_hover #106ebe, neutral_white #ffffff, semantic_error #d13438
+  Typography: Segoe UI, sizes [10, 12, 14, 16, 18, 20, 24], weights [400, 500, 600, 700]
+  Spacing: [4, 8, 12, 16, 20, 24, 32]
+  Border Radius: [0, 2, 4, 8, 12]
+  Shadows: sm/md/lg/xl (token values provided)
+Use these tokens to validate bugs. If a visible issue violates a token, reference it and give a compliance_score (0–100).
 
-RULES:
-- Return JSON ONLY: {{"bugs":[ ... ], "meta":{{...}}}} — no extra text.
-- Each bug MUST include:
-  - title (phrased in ADO bug style), 
-  - type (Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI),
+RULES
+- Return JSON ONLY:
+  {{
+    "bugs_strong":[ ...  ],   // high-quality, consolidated (target 4–8)
+    "bugs_minor":[  ...  ],   // low-confidence or partial-evidence items (target 2–6)
+    "meta":{{ ... }}
+  }}
+- Each bug (in either array) MUST include:
+  - title, type (Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI|Shadow),
   - severity (Red|Orange|Yellow), confidence (High|Medium|Low),
-  - description (what is wrong, visible), expected (correct visual, reference Figma tokens if possible), actual (what is seen),
-  - affected_steps: [{{"index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "<why this screenshot shows the issue>"}}] (≥1 required),
+  - description (visible facts only), expected, actual,
+  - affected_steps: [ {{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "<why this step shows the issue>" }} ] (≥1),
   - ui_path (or "Not Observable"), screen_position (Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center),
-  - visual_analysis: {{alignment, spacing, color, typography, border_radius, shadow}},
-  - developer_action: {{what_to_correct, likely_surface, visual_target, qa}},
-  - persona_impact: {{novice: 1-10, power: 1-10, superfans: 1-10}},
-  - design_system_compliance: {{expected_token, actual_value, compliance_score (0–100)}}
-
-- Consolidate duplicates across steps; include all affected steps in one bug.
-- Prefer 4–8 strong bugs across all images (not filler). No boilerplate like "Current implementation has issues".
-- Validate bugs against FIGMA TOKENS where applicable (e.g. incorrect color hex, wrong font size, inconsistent spacing tokens).
-- Phrase bug titles & descriptions following ADO bug style for consistency.
+  - visual_analysis: {{ alignment, spacing, color, typography, border_radius, shadow }},
+  - developer_action: {{ what_to_correct, likely_surface, visual_target, qa }},
+  - design_system_compliance: {{ expected_token, actual_value, compliance_score }},
+  - persona_impact: {{ novice:1-10, power:1-10, super_fans:1-10 }}
+- Consolidate exact duplicates across steps BUT do not merge across different types (e.g., Spacing vs Alignment).
+- Target output size: **6–10 total** (sum of bugs_strong + bugs_minor). If few issues are visible: return fewer and set meta.notes="Sparse".
+- If token match is uncertain, set expected_token="None", compliance_score ≤ 40, and put the item in bugs_minor (do not drop).
 
 You will receive images interleaved with their step captions in this order. Use the captions to bind bugs to steps. Produce JSON only."""
 
@@ -273,9 +282,37 @@ You will receive images interleaved with their step captions in this order. Use 
         # JSON first
         data = self._try_parse_json(analysis_text)
         if data:
-            bugs = self._normalize_bugs_from_json(data["bugs"], unique_steps)
-            print(f"✅ Final analysis complete (JSON): {len(bugs)} craft bugs detected")
-            return bugs
+            # Handle new structure with bugs_strong and bugs_minor
+            all_bugs = []
+            debug_counters = {
+                "generated_strong": 0,
+                "generated_minor": 0,
+                "dropped_missing_fields": 0,
+                "dropped_dedup": 0,
+                "kept_strong": 0,
+                "kept_minor": 0
+            }
+            
+            # Process strong bugs
+            if "bugs_strong" in data and data["bugs_strong"]:
+                strong_bugs = self._normalize_bugs_from_json(data["bugs_strong"], unique_steps, debug_counters, "strong")
+                all_bugs.extend(strong_bugs)
+                debug_counters["kept_strong"] = len(strong_bugs)
+            
+            # Process minor bugs
+            if "bugs_minor" in data and data["bugs_minor"]:
+                minor_bugs = self._normalize_bugs_from_json(data["bugs_minor"], unique_steps, debug_counters, "minor")
+                all_bugs.extend(minor_bugs)
+                debug_counters["kept_minor"] = len(minor_bugs)
+            
+            # Fallback to old structure if new structure not found
+            if "bugs" in data and data["bugs"] and not all_bugs:
+                fallback_bugs = self._normalize_bugs_from_json(data["bugs"], unique_steps, debug_counters, "fallback")
+                all_bugs.extend(fallback_bugs)
+            
+            print(f"✅ Final analysis complete (JSON): {len(all_bugs)} craft bugs detected")
+            print(f"📊 Debug counters: {debug_counters}")
+            return all_bugs
 
         # Fallback to legacy regex parser
         print("ℹ️ JSON parse failed — using legacy regex parser")
@@ -386,31 +423,27 @@ You will receive images interleaved with their step captions in this order. Use 
             ])
             steps_catalog_json = json.dumps(steps_catalog, indent=2)
 
-            # Load ADO examples and Figma tokens using safe utility functions
-            from utils.context_payloads import load_ado_examples_safe, load_figma_tokens_safe
-            
-            ado_reference_examples = load_ado_examples_safe()
-            figma_tokens_json = load_figma_tokens_safe()
-
-            # Fill prompt with enhanced context
+            # Fill prompt with enhanced context (inline tokens)
             prompt_text = self.final_prompt.format(
                 scenario_description=context.get('scenario_description', 'Excel Web Scenario'),
                 persona_type=context.get('persona_type', 'User'),
-                steps_catalog_json=steps_catalog_json,
-                ado_reference_examples=ado_reference_examples,
-                figma_tokens_json=figma_tokens_json
+                steps_catalog_json=steps_catalog_json
             )
 
             # Interleave captions + images
             messages = build_messages(prompt_text, ordered_steps_with_b64)
 
             print(f"🚀 Sending {len(ordered_steps_with_b64)} images with captions (interleaved)")
-            print(f"📊 Enhanced with ADO examples and Figma tokens for token validation")
+            print(f"📊 Enhanced with inline Figma tokens and ADO-style bug detection")
             response = await self._make_api_call_with_retry(messages)
             if not response:
                 return ""
             text = response.choices[0].message.content or ""
             print(f"✅ LLM returned {len(text)} chars")
+            
+            # Debug: Show first 500 chars of response
+            print(f"🔍 LLM Response Preview: {text[:500]}...")
+            
             return text
         except Exception as e:
             logger.error(f"Final analysis failed: {e}")
@@ -462,7 +495,7 @@ You will receive images interleaved with their step captions in this order. Use 
                 logger.warning(f"Failed to parse bug section {i}: {e}")
                 continue
         
-        # Final deduplication - use (title + type + affected_steps) as key to prevent over-merging
+        # Enhanced deduplication - less aggressive, keep separate entries for different categories
         unique_bugs = []
         seen_keys = set()
         
@@ -470,23 +503,43 @@ You will receive images interleaved with their step captions in this order. Use 
             title = bug.get('title', '').strip()
             bug_type = bug.get('type', '').strip()
             affected_steps = bug.get('affected_steps', [])
+            ui_path = bug.get('ui_path', '').strip()
+            screen_position = bug.get('screen_position', '').strip()
             
-            # Create unique key: (normalized_title + type + sorted_step_indices)
+            # Create composite key: (type + element/ui_path + primary_screenshot + rounded_screen_position)
             step_indices = [str(s.get('index', -1)) for s in affected_steps]
             step_indices.sort()
+            primary_step = step_indices[0] if step_indices else "0"
+            
+            # Round screen position to general areas
+            rounded_position = "Center"
+            if "top" in screen_position.lower():
+                rounded_position = "Top"
+            elif "bottom" in screen_position.lower():
+                rounded_position = "Bottom"
+            elif "left" in screen_position.lower():
+                rounded_position = "Left"
+            elif "right" in screen_position.lower():
+                rounded_position = "Right"
+            
+            # Use element or ui_path for better differentiation
+            element_identifier = ui_path if ui_path and ui_path != "Not Observable" else "general"
             
             key = (
-                title.lower() + '|' +
                 bug_type.lower() + '|' +
-                ','.join(step_indices)
+                element_identifier.lower() + '|' +
+                primary_step + '|' +
+                rounded_position.lower()
             )
             
             if key not in seen_keys:
                 seen_keys.add(key)
                 unique_bugs.append(bug)
+            else:
+                print(f"🔍 Deduplicated bug: {title} (type: {bug_type}, element: {element_identifier})")
         
         if len(unique_bugs) < len(bugs):
-            print(f"🔍 Removed {len(bugs) - len(unique_bugs)} duplicate bugs in final deduplication")
+            print(f"🔍 Removed {len(bugs) - len(unique_bugs)} duplicate bugs in enhanced deduplication")
         
         return unique_bugs
 
@@ -754,7 +807,7 @@ You will receive images interleaved with their step captions in this order. Use 
         try:
             # First try direct JSON parsing
             data = json.loads(text)
-            if isinstance(data, dict) and "bugs" in data:
+            if isinstance(data, dict) and ("bugs" in data or "bugs_strong" in data or "bugs_minor" in data):
                 return data
         except Exception:
             pass
@@ -767,13 +820,37 @@ You will receive images interleaved with their step captions in this order. Use 
                 if end > start:
                     json_text = text[start:end].strip()
                     data = json.loads(json_text)
-                    if isinstance(data, dict) and "bugs" in data:
+                    if isinstance(data, dict) and ("bugs" in data or "bugs_strong" in data or "bugs_minor" in data):
                         return data
         except Exception:
             pass
         
         try:
-            # Try to find JSON object in the text
+            # Try to find JSON object in the text (look for new structure first)
+            if '{"bugs_strong"' in text:
+                start = text.find('{"bugs_strong"')
+                # Find the matching closing brace
+                brace_count = 0
+                end = start
+                for i, char in enumerate(text[start:], start):
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            end = i + 1
+                            break
+                
+                if end > start:
+                    json_text = text[start:end]
+                    data = json.loads(json_text)
+                    if isinstance(data, dict) and ("bugs_strong" in data or "bugs_minor" in data):
+                        return data
+        except Exception:
+            pass
+        
+        try:
+            # Fallback: Try to find old JSON structure
             if '{"bugs"' in text:
                 start = text.find('{"bugs"')
                 # Find the matching closing brace
@@ -798,7 +875,7 @@ You will receive images interleaved with their step captions in this order. Use 
         
         return None
 
-    def _normalize_bugs_from_json(self, bugs_json: List[Dict], steps_data: List[Dict]) -> List[Dict]:
+    def _normalize_bugs_from_json(self, bugs_json: List[Dict], steps_data: List[Dict], debug_counters: Dict = None, bug_category: str = "unknown") -> List[Dict]:
         """Normalize bugs from JSON format to our standard format"""
         # Index real steps for quick lookup - only include valid paths
         idx_to_path = {}
@@ -817,6 +894,31 @@ You will receive images interleaved with their step captions in this order. Use 
 
         normalized = []
         for b in bugs_json:
+            # Enhanced validation with debug counters
+            if debug_counters:
+                debug_counters[f"generated_{bug_category}"] = debug_counters.get(f"generated_{bug_category}", 0) + 1
+            
+            # Validate required fields - be more lenient for minor bugs
+            required_fields = ["title", "type", "severity", "confidence"]
+            missing_fields = [field for field in required_fields if not b.get(field)]
+            
+            if missing_fields and bug_category == "strong":
+                if debug_counters:
+                    debug_counters["dropped_missing_fields"] += 1
+                print(f"⚠️ Dropping strong bug with missing fields: {missing_fields}")
+                continue
+            
+            # For minor bugs, fill in missing fields with defaults
+            if missing_fields and bug_category == "minor":
+                if not b.get("title"):
+                    b["title"] = f"Minor {b.get('type', 'Visual')} Issue"
+                if not b.get("type"):
+                    b["type"] = "Visual"
+                if not b.get("severity"):
+                    b["severity"] = "Yellow"
+                if not b.get("confidence"):
+                    b["confidence"] = "Low"
+            
             # Map affected_steps to real file paths (validate catalog picks)
             paths = []
             for stepref in b.get("affected_steps", []):
@@ -834,7 +936,8 @@ You will receive images interleaved with their step captions in this order. Use 
                 else:
                     print("⚠️ No valid fallback screenshot available")
 
-            normalized.append({
+            # Enhanced bug normalization with better field handling
+            normalized_bug = {
                 "title": b.get("title", "Untitled"),
                 "type": b.get("type", "Visual"),
                 "severity": b.get("severity", "Yellow"),
@@ -842,7 +945,7 @@ You will receive images interleaved with their step captions in this order. Use 
                 "description": b.get("description", ""),
                 "expected": b.get("expected", ""),
                 "actual": b.get("actual", ""),
-                "ui_path": b.get("ui_path", "Not Observable"),
+                "ui_path": b.get("ui_path", "Not Observable"),  # More lenient - don't drop for missing ui_path
                 "screen_position": b.get("screen_position", ""),
                 "visual_measurement": json.dumps(b.get("visual_analysis", {})),
                 "what_to_correct": b.get("developer_action", {}).get("what_to_correct", ""),
@@ -851,13 +954,16 @@ You will receive images interleaved with their step captions in this order. Use 
                 "qa_verification": b.get("developer_action", {}).get("qa", ""),
                 "screenshot_paths": paths,
                 "screenshot_path": paths[0] if paths and len(paths) > 0 else (list(idx_to_path.values())[0] if idx_to_path else None),
-                "affected_steps": b.get("affected_steps", [])
-            })
+                "affected_steps": b.get("affected_steps", []),
+                "bug_category": bug_category  # Track which category this came from
+            }
             
             # Final safety check - ensure screenshot_path is never None
-            if normalized[-1]["screenshot_path"] is None and idx_to_path:
-                normalized[-1]["screenshot_path"] = list(idx_to_path.values())[0]
+            if normalized_bug["screenshot_path"] is None and idx_to_path:
+                normalized_bug["screenshot_path"] = list(idx_to_path.values())[0]
                 print(f"🛡️ Applied final safety fix for screenshot_path")
+            
+            normalized.append(normalized_bug)
         
         return normalized
 
