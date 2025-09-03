@@ -56,22 +56,45 @@
         "health_alerts"
       ],
       "step_success_rate": 1.0
+    },
+    "excel_ux_1756884282": {
+      "analysis_id": "excel_ux_1756884282",
+      "file_path": "reports/analysis/analysis_excel_ux_1756884282_20250903_125442.json",
+      "filename": "analysis_excel_ux_1756884282_20250903_125442.json",
+      "created_at": "2025-09-03T12:54:42.899793",
+      "file_size": 47931,
+      "analysis_type": "unknown",
+      "scenario_type": "unknown",
+      "url": null,
+      "scenario_path": null,
+      "app_path": null,
+      "overall_score": 0,
+      "status": "completed",
+      "craft_bugs_count": 0,
+      "pattern_issues_count": 0,
+      "total_issues": 0,
+      "total_duration_ms": 0,
+      "successful_steps": 0,
+      "total_steps": 0,
+      "has_screenshots": false,
+      "browser_automation": false,
+      "modules_analyzed": []
     }
   },
   "statistics": {
-    "total_reports": 2,
+    "total_reports": 3,
     "total_craft_bugs": 0,
     "total_pattern_issues": 0,
     "total_issues": 0,
-    "avg_score": 46.0,
+    "avg_score": 30.7,
     "min_score": 0,
     "max_score": 92,
     "analysis_type_distribution": {
-      "unknown": 2
+      "unknown": 3
     },
-    "recent_reports_count": 2,
+    "recent_reports_count": 1,
     "last_cleanup": null,
-    "total_file_size_mb": 0.02
+    "total_file_size_mb": 0.06
   },
-  "last_updated": "2025-08-22T16:04:29.959912"
+  "last_updated": "2025-09-03T12:54:42.904311"
 }

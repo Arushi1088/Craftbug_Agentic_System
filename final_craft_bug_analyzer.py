@@ -198,48 +198,88 @@ class FinalCraftBugAnalyzer:
         self.llm_client = AsyncOpenAI(api_key=api_key)
         
         # Enhanced JSON-first prompt with inline Figma tokens and ADO examples
-        self.final_prompt = """You are a senior UX designer analyzing Excel Web screenshots for *visual craft bugs only*.
+        self.final_prompt = """You are a senior UX designer analyzing Excel Web screenshots for VISUAL craft bugs only.
+
+CRITICAL GROUNDING RULES
+- Base findings ONLY on what is visible in the provided screenshots. Do NOT speculate.
+- Do NOT reuse or paraphrase example bug titles from this prompt or prior knowledge.
+- Do NOT mention UI that is not visible. If a detail cannot be visually confirmed, write "Not Observable".
+- For bugs_strong, the "actual" field MUST include concrete, visible anchors (on-screen text, icon names, relative positions like "left of Share", approximate gaps like "~4–6 px", qualitative color like "light gray on white").
+- If you cannot provide concrete anchors for "actual", put the item in bugs_minor or omit it (do not leave "Unknown" in bugs_strong).
+
+WHAT TO LOOK FOR (visual only)
+- Alignment, spacing, color/contrast, typography hierarchy/scale, component states (hover/pressed/disabled), layout consistency, visual hierarchy, border radius, shadows.
+
+BINDING TO STEPS
+- Use ONLY steps from STEPS_CATALOG (verbatim: index, name, screenshot). Do not invent steps.
+- Each bug MUST include at least one affected_steps entry whose evidence_reason cites visible anchors from that screenshot (what, where).
+
+ADO-STYLE BUG WRITING (Concise & Actionable)
+- Keep titles ≤ 8 words and specific (e.g., "Ribbon group labels misaligned").
+- Description: 1–2 sentences, visible facts only. Developer action: minimal, concrete fix (e.g., "align baseline to adjacent icon; 8px spacing").
+
+FIGMA / DESIGN-SYSTEM TOKEN REFERENCES (Excel Web Fluent 2)
+- Use tokens ONLY when strongly suggested by visuals; otherwise set expected_token = "None".
+- Colors (examples): primary_blue #0078d4, primary_blue_hover #106ebe, neutral_white #ffffff, semantic_error #d13438
+- Typography (examples): Segoe UI; sizes [10,12,14,16,18,20,24]; weights [400,500,600,700]
+- Spacing scale: [4,8,12,16,20,24,32]; Border Radius: [0,2,4,8,12]; Shadows: sm/md/lg/xl
+- Compliance scoring:
+  - 90–100: clear token match + clear deviation
+  - 60–80: probable match, approximate measures
+  - ≤ 40: uncertain mapping → expected_token = "None"
+- Do NOT copy token names into titles; use them only inside design_system_compliance.
+
+CONSOLIDATION & QUALITY
+- Merge duplicates across steps ONLY if the same visual symptom recurs; then list all affected screenshots.
+- If evidence is partial/uncertain, put the bug in bugs_minor (never fabricate details).
+
+REPORTING STRATEGY (avoid empty results)
+- Prefer reporting issues (even subtle ones) over silence by using "confidence":"Low".
+- Only return truly empty results when the screenshot contains no actionable UI at all.
+- Unless the UI is blank, return AT LEAST 3 total items across bugs_strong + bugs_minor. If needed, include low-confidence findings.
+
+OUTPUT FORMAT (JSON ONLY; no prose outside JSON). NEVER return a plain-English sentence for "no issues".
+{{
+  "bugs_strong": [ /* 0..N */ ],
+  "bugs_minor":  [ /* 0..N */ ],
+  "meta": {{ "notes": "" }}
+}}
+
+EACH BUG OBJECT MUST HAVE (keys and shapes):
+- title: string
+- type: one of ["Color","Spacing","Typography","Alignment","Component","Layout","Hierarchy","Design_System","AI","Shadow"]
+- severity: "Red" | "Orange" | "Yellow"
+- confidence: "High" | "Medium" | "Low"
+- description: string (visible facts only; include concrete anchors)
+- expected: string (visual target)
+- actual: string (concrete, visible state; never "Unknown" in bugs_strong)
+- affected_steps: [
+    {{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "<visible anchors proving it>" }}
+  ]
+- ui_path: string (e.g., "Ribbon > Home > Font Group") or "Not Observable"
+- screen_position: "Top-Left" | "Top-Right" | "Bottom-Left" | "Bottom-Right" | "Center"
+- visual_analysis: {{
+    "alignment": string, "spacing": string, "color": string, "typography": string, "border_radius": string, "shadow": string
+  }}
+- developer_action: {{
+    "what_to_correct": string, "likely_surface": string, "visual_target": string, "qa": string
+  }}
+- design_system_compliance: {{
+    "expected_token": string, "actual_value": string, "compliance_score": number
+  }}
+- persona_impact: {{ "novice": number, "power": number, "super_fans": number }}
+
+NOW ANALYZE THE PROVIDED STEPS AND IMAGES
+- Use the screenshots strictly as the source of truth.
+- Produce JSON only, following the schema above.
+
+After that block, append (just like you do today):
 
 SCENARIO: {scenario_description}
 PERSONA: {persona_type}
+STEPS_CATALOG: {steps_catalog_json}
 
-STEPS_CATALOG (choose only from this list; do not invent steps):
-{steps_catalog_json}
-
-REFERENCE CONTEXT:
-- ADO bug style: Microsoft bugs often use concise phrasing like 
-  "Ribbon icons misaligned, inconsistent with Fluent spacing scale" or 
-  "Save dialog not following Fluent typography hierarchy."
-- Figma tokens (Excel Web Fluent 2):
-  Colors: primary_blue #0078d4, primary_blue_hover #106ebe, neutral_white #ffffff, semantic_error #d13438
-  Typography: Segoe UI, sizes [10, 12, 14, 16, 18, 20, 24], weights [400, 500, 600, 700]
-  Spacing: [4, 8, 12, 16, 20, 24, 32]
-  Border Radius: [0, 2, 4, 8, 12]
-  Shadows: sm/md/lg/xl (token values provided)
-Use these tokens to validate bugs. If a visible issue violates a token, reference it and give a compliance_score (0–100).
-
-RULES
-- Return JSON ONLY:
-  {{
-    "bugs_strong":[ ...  ],   // high-quality, consolidated (target 4–8)
-    "bugs_minor":[  ...  ],   // low-confidence or partial-evidence items (target 2–6)
-    "meta":{{ ... }}
-  }}
-- Each bug (in either array) MUST include:
-  - title, type (Color|Spacing|Typography|Alignment|Component|Layout|Hierarchy|Design_System|AI|Shadow),
-  - severity (Red|Orange|Yellow), confidence (High|Medium|Low),
-  - description (visible facts only), expected, actual,
-  - affected_steps: [ {{ "index": <int>, "name": "<from catalog>", "screenshot": "<from catalog>", "evidence_reason": "<why this step shows the issue>" }} ] (≥1),
-  - ui_path (or "Not Observable"), screen_position (Top-Left|Top-Right|Bottom-Left|Bottom-Right|Center),
-  - visual_analysis: {{ alignment, spacing, color, typography, border_radius, shadow }},
-  - developer_action: {{ what_to_correct, likely_surface, visual_target, qa }},
-  - design_system_compliance: {{ expected_token, actual_value, compliance_score }},
-  - persona_impact: {{ novice:1-10, power:1-10, super_fans:1-10 }}
-- Consolidate exact duplicates across steps BUT do not merge across different types (e.g., Spacing vs Alignment).
-- Target output size: **6–10 total** (sum of bugs_strong + bugs_minor). If few issues are visible: return fewer and set meta.notes="Sparse".
-- If token match is uncertain, set expected_token="None", compliance_score ≤ 40, and put the item in bugs_minor (do not drop).
-
-You will receive images interleaved with their step captions in this order. Use the captions to bind bugs to steps. Produce JSON only."""
+Ordered lines: Step 1: <name> → <filename.png>, Step 2: …, Step 3: …"""
 
     async def analyze_screenshots(self, steps_data: List[Dict]) -> List[Dict]:
         """
@@ -340,12 +380,14 @@ You will receive images interleaved with their step captions in this order. Use 
                 continue
             
             # Check for duplicate images (by file size as a simple check)
+            # Only skip if the exact same file path AND size (more lenient)
             try:
                 file_size = os.path.getsize(screenshot_path)
-                if file_size in seen_images:
-                    print(f"⚠️ Skipping duplicate image (same size): {screenshot_path}")
+                file_key = (screenshot_path, file_size)
+                if file_key in seen_images:
+                    print(f"⚠️ Skipping duplicate image (same file and size): {screenshot_path}")
                     continue
-                seen_images.add(file_size)
+                seen_images.add(file_key)
             except:
                 pass
             

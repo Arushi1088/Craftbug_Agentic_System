@@ -494,16 +494,10 @@ async def main():
                 print(f"  - {bug['category']}: {bug['title']} (Severity: {bug['severity']})")
 
 
-def execute_scenario_with_telemetry():
-    """Synchronous wrapper for scenario execution with telemetry"""
-    # Check if we're already in an event loop
-    try:
-        loop = asyncio.get_running_loop()
-        # We're in an event loop, create a task
-        return loop.run_until_complete(ExcelScenarioTelemetry().execute_scenario_with_telemetry())
-    except RuntimeError:
-        # No event loop running, create one
-        return asyncio.run(ExcelScenarioTelemetry().execute_scenario_with_telemetry())
+async def execute_scenario_with_telemetry():
+    """Async wrapper for scenario execution with telemetry"""
+    telemetry = ExcelScenarioTelemetry()
+    return await telemetry.execute_scenario_with_telemetry()
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -101,8 +101,16 @@ Impact: [Effect on user experience]
 
 Fix: [Specific action e.g., adjust margin, increase contrast, align text]
 
-If no issues:
-"No visible craft bugs in screenshot."
+⚠️ IMPORTANT: Even if issues are subtle, you MUST list all observable problems with visual design.
+- If an element looks misaligned or inconsistently spaced, report it.
+- If colors appear inconsistent or contrast seems poor, report it.
+- If typography hierarchy looks unclear, report it.
+- If you are unsure whether something qualifies, include it with confidence="Low" instead of omitting it.
+- Do not return "No visible craft bugs" unless you have carefully checked every visual region and truly found nothing problematic at all.
+- Prefer reporting Low-confidence issues over outputting nothing.
+
+If no issues are found at all (e.g., screenshot is literally blank), respond with:
+"No visual craft bugs detected in this screenshot."
 
 RULES
 

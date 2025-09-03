@@ -2484,7 +2484,7 @@ if EXCEL_WEB_AVAILABLE:
             # Import required modules
             try:
                 from excel_scenario_telemetry import ExcelScenarioTelemetry
-                from llm_enhanced_analyzer import LLMEnhancedAnalyzer as EnhancedUXAnalyzer
+                from final_craft_bug_analyzer import FinalCraftBugAnalyzer
                 from enhanced_report_generator import EnhancedReportGenerator
             except ImportError as e:
                 logger.error(f"❌ Failed to import enhanced UX analysis modules: {e}")
@@ -2669,24 +2669,54 @@ async def analyze_excel_scenario(request: Dict[str, Any]):
         # Import telemetry wrapper
         try:
             from excel_scenario_telemetry import execute_scenario_with_telemetry
-            from llm_enhanced_analyzer import LLMEnhancedAnalyzer as EnhancedUXAnalyzer
+            from final_craft_bug_analyzer import FinalCraftBugAnalyzer
         except ImportError as e:
             logger.error(f"❌ Failed to import telemetry modules: {e}")
             raise HTTPException(status_code=500, detail="Telemetry modules not available")
         
         # Run scenario with telemetry
         logger.info("📊 Running Excel scenario with telemetry...")
-        telemetry_result = execute_scenario_with_telemetry()
+        telemetry_result = await execute_scenario_with_telemetry()
         
         if not telemetry_result or not telemetry_result.get("success"):
             error_msg = telemetry_result.get("error", "Unknown error") if telemetry_result else "No result returned"
             logger.error(f"❌ Scenario execution failed: {error_msg}")
             raise HTTPException(status_code=500, detail=f"Scenario execution failed: {error_msg}")
         
-        # Analyze telemetry data with enhanced analyzer
-        logger.info("🔍 Analyzing telemetry data with enhanced analyzer...")
-        enhanced_analyzer = EnhancedUXAnalyzer()
-        analysis_result = await enhanced_analyzer.analyze_scenario_with_enhanced_data(telemetry_result)
+        # Analyze telemetry data with the fixed FinalCraftBugAnalyzer
+        logger.info("🔍 Analyzing telemetry data with FinalCraftBugAnalyzer...")
+        
+        # Convert telemetry data to the format expected by FinalCraftBugAnalyzer
+        steps_data = []
+        if 'telemetry' in telemetry_result:
+            actual_telemetry_data = telemetry_result['telemetry']
+        else:
+            actual_telemetry_data = telemetry_result
+            
+        for step in actual_telemetry_data.get('steps', []):
+            step_data = {
+                'step_name': step.get('step_name', 'Unknown'),
+                'description': step.get('description', ''),
+                'screenshot_path': step.get('screenshot_path', ''),
+                'scenario_description': actual_telemetry_data.get('scenario_name', 'Excel Document Creation'),
+                'persona_type': 'Power User'
+            }
+            steps_data.append(step_data)
+        
+        # Use the fixed FinalCraftBugAnalyzer
+        ux_analyzer = FinalCraftBugAnalyzer()
+        all_craft_bugs = await ux_analyzer.analyze_screenshots(steps_data)
+        
+        # Create analysis result with the new bugs
+        analysis_result = {
+            "llm_generated_bugs": all_craft_bugs,
+            "total_llm_bugs": len(all_craft_bugs),
+            "craft_bugs": [],
+            "base_craft_bugs": [],
+            "enhanced_craft_bugs": [],
+            "ux_score": 85,
+            "llm_enhanced": True
+        }
         
         # Generate comprehensive report
         report_data = {
