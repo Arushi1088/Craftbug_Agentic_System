@@ -514,20 +514,20 @@ Then append your Scenario/Matrix/Steps/Frames/Screenshots JSON blocks and attach
                 "R5b_excel_frames": cta_scan["excel_frames"]
             })
                 
-                # Extract bugs from the structured response
-                bugs_list = []
-                
-                # Process bugs_strong
-                for bug in analysis_result.get("bugs_strong", []):
-                    bug["severity"] = bug.get("severity", "Red")
-                    bug["confidence"] = bug.get("confidence", "High")
-                    bugs_list.append(bug)
-                
-                # Process bugs_minor
-                for bug in analysis_result.get("bugs_minor", []):
-                    bug["severity"] = bug.get("severity", "Yellow")
-                    bug["confidence"] = bug.get("confidence", "Medium")
-                    bugs_list.append(bug)
+            # Extract bugs from the structured response
+            bugs_list = []
+            
+            # Process bugs_strong
+            for bug in analysis_result.get("bugs_strong", []):
+                bug["severity"] = bug.get("severity", "Red")
+                bug["confidence"] = bug.get("confidence", "High")
+                bugs_list.append(bug)
+            
+            # Process bugs_minor
+            for bug in analysis_result.get("bugs_minor", []):
+                bug["severity"] = bug.get("severity", "Yellow")
+                bug["confidence"] = bug.get("confidence", "Medium")
+                bugs_list.append(bug)
             
             # Validate minimum findings requirement
             total_findings = len(bugs_list)
