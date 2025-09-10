@@ -2822,9 +2822,13 @@ async def analyze_video(
         logger.info(f"📱 Surface: {surface}, Platform: {platform}, Device: {device}")
         logger.info(f"🔧 Mode: {mode}, Hub Entry: {hub_entry}, Source: {source}")
         
-        # Create temporary directory for this analysis
+        # Create temporary directory for this analysis (ensure fresh start)
         temp_dir = Path(f"temp_video_analysis_{analysis_id}")
+        if temp_dir.exists():
+            import shutil
+            shutil.rmtree(temp_dir)
         temp_dir.mkdir(exist_ok=True)
+        logger.info(f"📁 Created fresh temp directory: {temp_dir}")
         
         # Save uploaded video
         video_path = temp_dir / f"uploaded_video_{analysis_id}.mp4"
@@ -3067,6 +3071,10 @@ async def analyze_video(
             if total < 3 and any(f.get("ocr_text") for f in saved_frames):
                 result.setdefault("llm_analysis", {}).setdefault("meta", {}).setdefault("notes", "")
                 result["llm_analysis"]["meta"]["notes"] += " | Guardrail: Added hints to ensure ≥3 observations when UI present."
+            
+            # Add run_id for debugging
+            result["run_id"] = analysis_id
+            result["temp_directory"] = str(temp_dir)
             
             return result
             

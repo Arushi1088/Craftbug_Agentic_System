@@ -21,6 +21,33 @@ logger = logging.getLogger(__name__)
 PROMPT_PATH = Path("prompts/mobile_prompt_blueprint.md")
 MATRIX_JSON = Path("real_data/mobile_excel_matrix.json")
 
+# --- Normalization functions ---
+def _norm_protection(value: str) -> str:
+    """Normalize protection values to canonical form."""
+    v = (value or "").strip().lower().replace(" ", "_").replace("-", "_")
+    # canonical set
+    aliases = {
+        "double_protected": {"double_protected", "doubleprotected", "double", "password_plus_label", "pass_plus_label"},
+        "password": {"password", "pass_protected", "password_protected"},
+        "irm": {"irm", "information_rights_management"},
+        "clp": {"clp", "compliance_label_policy", "sensitivity_label", "confidential", "highly_confidential"},
+        "dlp": {"dlp", "data_loss_prevention"},
+        "normal": {"normal", "general", "non_business", "public"}
+    }
+    for canon, names in aliases.items():
+        if v in names:
+            return canon
+    return v or "normal"
+
+def _norm_size(value: str) -> str:
+    """Normalize size values to canonical form."""
+    v = (value or "").strip().lower()
+    if v in {"s", "small"}: return "small"
+    if v in {"m", "medium", "med"}: return "medium"
+    if v in {"l", "large"}: return "large"
+    if v in {"xl", "xlarge", "extra_large", "extra-large"}: return "xlarge"
+    return v
+
 # --- R0 precedence: resolve expected flow from scenario + matrix ---
 def resolve_expected_flow(scenario_cfg: dict, matrix_row: dict, provided_expected_flow: dict) -> dict:
     """
@@ -31,8 +58,9 @@ def resolve_expected_flow(scenario_cfg: dict, matrix_row: dict, provided_expecte
       - Desktop-only messaging allowed only for XL>100MB or known-unsupported features (not covered here).
       - If provided flow disagrees with these rules, override.
     """
-    prot = (scenario_cfg.get("Protection") or "").lower().replace(" ", "-")
-    fsize = (scenario_cfg.get("Size") or "").lower()
+    # Normalize inputs properly
+    prot = _norm_protection(scenario_cfg.get("Protection"))
+    fsize = _norm_size(scenario_cfg.get("Size"))
     resolved = dict(provided_expected_flow or {})
 
     # Default sensible fallbacks
@@ -45,7 +73,7 @@ def resolve_expected_flow(scenario_cfg: dict, matrix_row: dict, provided_expecte
     resolved.setdefault("Forbidden_Errors", "Auth_Failure")
 
     # R0: Protection precedence for S/M/L
-    if prot in {"password", "double-protected"} and fsize in {"small", "medium", "large"}:
+    if prot in {"password", "double_protected"} and fsize in {"small", "medium", "large"}:
         resolved["Expected_Handoff"] = "Password_Prompt"  # or "Double_Protection_Check"
         # Flags should reflect protection
         if prot == "double-protected":
@@ -115,6 +143,50 @@ def _suppress_false_password_bugs(out_json, resolved_expected):
                 filtered.append(b)
             out_json[bucket] = filtered
     return out_json
+
+def anchor_in_ocr(frames_by_id: dict, bug: dict) -> bool:
+    """Verify that bug evidence anchors exist in actual OCR text."""
+    ok = True
+    for ev in bug.get("evidence", []):
+        if ev.get("kind") != "frame":   # screenshots allowed too
+            continue
+        fr = frames_by_id.get(ev.get("id"))
+        if not fr: 
+            ok = False
+            break
+        ocr = (fr.get("ocr_text") or "").lower()
+        # Choose anchors based on type
+        needles = []
+        if bug.get("type") in {"OpenFlowConflict", "MessagingMismatch", "CTAHierarchy"}:
+            needles = ["open in desktop app", "open microsoft excel"]
+        if bug.get("type") in {"StateStacking"}:
+            needles = ["loading", "downloading", "almost there", "error", "can't open", "you don't have permission"]
+        if bug.get("type") in {"OpenFailure"} and "password" in bug.get("title", "").lower():
+            needles = ["please enter the password", "password", "enter password"]
+        # Require at least one needle presence per evidence item
+        if needles and not any(n in ocr for n in needles):
+            ok = False
+            break
+    return ok
+
+def verify_anchor_evidence(analysis_result: dict, frames_catalog: list) -> dict:
+    """Post-LLM verification: ensure bugs match actual OCR content."""
+    frames_by_id = {f["frame_id"]: f for f in frames_catalog}
+    
+    for bucket in ["bugs_strong", "bugs_minor"]:
+        if bucket in analysis_result:
+            filtered = []
+            for b in analysis_result[bucket]:
+                if anchor_in_ocr(frames_by_id, b):
+                    filtered.append(b)
+                else:
+                    # Soften instead of drop - mark as low confidence
+                    b["confidence"] = "Low"
+                    b["notes"] = "Anchor not found in OCR"
+                    filtered.append(b)
+            analysis_result[bucket] = filtered
+    
+    return analysis_result
 
 class MobileLLMAnalyzer:
     """Mobile-specific LLM analyzer for video frame analysis with matrix integration"""
@@ -506,6 +578,9 @@ Then append your Scenario/Matrix/Steps/Frames/Screenshots JSON blocks and attach
             
             # Suppress false password bugs when R0 says they're expected
             analysis_result = _suppress_false_password_bugs(analysis_result, resolved_expected_flow)
+            
+            # Verify anchor evidence matches actual OCR content
+            analysis_result = verify_anchor_evidence(analysis_result, frames_data)
             
             # Ensure rule firings meta section is populated
             analysis_result = ensure_rule_firings(analysis_result, {
