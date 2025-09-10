@@ -21,6 +21,101 @@ logger = logging.getLogger(__name__)
 PROMPT_PATH = Path("prompts/mobile_prompt_blueprint.md")
 MATRIX_JSON = Path("real_data/mobile_excel_matrix.json")
 
+# --- R0 precedence: resolve expected flow from scenario + matrix ---
+def resolve_expected_flow(scenario_cfg: dict, matrix_row: dict, provided_expected_flow: dict) -> dict:
+    """
+    Reconciles EXPECTED_FLOW with matrix + guardrails.
+    Rules:
+      - If Protection ∈ {password, double-protected} and file_size ∈ {small, medium, large}:
+          Expected_Handoff := 'Password_Prompt' (or 'Double_Protection_Check' if you prefer)
+      - Desktop-only messaging allowed only for XL>100MB or known-unsupported features (not covered here).
+      - If provided flow disagrees with these rules, override.
+    """
+    prot = (scenario_cfg.get("Protection") or "").lower().replace(" ", "-")
+    fsize = (scenario_cfg.get("Size") or "").lower()
+    resolved = dict(provided_expected_flow or {})
+
+    # Default sensible fallbacks
+    resolved.setdefault("Expected_Previewer", "Inline_Preview")
+    resolved.setdefault("Expected_Handoff", "Direct_Open")
+    resolved.setdefault("Expected_Result", "Excel_Mobile_Editor")
+    resolved.setdefault("Expected_Flags", "None")
+    resolved.setdefault("Expected_CTAs", "Open_in_App")
+    resolved.setdefault("Allowed_Errors", "Generic_Loading_Error")
+    resolved.setdefault("Forbidden_Errors", "Auth_Failure")
+
+    # R0: Protection precedence for S/M/L
+    if prot in {"password", "double-protected"} and fsize in {"small", "medium", "large"}:
+        resolved["Expected_Handoff"] = "Password_Prompt"  # or "Double_Protection_Check"
+        # Flags should reflect protection
+        if prot == "double-protected":
+            resolved["Expected_Flags"] = "Double_Protected"
+        else:
+            resolved["Expected_Flags"] = "Password_Required"
+
+    # Desktop-only messaging is only justifiable for XL>100MB or unsupported features
+    if fsize in {"small", "medium", "large"}:
+        resolved["Desktop_Only_Messaging_Allowed"] = False
+    else:
+        # XL
+        resolved["Desktop_Only_Messaging_Allowed"] = True
+
+    resolved["_resolution_notes"] = {
+        "protection": prot,
+        "file_size": fsize,
+        "source_expected_handoff": (provided_expected_flow or {}).get("Expected_Handoff"),
+        "resolved_expected_handoff": resolved["Expected_Handoff"]
+    }
+    return resolved
+
+
+def scan_cta_conflicts(frames):
+    """Returns dict with frame ids that contain desktop+excel CTAs simultaneously."""
+    conflict_frames, desktop_frames, excel_frames = [], [], []
+    for fr in frames:
+        txt = (fr.get("ocr_text") or "").lower()
+        if not txt:
+            continue
+        has_desktop = "open in desktop app" in txt
+        has_excel = ("open microsoft excel" in txt) or ("open in excel" in txt)
+        if has_desktop:
+            desktop_frames.append(fr["frame_id"])
+        if has_excel:
+            excel_frames.append(fr["frame_id"])
+        if has_desktop and has_excel:
+            conflict_frames.append(fr["frame_id"])
+    return {
+        "conflict_frames": conflict_frames,
+        "desktop_frames": desktop_frames,
+        "excel_frames": excel_frames
+    }
+
+
+def ensure_rule_firings(output_json, hints):
+    """Ensure rule_firings meta section is populated based on hints"""
+    rf = output_json.setdefault("meta", {}).setdefault("rule_firings", [])
+    if hints.get("R2b_candidate_frames"):
+        rf.append({"rule": "R2b", "frames": hints["R2b_candidate_frames"]})
+    if hints.get("R4b_desktop_frames"):
+        rf.append({"rule": "R4b", "frames": hints["R4b_desktop_frames"]})
+    if hints.get("R5b_excel_frames"):
+        rf.append({"rule": "R5b", "frames": hints["R5b_excel_frames"]})
+    return output_json
+
+
+def _suppress_false_password_bugs(out_json, resolved_expected):
+    """Suppress false password prompt bugs when R0 says they're expected"""
+    if resolved_expected.get("Expected_Handoff") in {"Password_Prompt", "Double_Protection_Check"}:
+        for bucket in ["bugs_strong", "bugs_minor"]:
+            filtered = []
+            for b in out_json.get(bucket, []):
+                if b.get("type") in {"OpenFailure", "Password_Prompt"} and "password" in (b.get("title","")+b.get("description","")).lower():
+                    # Only suppress if it claims the prompt is "unexpected"
+                    continue
+                filtered.append(b)
+            out_json[bucket] = filtered
+    return out_json
+
 class MobileLLMAnalyzer:
     """Mobile-specific LLM analyzer for video frame analysis with matrix integration"""
     
@@ -295,10 +390,18 @@ Then append your Scenario/Matrix/Steps/Frames/Screenshots JSON blocks and attach
             logger.info(f"🎯 Mobile LLM Analysis: {len(frames_data)} frames")
             
             # Look up expected flow from matrix
-            expected_flow = self.lookup_expected_flow(scenario_metadata)
-            logger.info(f"📊 Matrix lookup result: {expected_flow.get('match', 'Unknown')}")
+            provided_expected_flow = self.lookup_expected_flow(scenario_metadata)
+            logger.info(f"📊 Matrix lookup result: {provided_expected_flow.get('match', 'Unknown')}")
             
-            # Build the enhanced prompt with mobile-specific data and expected flow
+            # R0 precedence: resolve expected flow with protection logic
+            resolved_expected_flow = resolve_expected_flow(scenario_metadata, scenario_metadata.get("matrix", {}), provided_expected_flow)
+            logger.info(f"🔧 R0 precedence applied: {resolved_expected_flow.get('_resolution_notes', {})}")
+            
+            # CTA conflict scanning for co-triggering
+            cta_scan = scan_cta_conflicts(frames_catalog)
+            logger.info(f"🔍 CTA scan: {len(cta_scan['conflict_frames'])} conflict frames, {len(cta_scan['desktop_frames'])} desktop frames")
+            
+            # Build the enhanced prompt with mobile-specific data and resolved expected flow
             prompt_parts = [
                 self.mobile_prompt,
                 "",
@@ -306,7 +409,24 @@ Then append your Scenario/Matrix/Steps/Frames/Screenshots JSON blocks and attach
                 json.dumps(scenario_metadata, indent=2),
                 "",
                 "EXPECTED_FLOW:",
-                json.dumps(expected_flow, indent=2),
+                json.dumps(resolved_expected_flow, indent=2),
+                "",
+                "LLM_HINTS:",
+                json.dumps({
+                    "R2b_candidate_frames": cta_scan["conflict_frames"],
+                    "R4b_desktop_frames": cta_scan["desktop_frames"],
+                    "R5b_excel_frames": cta_scan["excel_frames"],
+                    "Desktop_Only_Messaging_Allowed": resolved_expected_flow.get("Desktop_Only_Messaging_Allowed", False)
+                }, indent=2),
+                "",
+                "META_EXPECTATION_RECONCILIATION:",
+                json.dumps({
+                    "protection": scenario_metadata.get("Protection"),
+                    "file_size": scenario_metadata.get("Size"),
+                    "provided_expected_handoff": provided_expected_flow.get("Expected_Handoff"),
+                    "resolved_expected_handoff": resolved_expected_flow.get("Expected_Handoff"),
+                    "notes": "R0 precedence applied; do not flag password prompt as unexpected when protection requires it."
+                }, indent=2),
                 "",
                 "STEPS_CATALOG:",
                 json.dumps(steps_catalog, indent=2),
@@ -382,22 +502,32 @@ Then append your Scenario/Matrix/Steps/Frames/Screenshots JSON blocks and attach
             analysis_result = self.parse_llm_json(response_content)
             
             # Apply auto guardrail findings to catch missed high-signal issues
-            analysis_result = self.auto_guardrail_findings(frames_data, scenario_metadata, expected_flow, analysis_result)
+            analysis_result = self.auto_guardrail_findings(frames_data, scenario_metadata, resolved_expected_flow, analysis_result)
             
-            # Extract bugs from the structured response
-            bugs_list = []
+            # Suppress false password bugs when R0 says they're expected
+            analysis_result = _suppress_false_password_bugs(analysis_result, resolved_expected_flow)
             
-            # Process bugs_strong
-            for bug in analysis_result.get("bugs_strong", []):
-                bug["severity"] = bug.get("severity", "Red")
-                bug["confidence"] = bug.get("confidence", "High")
-                bugs_list.append(bug)
-            
-            # Process bugs_minor
-            for bug in analysis_result.get("bugs_minor", []):
-                bug["severity"] = bug.get("severity", "Yellow")
-                bug["confidence"] = bug.get("confidence", "Medium")
-                bugs_list.append(bug)
+            # Ensure rule firings meta section is populated
+            analysis_result = ensure_rule_firings(analysis_result, {
+                "R2b_candidate_frames": cta_scan["conflict_frames"],
+                "R4b_desktop_frames": cta_scan["desktop_frames"],
+                "R5b_excel_frames": cta_scan["excel_frames"]
+            })
+                
+                # Extract bugs from the structured response
+                bugs_list = []
+                
+                # Process bugs_strong
+                for bug in analysis_result.get("bugs_strong", []):
+                    bug["severity"] = bug.get("severity", "Red")
+                    bug["confidence"] = bug.get("confidence", "High")
+                    bugs_list.append(bug)
+                
+                # Process bugs_minor
+                for bug in analysis_result.get("bugs_minor", []):
+                    bug["severity"] = bug.get("severity", "Yellow")
+                    bug["confidence"] = bug.get("confidence", "Medium")
+                    bugs_list.append(bug)
             
             # Validate minimum findings requirement
             total_findings = len(bugs_list)
@@ -436,15 +566,15 @@ Then append your Scenario/Matrix/Steps/Frames/Screenshots JSON blocks and attach
                         }
                         bugs_list.append(craft_issue)
                         logger.info(f"➕ Added analysis gap issue to meet minimum requirement")
-            
-            logger.info(f"✅ Mobile analysis complete: {len(bugs_list)} bugs detected")
-            logger.info(f"📊 Debug: {len(analysis_result.get('bugs_strong', []))} strong, {len(analysis_result.get('bugs_minor', []))} minor")
-            
+                
+                logger.info(f"✅ Mobile analysis complete: {len(bugs_list)} bugs detected")
+                logger.info(f"📊 Debug: {len(analysis_result.get('bugs_strong', []))} strong, {len(analysis_result.get('bugs_minor', []))} minor")
+                
             # Add matrix match info to the result
             for bug in bugs_list:
-                bug["matrix_match"] = expected_flow.get("match", "Unknown")
-                bug["expected_flow"] = expected_flow
-            
+                bug["matrix_match"] = resolved_expected_flow.get("match", "Unknown")
+                bug["expected_flow"] = resolved_expected_flow
+                
             return bugs_list
                 
         except Exception as e:

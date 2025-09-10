@@ -279,3 +279,29 @@ Return ONLY valid JSON with this structure:
 7. **Document coverage** of what was actually observed
 
 Remember: The matrix provides expected behaviors as guardrails, but you must still ground every finding in visible evidence from the frames. No speculation, only what you can see.
+
+## Enhanced Guardrail Rules (R0-R5b)
+
+### R0: Authoritative Precedence
+**IF** Protection ∈ {Password, Double_Protected} and file_size ∈ {Small, Medium, Large}
+**THEN** treat Password_Prompt (or Double_Protection_Check) as expected. If the incoming EXPECTED_FLOW disagrees, override with R0 and do not file a "password prompt" bug.
+
+### R2c: False Positive Guard for Password
+**IF** password dialog is visible and R0 marks it expected
+**THEN** do not file OpenFailure/Password_Prompt. Instead evaluate craft: clarity of copy, input affordances, keyboard overlap, CTA order.
+
+### R4b: Forbidden Desktop Messaging on Mobile
+**IF** "Open in Desktop App" appears while AppsInstalled includes Excel/M365 and size ∈ {S,M,L}
+**THEN** file Functional/MessagingMismatch (Orange). Escalate to PolicyBlock (Red) if it blocks progress.
+
+### R5b: CTA Hierarchy
+**IF** "Open Microsoft Excel" and "Open in Desktop App" co-exist
+**THEN** evaluate visual prominence and file Craft/CTAHierarchy (Yellow–Orange) when desktop CTA dominates.
+
+## Analyzer Hints
+
+**IF** LLM_HINTS.R2b_candidate_frames not empty → evaluate R2b, R4b, R5b on those frames.
+
+**Desktop_Only_Messaging_Allowed** indicates whether desktop banners are ever acceptable for this size.
+
+**META_EXPECTATION_RECONCILIATION** shows how R0 precedence was applied to resolve conflicts between matrix and protection logic.
