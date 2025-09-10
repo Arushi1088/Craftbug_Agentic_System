@@ -14,7 +14,8 @@ import {
   BarChart3,
   Table,
   Database,
-  Bot
+  Bot,
+  Video
 } from 'lucide-react';
 
 export function HomePage() {
@@ -58,6 +59,11 @@ export function HomePage() {
       icon: <Table className="w-6 h-6" />,
       title: "Excel Web Automation",
       description: "Automated testing and bug detection for Excel Web applications"
+    },
+    {
+      icon: <Video className="w-6 h-6" />,
+      title: "Video Analysis",
+      description: "Frame-by-frame UX analysis of recorded user interactions and workflows"
     }
   ];
 
@@ -75,6 +81,13 @@ export function HomePage() {
       description: "Automated testing and bug detection for Excel Web with biometric authentication",
       features: ["Document creation", "Data entry workflows", "Save operations"],
       link: "/excel-testing"
+    },
+    {
+      icon: <Video className="w-8 h-8" />,
+      title: "Video Analysis",
+      description: "Upload videos and analyze frame-by-frame UX issues with AI-powered detection",
+      features: ["Frame extraction", "LLM analysis", "Timeline insights"],
+      link: "/analyze"
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,

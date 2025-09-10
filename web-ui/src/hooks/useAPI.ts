@@ -97,6 +97,23 @@ export function useAnalysis() {
     }
   }, []);
 
+  const startVideoAnalysis = useCallback(async (formData: FormData) => {
+    try {
+      setError(null);
+      setIsAnalyzing(true);
+      startProgress();
+
+      const resp = await apiClient.startVideoAnalysis(formData);
+      finishProgress();
+      setCurrentAnalysis({ ...resp, message: resp.message ?? 'Video analysis started' });
+      return resp; // Return the response so it can be used in components
+    } catch (e: any) {
+      setError(e?.message || 'Failed to start video analysis');
+      setIsAnalyzing(false);
+      throw e; // Re-throw so components can handle the error
+    }
+  }, []);
+
   return {
     isAnalyzing,
     progress,
@@ -106,6 +123,7 @@ export function useAnalysis() {
     startUrlScenario,
     startMockScenario,
     startEnhanced,
+    startVideoAnalysis,
   };
 }
 

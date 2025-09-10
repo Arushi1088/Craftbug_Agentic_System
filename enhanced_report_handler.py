@@ -141,6 +141,19 @@ class EnhancedReportHandler:
                 craft_bugs_count = len(report_data["craft_bugs_detected"])
             elif "craft_bugs" in report_data:
                 craft_bugs_count = len(report_data["craft_bugs"])
+            elif "llm_analysis" in report_data:
+                # For mobile video analysis, count bugs from llm_analysis
+                llm_analysis = report_data["llm_analysis"]
+                bugs_strong = llm_analysis.get("bugs_strong", [])
+                bugs_minor = llm_analysis.get("bugs_minor", [])
+                craft_bugs_count = len(bugs_strong) + len(bugs_minor)
+            elif "module_results" in report_data:
+                # For other analysis types, count bugs from module_results
+                total_issues = 0
+                for module_name, module_data in report_data["module_results"].items():
+                    if isinstance(module_data, dict) and "issues" in module_data:
+                        total_issues += len(module_data["issues"])
+                craft_bugs_count = total_issues
             
             # Extract pattern issues count
             if "pattern_issues" in report_data:

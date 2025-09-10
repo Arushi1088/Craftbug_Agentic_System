@@ -130,6 +130,15 @@ export const apiClient = {
     if (!res.ok) throw new Error(`Download failed: ${res.statusText}`);
     return res.blob();
   },
+
+  // VIDEO: Mobile Video Analysis
+  async startVideoAnalysis(formData: FormData) {
+    const res = await fetch(`${BASE_URL}/api/analyze/video`, {
+      method: 'POST',
+      body: formData,
+    });
+    return json<{ analysis_id: string; status: string; message: string }>(res);
+  },
 };
 
 // Export additional types for compatibility

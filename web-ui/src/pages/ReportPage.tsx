@@ -16,7 +16,11 @@ import {
   PlayCircle,
   Loader2,
   Settings,
-  ExternalLink
+  ExternalLink,
+  Smartphone,
+  CheckSquare,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import { useReports, useFixManager } from '../hooks/useAPI';
 import { AnalysisReport, UXIssue } from '../services/api';
@@ -1461,6 +1465,138 @@ export function ReportPage() {
                   </>
                 );
               })()}
+            </div>
+          )}
+
+          {/* Mobile Matrix Evaluation */}
+          {report.mobile_metadata && (
+            <div className="bg-white rounded-xl shadow p-6">
+              <div className="flex items-center mb-4">
+                <Smartphone className="w-6 h-6 text-blue-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Mobile Matrix Evaluation</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Scenario Configuration */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Scenario Configuration</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Device:</span>
+                      <span className="font-medium">{report.mobile_metadata.device || 'iPhone'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Host App:</span>
+                      <span className="font-medium">{report.mobile_metadata.surface || 'Outlook Mobile'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Hub Entry:</span>
+                      <span className="font-medium">{report.mobile_metadata.hub_entry || 'message_detail'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Source:</span>
+                      <span className="font-medium">{report.mobile_metadata.source || 'Attachment'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">File Extension:</span>
+                      <span className="font-medium">{report.mobile_metadata.file_ext || 'xlsx'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">File Size:</span>
+                      <span className="font-medium">{report.mobile_metadata.file_size || 'Small'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Protection:</span>
+                      <span className="font-medium">{report.mobile_metadata.protection || 'Normal'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Apps Installed:</span>
+                      <span className="font-medium">{report.mobile_metadata.apps_installed || 'None'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Host Account:</span>
+                      <span className="font-medium">{report.mobile_metadata.host_account || 'Primary'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">App Account:</span>
+                      <span className="font-medium">{report.mobile_metadata.app_account || 'Primary'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Matrix Match Results */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Matrix Match Results</h4>
+                  <div className="space-y-3">
+                    {/* Expected vs Observed */}
+                    {report.mobile_metadata.scenario_metadata && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-700 mb-2">Expected Flow</div>
+                        <div className="text-xs text-gray-600 space-y-1">
+                          <div>Previewer: {report.mobile_metadata.scenario_metadata.Expected_Previewer || 'Inline_Preview'}</div>
+                          <div>Handoff: {report.mobile_metadata.scenario_metadata.Expected_Handoff || 'Direct_Open'}</div>
+                          <div>Result: {report.mobile_metadata.scenario_metadata.Expected_Result || 'Excel_Mobile_Editor'}</div>
+                          <div>Flags: {report.mobile_metadata.scenario_metadata.Expected_Flags || 'None'}</div>
+                          <div>CTAs: {report.mobile_metadata.scenario_metadata.Expected_CTAs || 'Open_in_App'}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Matrix Match Quality */}
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="text-sm font-medium text-blue-700 mb-2">Matrix Match Quality</div>
+                      <div className="flex items-center space-x-2">
+                        {report.mobile_metadata.scenario_metadata?.match === 'Exact' ? (
+                          <CheckSquare className="w-4 h-4 text-green-600" />
+                        ) : report.mobile_metadata.scenario_metadata?.match?.includes('Fuzzy') ? (
+                          <AlertCircle className="w-4 h-4 text-yellow-600" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-600" />
+                        )}
+                        <span className="text-sm text-blue-600">
+                          {report.mobile_metadata.scenario_metadata?.match || 'Not Found'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Rulebook Evaluation */}
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <div className="text-sm font-medium text-green-700 mb-2">Rulebook Evaluation</div>
+                      <div className="text-xs text-green-600 space-y-1">
+                        <div>• Evidence-based analysis with visual anchors</div>
+                        <div>• Expected behavior validation</div>
+                        <div>• Intelligent guardrails applied</div>
+                        <div>• IF/THEN rules (R1-R17) enforced</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Video Analysis Summary */}
+              {report.video_info && (
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-3">Video Analysis Summary</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-600">Total Frames</div>
+                      <div className="font-medium">{report.video_info.total_frames || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600">Duration</div>
+                      <div className="font-medium">{report.video_info.duration?.toFixed(1) || 0}s</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600">Frame Interval</div>
+                      <div className="font-medium">{report.video_info.frame_interval || 2}s</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600">File Size</div>
+                      <div className="font-medium">{(report.video_info.size / 1024 / 1024).toFixed(1)}MB</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
